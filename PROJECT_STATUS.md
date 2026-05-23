@@ -10,10 +10,10 @@
 
 ```
 G-FinanceSuite/
-├── src/
+├── docs/
 │   ├── index.html              — Interface principal
 │   ├── js/
-│   │   ├── app.js              — Lógica (~2766 linhas)
+│   │   ├── app.js              — Lógica (~2800 linhas)
 │   │   ├── utils.js            — Utilitários
 │   │   └── workers/
 │   │       └── excel.worker.js — Web Worker para Excel
@@ -61,16 +61,16 @@ G-FinanceSuite/
 
 ## Como Correr
 
-A aplicação é puramente frontend — não precisa de servidor.
+A aplicação é **puramente frontend** — não precisa de servidor.
 
 **Abrir diretamente:**
 ```
-src/index.html
+docs/index.html
 ```
 
 **Ou com servidor estático:**
 ```bash
-npx serve src
+npx serve docs
 ```
 
 Requer ligação à internet para SheetJS e jsPDF (carregados via CDN).
