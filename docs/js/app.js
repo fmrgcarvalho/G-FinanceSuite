@@ -2421,25 +2421,7 @@ function getFilteredGroups(groups) {
 }
 
 function renderReconciliation(reconOk, reconNok, tolerance, groupField, valField) {
-  const el = document.getElementById('dup-list');
-  if (!dupGroups.length) {
-    el.innerHTML='<div class="no-dups"><p>?? Nenhum resultado.</p></div>';
-    hide('pagination');
-    return;
-  }
-  const totalPages = Math.ceil(dupGroups.length/PAGE_SIZE);
-  const start = (currentPage-1)*PAGE_SIZE;
-  const slice = dupGroups.slice(start,start+PAGE_SIZE);
-  el.innerHTML = slice.map(e => `
-    <div class="group-block">
-      <div class="group-header">
-        <span class="group-count">${e.records.length} reg.</span>
-        <span class="group-key">${groupField}: ${escHtml(String(e.grp))}</span>
-      </div>
-      <div>Saldo: ${fmt(e.saldo)}</div>
-    </div>
-  `).join('');
-  hide('pagination');
+  renderReconDashboard(reconOk, reconNok, tolerance, groupField, valField);
 }
 
 
@@ -2989,4 +2971,174 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ───────────────────────────────────────────────────────────────
+// DASHBOARD DE RECONCILIAÇÃO
+// ───────────────────────────────────────────────────────────────
 
+let reconDashboardState = {
+  allGroups: [],
+  filteredGroups: [],
+  minSaldo: null,
+  maxSaldo: null,
+  charts: {}
+};
+
+function renderReconDashboard(reconOk, reconNok, tolerance, groupField, valField) {
+  reconDashboardState.allGroups = [...reconNok, ...reconOk];
+  reconDashboardState.filteredGroups = [...reconDashboardState.allGroups];
+
+  show('reconciliation-dashboard');
+  show('results-header-section');
+  renderReconPieChart(reconOk, reconNok);
+  renderReconBarChart(reconNok, valField);
+  renderReconStats(reconDashboardState.allGroups);
+  renderReconTable(reconDashboardState.filteredGroups, groupField, valField, tolerance);
+}
+
+function renderReconPieChart(reconOk, reconNok) {
+  const ctx = document.getElementById('recon-pie-chart');
+  if (!ctx) return;
+
+  if (reconDashboardState.charts.pie) {
+    reconDashboardState.charts.pie.destroy();
+  }
+
+  const data = {
+    labels: ['Reconciliados', 'Por reconciliar'],
+    datasets: [{
+      data: [reconOk.length, reconNok.length],
+      backgroundColor: ['#4ade80', '#f87171'],
+      borderColor: ['#22c55e', '#dc2626'],
+      borderWidth: 2
+    }]
+  };
+
+  reconDashboardState.charts.pie = new Chart(ctx, {
+    type: 'doughnut',
+    data: data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } }
+      }
+    }
+  });
+}
+
+function renderReconBarChart(reconNok, valField) {
+  const ctx = document.getElementById('recon-bar-chart');
+  if (!ctx) return;
+
+  if (reconDashboardState.charts.bar) {
+    reconDashboardState.charts.bar.destroy();
+  }
+
+  const topGroups = reconNok.slice(0, 10).map(g => ({
+    label: String(g.grp).substring(0, 20),
+    value: Math.abs(g.saldo)
+  }));
+
+  const data = {
+    labels: topGroups.map(g => g.label),
+    datasets: [{
+      label: 'Saldo (€)',
+      data: topGroups.map(g => g.value),
+      backgroundColor: '#ef4444',
+      borderColor: '#dc2626',
+      borderWidth: 1
+    }]
+  };
+
+  reconDashboardState.charts.bar = new Chart(ctx, {
+    type: 'bar',
+    data: data,
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#f0f0f0' } }
+      }
+    }
+  });
+}
+
+function renderReconStats(groups) {
+  const saldos = groups.map(g => g.saldo);
+  const totalBalance = saldos.reduce((s, v) => s + v, 0);
+  const avgBalance = saldos.length > 0 ? totalBalance / saldos.length : 0;
+  const sortedSaldos = [...saldos].sort((a, b) => a - b);
+  const medianBalance = sortedSaldos.length % 2 === 0
+    ? (sortedSaldos[sortedSaldos.length / 2 - 1] + sortedSaldos[sortedSaldos.length / 2]) / 2
+    : sortedSaldos[Math.floor(sortedSaldos.length / 2)];
+  const maxBalance = Math.max(...saldos.map(s => Math.abs(s)));
+
+  const update = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = fmt(val);
+  };
+
+  update('stat-total-balance', totalBalance);
+  update('stat-avg-balance', avgBalance);
+  update('stat-median-balance', medianBalance);
+  update('stat-max-balance', maxBalance);
+}
+
+function renderReconTable(groups, groupField, valField, tolerance) {
+  const tbody = document.getElementById('recon-table-body');
+  if (!tbody) return;
+
+  const rows = groups.map(g => {
+    const status = Math.abs(g.saldo) <= tolerance ? '✅ Reconciliado' : '❌ Por reconciliar';
+    const statusColor = Math.abs(g.saldo) <= tolerance ? '#22c55e' : '#ef4444';
+    return `
+      <tr style="border-bottom:1px solid #f0f0f0;transition:all 0.2s">
+        <td style="padding:10px 12px;color:#333">${escHtml(String(g.grp))}</td>
+        <td style="padding:10px 12px;text-align:center;color:#666">${g.records.length}</td>
+        <td style="padding:10px 12px;text-align:right;font-weight:bold;color:${Math.abs(g.saldo) > 10000 ? '#ef4444' : '#333'}">${fmt(g.saldo)}</td>
+        <td style="padding:10px 12px;text-align:center;color:${statusColor};font-weight:600">${status}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = rows.join('');
+}
+
+function applyReconFilters() {
+  const minVal = parseFloat(document.getElementById('recon-min-saldo').value);
+  const maxVal = parseFloat(document.getElementById('recon-max-saldo').value);
+
+  reconDashboardState.minSaldo = isNaN(minVal) ? null : minVal;
+  reconDashboardState.maxSaldo = isNaN(maxVal) ? null : maxVal;
+
+  reconDashboardState.filteredGroups = reconDashboardState.allGroups.filter(g => {
+    const saldo = Math.abs(g.saldo);
+    if (reconDashboardState.minSaldo !== null && saldo < reconDashboardState.minSaldo) return false;
+    if (reconDashboardState.maxSaldo !== null && saldo > reconDashboardState.maxSaldo) return false;
+    return true;
+  });
+
+  const groupField = document.getElementById('group-field-select').value;
+  const valField = document.getElementById('value-field-select').value;
+  const tolerance = parseFloat(document.getElementById('tolerance-input').value) || 1;
+
+  renderReconTable(reconDashboardState.filteredGroups, groupField, valField, tolerance);
+}
+
+function clearReconFilters() {
+  document.getElementById('recon-min-saldo').value = '';
+  document.getElementById('recon-max-saldo').value = '';
+  reconDashboardState.minSaldo = null;
+  reconDashboardState.maxSaldo = null;
+  reconDashboardState.filteredGroups = [...reconDashboardState.allGroups];
+
+  const groupField = document.getElementById('group-field-select').value;
+  const valField = document.getElementById('value-field-select').value;
+  const tolerance = parseFloat(document.getElementById('tolerance-input').value) || 1;
+
+  renderReconTable(reconDashboardState.filteredGroups, groupField, valField, tolerance);
+}

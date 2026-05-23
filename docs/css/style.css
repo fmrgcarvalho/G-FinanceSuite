@@ -963,3 +963,72 @@ footer strong{color:var(--green)}
 .log-btn:hover{ background:rgba(255,255,255,.15);color:#fff }
 .log-btn.primary{ background:rgba(142,199,61,.2);color:var(--green) }
 .log-btn.primary:hover{ background:rgba(142,199,61,.35) }
+
+/* ── DASHBOARD DE RECONCILIAÇÃO ── */
+#reconciliation-dashboard {
+  background: #fafbfc;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+#reconciliation-dashboard canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+#recon-table {
+  width: 100%;
+}
+
+#recon-table tbody tr:hover {
+  background: #f8f9fa;
+  transition: all 0.2s;
+}
+
+#recon-table td {
+  vertical-align: middle;
+}
+
+#reconciliation-dashboard h4 {
+  margin: 0 0 14px 0;
+  color: #1c2526;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── MELHORIAS DE SELECT/INPUT ── */
+.config-select:focus,
+#tolerance-input:focus,
+#recon-min-saldo:focus,
+#recon-max-saldo:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(142, 199, 61, 0.1);
+  outline: none;
+}
+
+.config-select,
+#tolerance-input {
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.config-select:hover {
+  border-color: var(--green);
+}
+
+.btn-run {
+  transition: all 0.2s ease;
+}
+
+.btn-run:hover {
+  background: var(--green-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(142, 199, 61, 0.3);
+}
+
+.btn-run:active {
+  transform: translateY(0);
+}
