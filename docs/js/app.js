@@ -1105,7 +1105,7 @@ function finalizeConsolidation() {
 
   setTimeout(() => {
     hide('progress-section');
-    showContent();
+    updateQueueUI();
   }, 500);
 }
 
