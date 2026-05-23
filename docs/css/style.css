@@ -53,16 +53,6 @@ header{
   padding:5px 13px;
   border-radius:4px;
 }
-.version-badge{
-  font-size:10px;
-  color:var(--green);
-  background:rgba(142,199,61,.15);
-  border:1px solid rgba(142,199,61,.3);
-  padding:2px 8px;
-  border-radius:4px;
-  font-weight:600;
-  letter-spacing:.5px;
-}
 header h1{font-size:14px;font-weight:500;color:rgba(255,255,255,.8);flex:1}
 .header-btn{
   padding:6px 12px;
@@ -883,8 +873,17 @@ tr:hover td{background:var(--green-light)}
 }
 
 /* ── FOOTER ── */
-footer{text-align:center;color:var(--muted);font-size:12px;padding:24px;margin-top:8px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:24px;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:12px}
 footer strong{color:var(--green)}
+.footer-version{
+  font-size:10px;
+  color:rgba(142,199,61,.7);
+  border:1px solid rgba(142,199,61,.3);
+  padding:2px 8px;
+  border-radius:4px;
+  font-weight:600;
+  letter-spacing:.5px;
+}
 
 /* ── LOG MODAL ── */
 .log-modal{
