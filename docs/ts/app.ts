@@ -2065,9 +2065,10 @@ function runReconciliation() {
     {id:'s-groups', val:`ã ${fmt(tolerance)}`, label:'Tolerãncia',              cls:'info'},
   ]);
 
-  document.getElementById('results-title').textContent = '';
-  document.getElementById('results-meta').textContent  =
-    `${fmtN(reconNok.length)} por reconciliar ã ${fmtN(reconOk.length)} reconciliados`;
+  const titleEl = document.getElementById('results-title') as HTMLElement | null;
+  const metaEl = document.getElementById('results-meta') as HTMLElement | null;
+  if (titleEl) titleEl.textContent = '';
+  if (metaEl) metaEl.textContent = `${fmtN(reconNok.length)} por reconciliar ã ${fmtN(reconOk.length)} reconciliados`;
 
   currentPage=1;
   show('results-section');

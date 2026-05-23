@@ -1867,9 +1867,10 @@ function runReconciliation() {
     {id:'s-groups', val:`€ ${fmt(tolerance)}`, label:'Tolerância',              cls:'info'},
   ]);
 
-  document.getElementById('results-title').textContent = '';
-  document.getElementById('results-meta').textContent  =
-    `${fmtN(reconNok.length)} por reconciliar — ${fmtN(reconOk.length)} reconciliados`;
+  const titleEl = document.getElementById('results-title');
+  const metaEl = document.getElementById('results-meta');
+  if (titleEl) titleEl.textContent = '';
+  if (metaEl) metaEl.textContent = `${fmtN(reconNok.length)} por reconciliar — ${fmtN(reconOk.length)} reconciliados`;
 
   currentPage=1;
   show('results-section');
