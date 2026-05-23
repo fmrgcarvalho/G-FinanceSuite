@@ -11,6 +11,13 @@ import {
   addFilesToQueue, removeFileFromQueue, startProcessing, processSingleFile,
   startAnalysis, confirmMapping, onMapInputChange, toggleIgnore, updateQueueUI,
 } from './modules/import.js';
+import {
+  buildFieldSelector, buildSumFieldSelector, toggleField, selectAllFields, clearAllFields,
+  runDuplicates, renderDuplicates,
+  setFilterTypeFromCard as setDupFilterTypeFromCard, setupFilters,
+  buildSearchFieldPanel, onSearchFieldChange, updateSearchFieldBtn, toggleSearchFieldPanel,
+  clearFilters, sortRecords, setSortField, getSortIndicator, getFilteredGroups,
+} from './modules/duplicates.js';
 
 /* --------------------------------------------------------------
    LOGGER
@@ -133,69 +140,8 @@ function showContent() {
   selectOp(1);
 }
 
-/* --------------------------------------------------------------
-   OP 1 — SELETOR DE CAMPOS DINÂMICO
-   -------------------------------------------------------------- */
-function buildFieldSelector() {
-  const grid = document.getElementById('fields-grid');
-  grid.innerHTML = AppState.availableFields.map(f => `
-    <label class="field-chk ${AppState.checkedFields.has(f.key)?'checked':''}" id="lbl-${f.key}">
-      <input type="checkbox" ${AppState.checkedFields.has(f.key)?'checked':''}
-             onchange="toggleField('${f.key}',this)">
-      <span class="fname">${f.key}</span>
-      <span class="fdesc">${f.desc}</span>
-    </label>`).join('');
-
-  buildSumFieldSelector();
-}
-
-function buildSumFieldSelector() {
-  const sel = document.getElementById('sum-field-select');
-  if (!sel) return;
-
-  const numericFields = AppState.availableFields.filter(f =>
-    f.desc && (f.desc.includes('numérico') || f.desc.includes('número') || f.desc.includes('numeric'))
-  );
-
-  const opts = numericFields.map(f =>
-    `<option value="${f.key}">${f.label || f.key}</option>`).join('');
-
-  sel.innerHTML = '<option value="">— Nenhum (sem soma) —</option>' + opts;
-
-  const autoDetect = ['montante','MONTANTE','Montante','valor','VALOR','Valor','amount','AMOUNT']
-                     .find(fname => numericFields.some(f => f.key === fname));
-
-  if (autoDetect) {
-    sel.value = autoDetect;
-    AppState.selectedSumField = autoDetect;
-    Logger.info(`Campo de soma automático: ${autoDetect}`);
-  }
-
-  sel.onchange = (e) => {
-    AppState.selectedSumField = e.target.value;
-    Logger.info(`Campo de soma: ${AppState.selectedSumField || 'nenhum'}`);
-  };
-}
-
-function toggleField(key, el) {
-  if (el.checked) { AppState.checkedFields.add(key);    document.getElementById('lbl-'+key).classList.add('checked'); }
-  else            { AppState.checkedFields.delete(key);  document.getElementById('lbl-'+key).classList.remove('checked'); }
-}
-
-function selectAllFields() {
-  AppState.availableFields.forEach(f => {
-    AppState.checkedFields.add(f.key);
-    const lbl=document.getElementById('lbl-'+f.key);
-    if(lbl){lbl.classList.add('checked');lbl.querySelector('input').checked=true;}
-  });
-}
-
-function clearAllFields() {
-  AppState.checkedFields.clear();
-  document.querySelectorAll('.field-chk').forEach(lbl=>{
-    lbl.classList.remove('checked'); lbl.querySelector('input').checked=false;
-  });
-}
+// buildFieldSelector, buildSumFieldSelector, toggleField,
+// selectAllFields, clearAllFields → modules/duplicates.js
 
 /* --------------------------------------------------------------
    OP 2 — CONFIGURAÇÃO DINÂMICA (agrupar por + campo de valor)
@@ -256,60 +202,7 @@ function runAnalysis() {
   if (AppState.selectedOp===1) runDuplicates(); else runReconciliation();
 }
 
-/* -- OP 1: DUPLICADOS ---------------------------------------- */
-function runDuplicates() {
-  const fields = [...AppState.checkedFields];
-  if (!fields.length) { alert('Seleciona pelo menos um campo.'); return; }
-
-  Logger.separator('Análise de Duplicados');
-  Logger.info(`Campos: ${fields.join(', ')} — ${AppState.rawData.length.toLocaleString('pt-PT')} registos`);
-
-  const groupMap = new Map();
-  AppState.rawData.forEach(r => {
-    const key = fields.map(f => {
-      const v=r[f];
-      if (v===null||v===undefined) return '';
-      if (typeof v==='number') return v.toFixed(4);
-      return String(v).trim();
-    }).join('||');
-    if (!groupMap.has(key)) groupMap.set(key,[]);
-    groupMap.get(key).push(r);
-  });
-
-  AppState.dupGroups = [...groupMap.values()].filter(g=>g.length>1);
-  AppState.dupGroups.sort((a,b)=>b.length-a.length);
-  const dupCount = AppState.dupGroups.reduce((s,g)=>s+g.length,0);
-
-  AppState.uniqueRecords = [...groupMap.values()]
-    .filter(g=>g.length===1)
-    .map(g=>g[0]);
-
-  if (AppState.dupGroups.length===0) Logger.info('Nenhum duplicado encontrado.');
-  else Logger.warn(`${dupCount} registos em ${AppState.dupGroups.length} grupo(s) de duplicados.`);
-
-  setSummaryCards([
-    {id:'s-total',  val:fmtN(AppState.rawData.length),         label:'Total de registos',   cls:'total'},
-    {id:'s-dups',   val:fmtN(dupCount),                         label:'Registos duplicados', cls:'dups'},
-    {id:'s-unique', val:fmtN(AppState.rawData.length-dupCount), label:'Registos únicos',     cls:'clean'},
-    {id:'s-groups', val:fmtN(AppState.dupGroups.length),        label:'Grupos duplicados',   cls:'info'},
-  ]);
-
-  hide('reconciliation-dashboard');
-  hide('results-header-section');
-  hide('recon-config');
-  hide('pagination-recon-top');
-  hide('pagination-recon-bottom');
-  show('filters-section');
-  show('pagination');
-  show('pagination-top');
-
-  document.getElementById('results-title').textContent = '';
-  AppState.currentPage=1;
-  AppState.activeFilters.type = 'all';
-  show('results-section');
-  setFilterTypeFromCard('all');
-  document.getElementById('results-section').scrollIntoView({behavior:'smooth',block:'start'});
-}
+// runDuplicates → modules/duplicates.js
 
 /* -- OP 2: RECONCILIAÇÃO (dinâmica) ------------------------- */
 function runReconciliation() {
@@ -367,361 +260,23 @@ function runReconciliation() {
   document.getElementById('results-section').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
+// renderDuplicates, filter/sort functions → modules/duplicates.js
+
+
 /* --------------------------------------------------------------
-   RENDER: DUPLICADOS
+   FILTRO POR CARD — orquestra entre Op1 e Op2
    -------------------------------------------------------------- */
-function renderDuplicates(fields) {
-  const el = document.getElementById('dup-list');
-
-  if (AppState.activeFilters.type === 'all') {
-    if (!AppState.rawData.length) {
-      el.innerHTML=`<div class="no-dups"><p>Nenhum registo.</p></div>`;
-      setPagination('none'); return;
-    }
-
-    let allRecords = AppState.rawData.filter(r => {
-      if (AppState.activeFilters.search) {
-        const vals = AppState.activeFilters.searchFields.length
-          ? AppState.activeFilters.searchFields.map(k => r[k])
-          : Object.values(r);
-        const match = vals.some(v => String(v ?? '').toLowerCase().includes(AppState.activeFilters.search));
-        if (!match) return false;
-      }
-      if (AppState.selectedSumField && AppState.activeFilters.minAmount !== null && (r[AppState.selectedSumField] ?? 0) < AppState.activeFilters.minAmount) return false;
-      if (AppState.selectedSumField && AppState.activeFilters.maxAmount !== null && (r[AppState.selectedSumField] ?? 0) > AppState.activeFilters.maxAmount) return false;
-      return true;
-    });
-
-    if (!allRecords.length) {
-      el.innerHTML=`<div class="no-dups"><div class="big">🔍</div><p>Nenhum registo corresponde aos filtros.</p></div>`;
-      setPagination('none'); return;
-    }
-
-    const sortedRecords = AppState.sortState.field ? sortRecords(allRecords, AppState.sortState.field, AppState.sortState.direction) : allRecords;
-
-    const totalPages = Math.ceil(sortedRecords.length/PAGE_SIZE);
-    const start = (AppState.currentPage-1)*PAGE_SIZE;
-    const slice = sortedRecords.slice(start, start+PAGE_SIZE);
-    const ctxKeys = AppState.availableFields.map(f=>f.key);
-    const showCols = [...new Set([...fields,...ctxKeys])].filter(k=>k in (AppState.rawData[0]||{}));
-
-    const rows = slice.map(r=>`<tr>${showCols.map(f=>{
-      const v=r[f];
-      if (typeof v==='number') return `<td class="${v<0?'amount-neg':'amount-pos'}">${fmt(v)}</td>`;
-      return `<td class="${['numero_documento','atribuicao','conta','referencia'].includes(f)?'mono':''}">${v??'—'}</td>`;
-    }).join('')}</tr>`).join('');
-
-    const headerCells = showCols.map(f=>
-      `<th style="cursor:pointer;user-select:none;padding:8px;background:#f5f5f5;border-bottom:2px solid #ddd;" onclick="setSortField('${f}')">${f.replace(/_/g,' ')}${getSortIndicator(f)}</th>`
-    ).join('');
-
-    const totalAll = AppState.selectedSumField
-      ? sortedRecords.reduce((s,r)=>s+(typeof r[AppState.selectedSumField]==='number'?r[AppState.selectedSumField]:0),0)
-      : 0;
-
-    el.innerHTML=`
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;padding:12px;background:#e3f2fd;border-radius:8px;border:1px solid #90caf9;">
-        <div style="display:flex;align-items:center;gap:16px">
-          <span style="display:inline-block;background:#1976d2;color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">Total de registos</span>
-          <span style="font-size:14px;color:#555;font-weight:500;">∑ montante: ${fmt(totalAll)}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="display:flex;flex-direction:column;gap:2px;text-align:right">
-            <div style="font-weight:600;color:#1e40af;font-size:12px">📊 Exportar dados</div>
-            <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, XLSX, PDF</div>
-          </div>
-          <button onclick="openExportModal()" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇️ Exportar</button>
-        </div>
-      </div>
-      <div style="overflow-x:auto"><table>
-        <thead><tr>${headerCells}</tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div>`;
-    setPagination(sortedRecords.length > PAGE_SIZE ? 'flex' : 'none', `Registos ${start+1}–${Math.min(start+PAGE_SIZE,sortedRecords.length)} de ${fmtN(sortedRecords.length)}`);
-    renderPagination(totalPages,()=>renderDuplicates(fields));
-    setupFilters(() => renderDuplicates(fields));
-    return;
-  }
-
-  let dataToShow = AppState.dupGroups;
-  if (AppState.activeFilters.type === 'unique') {
-    dataToShow = AppState.uniqueRecords.map(r => [r]);
-  }
-
-  if (!dataToShow.length) {
-    let msg = '✓ Nenhum duplicado encontrado.';
-    if (AppState.activeFilters.type === 'unique') msg = '✓ Nenhum registo único encontrado.';
-    el.innerHTML=`<div class="no-dups"><div class="big">👍</div><p>${msg}</p></div>`;
-    setPagination('none'); return;
-  }
-
-  let filteredGroups = getFilteredGroups(dataToShow);
-
-  if (!filteredGroups.length) {
-    el.innerHTML='<div class="no-dups"><div class="big">🔍</div><p>Nenhum grupo corresponde aos filtros.</p></div>';
-    setPagination('none'); return;
-  }
-
-  if (AppState.sortState.field) {
-    filteredGroups = [...filteredGroups].sort((groupA, groupB) => {
-      const valA = groupA[0]?.[AppState.sortState.field];
-      const valB = groupB[0]?.[AppState.sortState.field];
-      if (valA == null && valB == null) return 0;
-      if (valA == null) return 1;
-      if (valB == null) return -1;
-      if (typeof valA === 'number' && typeof valB === 'number') {
-        return AppState.sortState.direction === 'asc' ? valA - valB : valB - valA;
-      }
-      const strA = String(valA).toLowerCase();
-      const strB = String(valB).toLowerCase();
-      const cmp = strA.localeCompare(strB, 'pt-PT');
-      return AppState.sortState.direction === 'asc' ? cmp : -cmp;
-    });
-  }
-
-  const totalPages = Math.ceil(filteredGroups.length/PAGE_SIZE);
-  const start      = (AppState.currentPage-1)*PAGE_SIZE;
-  const slice      = filteredGroups.slice(start,start+PAGE_SIZE);
-
-  const ctxKeys  = AppState.availableFields.map(f=>f.key);
-  const showCols = [...new Set([...fields,...ctxKeys])].filter(k=>k in (AppState.rawData[0]||{}));
-
-  if (AppState.activeFilters.type === 'unique') {
-    const allRecords = slice.flatMap(group => group);
-
-    const totalUnique = AppState.selectedSumField
-      ? filteredGroups.flatMap(g=>g).reduce((s,r)=>s+(typeof r[AppState.selectedSumField]==='number'?r[AppState.selectedSumField]:0),0)
-      : 0;
-
-    const rows = allRecords.map(r=>`<tr>
-      <td style="padding:8px;text-align:center;"><span style="cursor:help;font-size:20px;" title="Registo único">✓</span></td>
-      ${showCols.map(f=>{
-        const v=r[f];
-        if (typeof v==='number')
-          return `<td class="${v<0?'amount-neg':'amount-pos'}">${fmt(v)}</td>`;
-        return `<td class="${['numero_documento','atribuicao','conta','referencia'].includes(f)?'mono':''}">${v??'—'}</td>`;
-      }).join('')}
-    </tr>`).join('');
-
-    const headerCells = `<th style="padding:8px;width:40px;text-align:center;"></th>${showCols.map(f=>
-      `<th style="cursor:pointer;user-select:none;padding:8px;background:#f5f5f5;border-bottom:2px solid #ddd;" onclick="setSortField('${f}')">${f.replace(/_/g,' ')}${getSortIndicator(f)}</th>`
-    ).join('')}`;
-
-    el.innerHTML=`
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;padding:12px;background:#f0f8f4;border-radius:8px;border:1px solid #c5e8a0;">
-        <div style="display:flex;align-items:center;gap:16px">
-          <span style="display:inline-block;background:#4caf50;color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">Registos únicos</span>
-          <span style="font-size:14px;color:#555;font-weight:500;">∑ montante: ${fmt(totalUnique)}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="display:flex;flex-direction:column;gap:2px;text-align:right">
-            <div style="font-weight:600;color:#1e40af;font-size:12px">📊 Exportar dados</div>
-            <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, XLSX, PDF</div>
-          </div>
-          <button onclick="openExportModal()" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇️ Exportar</button>
-        </div>
-      </div>
-      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;">
-        <thead><tr>${headerCells}</tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div>`;
-
-    setPagination(filteredGroups.length > PAGE_SIZE ? 'flex' : 'none', `Registos ${start+1}–${Math.min(start+PAGE_SIZE,filteredGroups.length)} de ${fmtN(filteredGroups.length)}`);
-    renderPagination(totalPages,()=>renderDuplicates(fields));
-    setupFilters(() => renderDuplicates(fields));
-    return;
-  }
-
-  const totalDuplicates = AppState.selectedSumField
-    ? filteredGroups.reduce((sum, group) =>
-        sum + group.reduce((s,r)=>s+(typeof r[AppState.selectedSumField]==='number'?r[AppState.selectedSumField]:0),0), 0)
-    : 0;
-
-  const groupsHtml = slice.map(group => {
-    const total = AppState.selectedSumField && group.length > 0
-                ? group.reduce((s,r)=>s+(typeof r[AppState.selectedSumField]==='number'?r[AppState.selectedSumField]:0),0)
-                : 0;
-
-    let groupRecords = [...group];
-    if (AppState.sortState.field) {
-      groupRecords = sortRecords(groupRecords, AppState.sortState.field, AppState.sortState.direction);
-    }
-
-    const rows  = groupRecords.map(r=>`<tr>${showCols.map(f=>{
-      const v=r[f];
-      if (typeof v==='number')
-        return `<td class="${v<0?'amount-neg':'amount-pos'}">${fmt(v)}</td>`;
-      return `<td class="${['numero_documento','atribuicao','conta','referencia'].includes(f)?'mono':''}">${v??'—'}</td>`;
-    }).join('')}</tr>`).join('');
-
-    const headerCells = showCols.map(f=>
-      `<th style="cursor:pointer;user-select:none;padding:8px;background:#f5f5f5;border-bottom:2px solid #ddd;" onclick="setSortField('${f}')">${f.replace(/_/g,' ')}${getSortIndicator(f)}</th>`
-    ).join('');
-
-    return `<div class="group-block">
-      <div class="group-header">
-        <span class="group-count">${group.length} duplicado</span>
-        <span class="group-total">💰 Montante: ${fmt(total)}</span>
-      </div>
-      <div style="overflow-x:auto"><table>
-        <thead><tr>${headerCells}</tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div>
-    </div>`;
-  }).join('');
-
-  el.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;padding:12px;background:#ffe8e8;border-radius:8px;border:1px solid #ffb3b3;">
-      <div style="display:flex;align-items:center;gap:16px">
-        <span style="display:inline-block;background:#d32f2f;color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">Registos duplicados</span>
-        <span style="font-size:14px;color:#555;font-weight:500;">💰 Montante: ${fmt(totalDuplicates)}</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="display:flex;flex-direction:column;gap:2px;text-align:right">
-          <div style="font-weight:600;color:#1e40af;font-size:12px">📤 Exportar dados</div>
-          <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, XLSX, PDF</div>
-        </div>
-        <button onclick="openExportModal()" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇ Exportar</button>
-      </div>
-    </div>
-    ${groupsHtml}`;
-
-  setPagination(filteredGroups.length > PAGE_SIZE ? 'flex' : 'none', `Grupos ${start+1}–${Math.min(start+PAGE_SIZE,filteredGroups.length)} de ${fmtN(filteredGroups.length)}`);
-  renderPagination(totalPages,()=>renderDuplicates(fields));
-  setupFilters(() => renderDuplicates(fields));
-}
-
 function setFilterTypeFromCard(type) {
   if (AppState.selectedOp === 2 && AppState.reconDashboardState.allGroups.length > 0) {
     setReconFilterType(type);
     return;
   }
-
-  AppState.activeFilters.type = type;
-  AppState.currentPage = 1;
-
-  document.getElementById('card-all').classList.toggle('selected', type === 'all');
-  document.getElementById('card-dups').classList.toggle('selected', type === 'duplicates');
-  document.getElementById('card-unique').classList.toggle('selected', type === 'unique');
-
-  const fields = Array.from(AppState.checkedFields);
-  renderDuplicates(fields);
+  setDupFilterTypeFromCard(type);
 }
 
-function setupFilters(callback) {
-  const filterSection = document.getElementById('filters-section');
-  if (!filterSection) return;
-
-  show('filters-section');
-
-  const exactCountWrapper = document.getElementById('filter-exactcount-wrapper');
-  if (AppState.activeFilters.type === 'duplicates') {
-    exactCountWrapper.style.display = 'block';
-  } else {
-    exactCountWrapper.style.display = 'none';
-  }
-
-  const searchInput     = document.getElementById('filter-search');
-  const exactCountInput = document.getElementById('filter-exactcount');
-  const minAmtInput     = document.getElementById('filter-minamt');
-  const maxAmtInput     = document.getElementById('filter-maxamt');
-
-  buildSearchFieldPanel();
-
-  const applyFilters = () => {
-    AppState.activeFilters.search     = (searchInput?.value || '').toLowerCase();
-    AppState.activeFilters.exactCount = exactCountInput?.value ? parseInt(exactCountInput.value) : null;
-    AppState.activeFilters.minAmount  = minAmtInput?.value ? parseFloat(minAmtInput.value) : null;
-    AppState.activeFilters.maxAmount  = maxAmtInput?.value ? parseFloat(maxAmtInput.value) : null;
-    AppState.currentPage = 1;
-    callback();
-  };
-
-  [searchInput, exactCountInput, minAmtInput, maxAmtInput].forEach(input => {
-    if (!input) return;
-    input.addEventListener('input', () => {
-      clearTimeout(AppState.filterDebounceTimer);
-      AppState.filterDebounceTimer = setTimeout(applyFilters, 400);
-    });
-  });
-}
-
-function buildSearchFieldPanel() {
-  const panel = document.getElementById('search-field-panel');
-  if (!panel || !AppState.availableFields.length) return;
-
-  panel.innerHTML = `
-    <div style="padding:6px 12px 4px;font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #f0f0f0;margin-bottom:4px">Pesquisar em:</div>
-    ${AppState.availableFields.map(f => {
-      const checked = AppState.activeFilters.searchFields.includes(f.key);
-      const icon = f.desc ? f.desc.split(' ')[0] : '❓';
-      return `<label title="${f.desc || f.key}" style="display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;font-size:12px;color:var(--dark);user-select:none;transition:background .12s${checked ? ';background:#f2f9e8' : ''}" onmouseenter="this.style.background='${checked ? '#eaf5d6' : '#f7f8f6'}'" onmouseleave="this.style.background='${checked ? '#f2f9e8' : 'transparent'}'">
-        <input type="checkbox" value="${f.key}" onchange="onSearchFieldChange()"
-               style="accent-color:var(--green);width:13px;height:13px;cursor:pointer;flex-shrink:0"
-               ${checked ? 'checked' : ''}>
-        <span style="font-family:monospace;font-size:12px;font-weight:${checked ? '700' : '500'};color:${checked ? 'var(--green-dark)' : 'var(--dark)'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.key}</span>
-        <span style="font-size:13px;opacity:.5;flex-shrink:0">${icon}</span>
-      </label>`;
-    }).join('')}`;
-}
-
-function onSearchFieldChange() {
-  const panel = document.getElementById('search-field-panel');
-  const checked = [...panel.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value);
-  AppState.activeFilters.searchFields = checked;
-  updateSearchFieldBtn();
-  AppState.currentPage = 1;
-  AppState.activeFilters.search = (document.getElementById('filter-search')?.value || '').toLowerCase();
-  const fields = Array.from(AppState.checkedFields);
-  renderDuplicates(fields);
-}
-
-function updateSearchFieldBtn() {
-  const label = document.getElementById('search-field-label');
-  if (!label) return;
-  const n = AppState.activeFilters.searchFields.length;
-  label.textContent = n === 0 ? 'Todos os campos' : n === 1 ? `1 campo` : `${n} campos`;
-  const btn = document.getElementById('search-field-btn');
-  if (btn) btn.style.borderColor = n > 0 ? 'var(--green)' : 'var(--gray-border)';
-  if (btn) btn.style.color = n > 0 ? 'var(--green-dark)' : 'var(--muted)';
-}
-
-function toggleSearchFieldPanel() {
-  const panel = document.getElementById('search-field-panel');
-  if (!panel) return;
-  const isOpen = panel.style.display !== 'none';
-  panel.style.display = isOpen ? 'none' : 'block';
-  if (!isOpen) {
-    buildSearchFieldPanel();
-    setTimeout(() => {
-      document.addEventListener('click', function closePanel(e) {
-        if (!document.getElementById('search-field-wrapper')?.contains(e.target)) {
-          panel.style.display = 'none';
-          document.removeEventListener('click', closePanel);
-        }
-      });
-    }, 0);
-  }
-}
-
-function clearFilters() {
-  AppState.activeFilters = { type: 'all', search: '', searchFields: [], exactCount: null, minAmount: null, maxAmount: null };
-
-  document.getElementById('card-all').classList.add('selected');
-  document.getElementById('card-dups').classList.remove('selected');
-  document.getElementById('card-unique').classList.remove('selected');
-
-  document.getElementById('filter-search').value = '';
-  document.getElementById('filter-exactcount').value = '';
-  document.getElementById('filter-minamt').value = '';
-  document.getElementById('filter-maxamt').value = '';
-  updateSearchFieldBtn();
-  AppState.currentPage = 1;
-
-  const fields = Array.from(AppState.checkedFields);
-  renderDuplicates(fields);
-  Logger.info('Filtros limpos');
-}
+// setupFilters, buildSearchFieldPanel, onSearchFieldChange, updateSearchFieldBtn,
+// toggleSearchFieldPanel, clearFilters, sortRecords, setSortField, getSortIndicator,
+// getFilteredGroups → modules/duplicates.js
 
 /* --------------------------------------------------------------
    RESET & ADICIONAR FICHEIROS
@@ -760,74 +315,6 @@ function resetAll() {
   const hint = document.querySelector('.file-hint');
   if (hint) hint.innerHTML = 'Ou arrasta vários ficheiros para aqui';
   Logger.info('Portal reiniciado.');
-}
-
-/* --------------------------------------------------------------
-   ORDENAÇÃO DE DADOS
-   -------------------------------------------------------------- */
-function sortRecords(records, field, direction) {
-  if (!field) return records;
-
-  const sorted = [...records].sort((a, b) => {
-    const valA = a[field];
-    const valB = b[field];
-
-    if (valA == null && valB == null) return 0;
-    if (valA == null) return 1;
-    if (valB == null) return -1;
-
-    if (typeof valA === 'number' && typeof valB === 'number') {
-      return direction === 'asc' ? valA - valB : valB - valA;
-    }
-
-    const strA = String(valA).toLowerCase();
-    const strB = String(valB).toLowerCase();
-    const cmp = strA.localeCompare(strB, 'pt-PT');
-    return direction === 'asc' ? cmp : -cmp;
-  });
-
-  return sorted;
-}
-
-function setSortField(field) {
-  if (AppState.sortState.field === field) {
-    AppState.sortState.direction = AppState.sortState.direction === 'asc' ? 'desc' : 'asc';
-  } else {
-    AppState.sortState.field = field;
-    AppState.sortState.direction = 'asc';
-  }
-  AppState.currentPage = 1;
-  renderDuplicates(Array.from(AppState.checkedFields));
-}
-
-function getSortIndicator(field) {
-  if (AppState.sortState.field !== field) return '';
-  return AppState.sortState.direction === 'asc' ? ' 🔼' : ' 🔽';
-}
-
-/* --------------------------------------------------------------
-   FILTROS E RENDERIZAÇÃO
-   -------------------------------------------------------------- */
-function getFilteredGroups(groups) {
-  return groups.filter(group => {
-    if (AppState.activeFilters.exactCount !== null && group.length !== AppState.activeFilters.exactCount) return false;
-    if (AppState.activeFilters.search) {
-      const hasMatch = group.some(record => {
-        const vals = AppState.activeFilters.searchFields.length
-          ? AppState.activeFilters.searchFields.map(k => record[k])
-          : Object.values(record);
-        return vals.some(val => String(val ?? '').toLowerCase().includes(AppState.activeFilters.search));
-      });
-      if (!hasMatch) return false;
-    }
-    if (AppState.selectedSumField && (AppState.activeFilters.minAmount !== null || AppState.activeFilters.maxAmount !== null)) {
-      const total = group.reduce((s, r) =>
-        s + (typeof r[AppState.selectedSumField] === 'number' ? r[AppState.selectedSumField] : 0), 0);
-      if (AppState.activeFilters.minAmount !== null && total < AppState.activeFilters.minAmount) return false;
-      if (AppState.activeFilters.maxAmount !== null && total > AppState.activeFilters.maxAmount) return false;
-    }
-    return true;
-  });
 }
 
 function renderReconciliation(reconOk, reconNok, tolerance, groupField, valField) {
