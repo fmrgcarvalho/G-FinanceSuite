@@ -2929,9 +2929,9 @@ function setPagination(display, infoText, isRecon = false) {
 }
 
 function renderPagination(totalPages, callback, isRecon = false) {
-  const suffix = isRecon ? '-recon' : '';
-  const pagBtns    = document.getElementById(`pag-btns${suffix}-bottom`);
-  const pagBtnsTop = document.getElementById(`pag-btns${suffix}-top`);
+  const suffix = isRecon ? '-recon-bottom' : '';
+  const pagBtns    = document.getElementById(`pag-btns${suffix}`);
+  const pagBtnsTop = document.getElementById(`pag-btns${isRecon ? '-recon-top' : '-top'}`);
   if (!pagBtns) return;
 
   pagBtns.innerHTML = '';
