@@ -3096,7 +3096,7 @@ function renderReconStats(groups) {
   const medianBalance = sortedSaldos.length % 2 === 0
     ? (sortedSaldos[sortedSaldos.length / 2 - 1] + sortedSaldos[sortedSaldos.length / 2]) / 2
     : sortedSaldos[Math.floor(sortedSaldos.length / 2)];
-  const maxBalance = Math.max(...saldos.map(s => Math.abs(s)));
+  const maxBalance = saldos.reduce((max, s) => Math.max(max, Math.abs(s)), 0);
 
   const update = (id, val) => {
     const el = document.getElementById(id);
