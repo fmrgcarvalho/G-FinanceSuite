@@ -2564,6 +2564,8 @@ function updateExportPreview() {
     previewText = '📋 JSON — Para integração com outras ferramentas';
   } else if (format === 'xml') {
     previewText = '📁 XML — Formato estruturado para sistemas';
+  } else if (format === 'xlsx') {
+    previewText = `📈 XLSX — Ficheiro Excel com formatação (máx. ${fmtN(PDF_MAX_RECORDS)} registos)`;
   } else if (format === 'pdf') {
     previewText = `📄 PDF — Relatório formatado (máx. ${fmtN(PDF_MAX_RECORDS)} registos)`;
   }
@@ -2604,6 +2606,8 @@ function executeExport() {
     exportToJSON(data, columns, filename);
   } else if (format === 'xml') {
     exportToXML(data, columns, filename);
+  } else if (format === 'xlsx') {
+    exportToXLSX(data, columns, filename);
   } else if (format === 'pdf') {
     exportToPDF(data, columns, filename);
   }
@@ -2687,6 +2691,58 @@ function exportToXML(data, columns, filename) {
 
   const blob = new Blob([xml], { type: 'application/xml;charset=utf-8;' });
   downloadFile(blob, `${filename}.xml`);
+}
+
+function exportToXLSX(data, columns, filename) {
+  try {
+    if (typeof window.XLSX === 'undefined') {
+      Logger.error('Biblioteca XLSX não carregou');
+      alert('⚠️ Biblioteca XLSX ainda a carregar. Tenta novamente em alguns segundos.');
+      return;
+    }
+
+    const XLSX = window.XLSX;
+
+    // Converter dados para array de arrays (formato compatível com XLSX)
+    const wsData = [];
+
+    // Adicionar cabeçalho
+    wsData.push(columns);
+
+    // Adicionar dados
+    data.forEach(record => {
+      const row = columns.map(col => {
+        const value = record[col];
+        return value ?? '';
+      });
+      wsData.push(row);
+    });
+
+    // Criar worksheet
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Aplicar formatação ao cabeçalho (negrito)
+    const wscols = columns.map(() => ({ wch: 15 }));
+    ws['!cols'] = wscols;
+
+    // Criar workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Dados');
+
+    // Adicionar metadados
+    wb.Props = {
+      Title: 'G-FinanceSuite - Exportação de Dados',
+      Author: 'G-FinanceSuite',
+      CreatedDate: new Date()
+    };
+
+    // Escrever ficheiro
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+    Logger.info(`✅ XLSX exportado com sucesso: ${data.length} registos`);
+  } catch (err) {
+    Logger.error(`Erro na exportação XLSX: ${err instanceof Error ? err.message : String(err)}`);
+    alert('Erro ao exportar XLSX:\n' + (err instanceof Error ? err.message : String(err)));
+  }
 }
 
 function exportToPDF(data, columns, filename) {

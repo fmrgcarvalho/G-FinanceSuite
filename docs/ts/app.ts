@@ -56,7 +56,7 @@ interface SortState {
 
 interface ExportState {
   dataType: 'all' | 'duplicates' | 'unique';
-  format: 'csv' | 'json' | 'xml' | 'pdf';
+  format: 'csv' | 'json' | 'xml' | 'xlsx' | 'pdf';
 }
 
 interface DataRecord {
@@ -2621,11 +2621,11 @@ function setExportDataType(type: ExportState['dataType']): void {
 
 /**
  * Define o formato de exportaão
- * @param {ExportState['format']} format - Formato: 'csv', 'json', 'xml' ou 'pdf'
+ * @param {ExportState['format']} format - Formato: 'csv', 'json', 'xml', 'xlsx' ou 'pdf'
  */
 function setExportFormat(format: ExportState['format']): void {
   // Validar formato (Priority 1)
-  const VALID_FORMATS: ReadonlyArray<ExportState['format']> = ['csv', 'json', 'xml', 'pdf'];
+  const VALID_FORMATS: ReadonlyArray<ExportState['format']> = ['csv', 'json', 'xml', 'xlsx', 'pdf'];
   if (!VALID_FORMATS.includes(format)) {
     Logger.error(`Formato de export inválido: ${format}. Usando CSV como padrão.`);
     exportState.format = 'csv';
@@ -2689,6 +2689,8 @@ function updateExportPreview(): void {
     previewText = '📋 JSON — Para integração com outras ferramentas';
   } else if (format === 'xml') {
     previewText = '📁 XML — Formato estruturado para sistemas';
+  } else if (format === 'xlsx') {
+    previewText = '📈 XLSX — Ficheiro Excel com formatação';
   } else if (format === 'pdf') {
     previewText = '📄 PDF — Relatório formatado e imprimível';
   }
@@ -2759,6 +2761,8 @@ function executeExport(): void {
     exportToJSON(data, columns, filename);
   } else if (format === 'xml') {
     exportToXML(data, columns, filename);
+  } else if (format === 'xlsx') {
+    exportToXLSX(data, columns, filename);
   } else if (format === 'pdf') {
     exportToPDF(data, columns, filename);
   }
@@ -2853,7 +2857,65 @@ function exportToXML(data, columns, filename) {
 }
 
 /**
- * Exporta dados para PDF com relatãrio formatado
+ * Exporta dados para XLSX (Excel)
+ * @param {DataRecord[]} data - Array de registos
+ * @param {string[]} columns - Nomes das colunas
+ * @param {string} filename - Nome do ficheiro (sem extensão)
+ */
+function exportToXLSX(data: DataRecord[], columns: string[], filename: string): void {
+  if (typeof (window as any).XLSX === 'undefined') {
+    Logger.error('Biblioteca XLSX não carregou');
+    alert('⚠️ Biblioteca XLSX ainda a carregar. Tenta novamente em alguns segundos.');
+    return;
+  }
+
+  try {
+    const XLSX = (window as any).XLSX;
+
+    // Converter dados para array de arrays (formato compatível com XLSX)
+    const wsData: any[][] = [];
+
+    // Adicionar cabeçalho
+    wsData.push(columns);
+
+    // Adicionar dados
+    data.forEach(record => {
+      const row: any[] = columns.map(col => {
+        const value = record[col];
+        return value ?? '';
+      });
+      wsData.push(row);
+    });
+
+    // Criar worksheet
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Aplicar formatação ao cabeçalho (negrito)
+    const wscols = columns.map(() => ({ wch: 15 }));
+    ws['!cols'] = wscols;
+
+    // Criar workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Dados');
+
+    // Adicionar metadados
+    wb.Props = {
+      Title: 'G-FinanceSuite - Exportação de Dados',
+      Author: 'G-FinanceSuite',
+      CreatedDate: new Date()
+    };
+
+    // Escrever ficheiro
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+    Logger.info(`✅ XLSX exportado com sucesso: ${data.length} registos`);
+  } catch (err) {
+    Logger.error(`Erro na exportação XLSX: ${err instanceof Error ? err.message : String(err)}`);
+    alert('Erro ao exportar XLSX:\n' + (err instanceof Error ? err.message : String(err)));
+  }
+}
+
+/**
+ * Exporta dados para PDF com relatório formatado
  * @param {DataRecord[]} data - Array de registos
  * @param {string[]} columns - Nomes das colunas
  * @param {string} filename - Nome do ficheiro (sem extensão)
