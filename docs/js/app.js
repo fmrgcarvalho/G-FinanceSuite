@@ -1,7 +1,7 @@
 ﻿/* ============================================================
    G-FinanceSuite — Duplicate Detection & Reconciliation
+   Orquestrador principal. Migração gradual para ES6 modules.
    ============================================================ */
-'use strict';
 
 const APP_VERSION = '1.0.0';
 
@@ -3483,3 +3483,41 @@ function executeReconExport() {
     alert('Erro ao exportar:\n' + err.message);
   }
 }
+
+/* ============================================================
+   SHIMS GLOBAIS — Expõe funções ao HTML via onclick/onchange
+   Temporário durante migração para ES6 modules.
+   Removidos na Fase 7 (substituídos por event listeners).
+   ============================================================ */
+window.toggleLog              = toggleLog;
+window.exportLog              = exportLog;
+window.clearLog               = clearLog;
+window.selectOp               = selectOp;
+window.runAnalysis            = runAnalysis;
+window.resetAll               = resetAll;
+window.clearAllFields         = clearAllFields;
+window.selectAllFields        = selectAllFields;
+window.toggleField            = toggleField;
+window.clearFilters           = clearFilters;
+window.toggleSearchFieldPanel = toggleSearchFieldPanel;
+window.setFilterTypeFromCard  = setFilterTypeFromCard;
+window.confirmMapping         = confirmMapping;
+window.onMapInputChange       = onMapInputChange;
+window.toggleIgnore           = toggleIgnore;
+window.addMoreFiles           = addMoreFiles;
+window.removeFileFromQueue    = removeFileFromQueue;
+window.startAnalysis          = startAnalysis;
+window.applyReconFilters      = applyReconFilters;
+window.clearReconFilters      = clearReconFilters;
+window.toggleReconCharts      = toggleReconCharts;
+window.toggleReconExpand      = toggleReconExpand;
+window.openExportModal        = openExportModal;
+window.closeExportModal       = closeExportModal;
+window.setExportDataType      = setExportDataType;
+window.setExportFormat        = setExportFormat;
+window.executeExport          = executeExport;
+window.openReconExportModal   = openReconExportModal;
+window.closeReconExportModal  = closeReconExportModal;
+window.setReconExportDataType = setReconExportDataType;
+window.setReconExportFormat   = setReconExportFormat;
+window.executeReconExport     = executeReconExport;
