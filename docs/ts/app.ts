@@ -156,9 +156,12 @@ const Logger = (() => {
 function toggleLog() {
   const panel = document.getElementById('log-panel');
   const chevron = document.getElementById('log-chevron');
+  const main = document.getElementById('main');
+  if (!panel || !chevron || !main) return;
   panel.classList.toggle('collapsed');
-  // Atualizar ícone: ⬇️ quando fechado, ⬆️ quando aberto
-  chevron.textContent = panel.classList.contains('collapsed') ? '⬇️' : '⬆️';
+  const isCollapsed = panel.classList.contains('collapsed');
+  chevron.textContent = isCollapsed ? '⬇️' : '⬆️';
+  main.style.paddingTop = isCollapsed ? '0' : '320px';
 }
 
 function exportLog()  {
