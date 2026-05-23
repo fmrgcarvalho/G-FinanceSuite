@@ -248,7 +248,7 @@ const COLUMN_ALIASES = {
 function normalizeHeader(h) {
   if (h==null) return '';
   return String(h).toLowerCase()
-    .normalize('NFD').replace(/[`-?]/g,'')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
     .replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
 }
 
