@@ -3142,7 +3142,7 @@ function renderReconTable(groups, groupField, valField, tolerance) {
   }
 
   if (!groups || groups.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:#999">Nenhum grupo encontrado</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:#999">Nenhum grupo encontrado</td></tr>';
     setPagination('none');
     Logger.warn('renderReconTable: nenhum grupo recebido');
     return;
@@ -3153,15 +3153,41 @@ function renderReconTable(groups, groupField, valField, tolerance) {
   const start = (currentPage - 1) * PAGE_SIZE;
   const slice = groups.slice(start, start + PAGE_SIZE);
 
-  const rows = slice.map(g => {
+  const rows = slice.map((g, idx) => {
     const status = Math.abs(g.saldo) <= tolerance ? '✅ Reconciliado' : '❌ Por reconciliar';
     const statusColor = Math.abs(g.saldo) <= tolerance ? '#22c55e' : '#ef4444';
+    const expandId = `recon-expand-${start + idx}`;
+
+    // Extrair números de documentos
+    const docNumbers = g.records
+      .map(r => r.numero_documento)
+      .filter(n => n)
+      .join(', ');
+
     return `
-      <tr style="border-bottom:1px solid #f0f0f0;transition:all 0.2s">
-        <td style="padding:10px 12px;color:#333">${escHtml(String(g.grp))}</td>
+      <tr style="border-bottom:1px solid #f0f0f0;transition:all 0.2s;cursor:pointer" onclick="toggleReconExpand('${expandId}')" title="Clique para ver documentos">
+        <td style="padding:10px 12px;color:#333">
+          <span style="margin-right:8px;color:#999;font-weight:bold">▼</span>${escHtml(String(g.grp))}
+        </td>
         <td style="padding:10px 12px;text-align:center;color:#666">${g.records.length}</td>
         <td style="padding:10px 12px;text-align:right;font-weight:bold;color:${Math.abs(g.saldo) > 10000 ? '#ef4444' : '#333'}">${fmt(g.saldo)}</td>
         <td style="padding:10px 12px;text-align:center;color:${statusColor};font-weight:600">${status}</td>
+        <td style="padding:10px 12px;font-size:11px;color:#6b7280">${docNumbers.substring(0, 30)}${docNumbers.length > 30 ? '...' : ''}</td>
+      </tr>
+      <tr id="${expandId}" style="display:none;background:#f8f9fa">
+        <td colspan="5" style="padding:12px 16px">
+          <div style="background:white;border:1px solid #e5e7eb;border-radius:6px;padding:12px">
+            <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:8px;text-transform:uppercase">Documentos neste grupo:</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;font-size:12px">
+              ${g.records.map(r => `
+                <div style="padding:8px;background:#f3f4f6;border-radius:4px;border-left:3px solid #8ec73d">
+                  <div style="font-weight:600;color:#1c2526">${escHtml(String(r.numero_documento || '—'))}</div>
+                  <div style="font-size:11px;color:#6b7280">Montante: ${fmt(r[valField] || 0)}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </td>
       </tr>
     `;
   });
@@ -3206,4 +3232,12 @@ function clearReconFilters() {
   const tolerance = parseFloat(document.getElementById('tolerance-input').value) || 1;
 
   renderReconTable(reconDashboardState.filteredGroups, groupField, valField, tolerance);
+}
+
+function toggleReconExpand(expandId) {
+  const el = document.getElementById(expandId);
+  if (el) {
+    const isVisible = el.style.display !== 'none';
+    el.style.display = isVisible ? 'none' : 'table-row';
+  }
 }
