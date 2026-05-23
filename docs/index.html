@@ -309,18 +309,23 @@
 
 <footer><strong>G-FinanceSuite</strong></footer>
 
-<!-- ── PAINEL DE LOG (com toggle automático) ── -->
-<div id="log-panel" class="collapsed">
-  <div id="log-header" onclick="toggleLog()" style="cursor: pointer; user-select: none;">
-    <div class="log-dot idle" id="log-dot"></div>
-    <span id="log-title">Log do sistema</span>
-    <span id="log-count">0 entradas</span>
-    <span class="log-toggle" id="log-chevron">▼</span>
-  </div>
-  <div id="log-body"></div>
-  <div id="log-actions">
-    <button class="log-btn primary" onclick="exportLog()">⬇ Exportar .txt</button>
-    <button class="log-btn"        onclick="clearLog()">🗑 Limpar</button>
+<!-- ── MODAL DE LOG ── -->
+<div id="log-modal" class="log-modal" style="display:none">
+  <div class="log-modal-backdrop" onclick="toggleLog()"></div>
+  <div class="log-modal-dialog">
+    <div class="log-modal-header">
+      <div style="display:flex;align-items:center;gap:8px;flex:1">
+        <div class="log-dot idle" id="log-dot"></div>
+        <span id="log-title">Log do sistema</span>
+        <span id="log-count" style="color:var(--green);font-size:11px;margin-left:auto">(0 entradas)</span>
+      </div>
+      <button class="log-modal-close" onclick="toggleLog()">✕</button>
+    </div>
+    <div id="log-body" class="log-modal-body"></div>
+    <div class="log-modal-footer">
+      <button class="log-btn primary" onclick="exportLog()">📥 Exportar .txt</button>
+      <button class="log-btn" onclick="clearLog()">🗑 Limpar</button>
+    </div>
   </div>
 </div>
 

@@ -61,11 +61,9 @@ const Logger = (() => {
 })();
 
 function toggleLog() {
-  const panel = document.getElementById('log-panel');
-  const chevron = document.getElementById('log-chevron');
-  if (!panel || !chevron) return;
-  panel.classList.toggle('collapsed');
-  chevron.textContent = panel.classList.contains('collapsed') ? '⬇️' : '⬆️';
+  const modal = document.getElementById('log-modal');
+  if (!modal) return;
+  modal.style.display = modal.style.display === 'none' || !modal.style.display ? 'flex' : 'none';
 }
 
 function exportLog()  {
