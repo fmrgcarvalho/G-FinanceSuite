@@ -2074,7 +2074,7 @@ function renderDuplicates(fields) {
                 ? group.reduce((s,r)=>s+(typeof r[selectedSumField]==='number'?r[selectedSumField]:0),0)
                 : 0;
 
-    // Ordenar registos dentro do grupo tambï¿½m
+    // Ordenar registos dentro do grupo também
     let groupRecords = [...group];
     if (sortState.field) {
       groupRecords = sortRecords(groupRecords, sortState.field, sortState.direction);
@@ -2093,7 +2093,7 @@ function renderDuplicates(fields) {
 
     return `<div class="group-block">
       <div class="group-header">
-        <span class="group-count">${group.length}ï¿½ duplicado</span>
+        <span class="group-count">${group.length} duplicado</span>
         <span class="group-total">S montante: ${fmt(total)}</span>
       </div>
       <div style="overflow-x:auto"><table>
@@ -2119,7 +2119,7 @@ function renderDuplicates(fields) {
     </div>
     ${groupsHtml}`;
 
-  setPagination(filteredGroups.length > PAGE_SIZE ? 'flex' : 'none', `Grupos ${start+1}ï¿½${Math.min(start+PAGE_SIZE,filteredGroups.length)} de ${fmtN(filteredGroups.length)}`);
+  setPagination(filteredGroups.length > PAGE_SIZE ? 'flex' : 'none', `Grupos ${start+1}–${Math.min(start+PAGE_SIZE,filteredGroups.length)} de ${fmtN(filteredGroups.length)}`);
   renderPagination(totalPages,()=>renderDuplicates(fields));
 
   // Setup de filtros
@@ -2147,7 +2147,7 @@ function setupFilters(callback) {
 
   show('filters-section');
 
-  // Mostrar/esconder filtro de "Nï¿½ duplicados" baseado na vista
+  // Mostrar/esconder filtro de "Não duplicados" baseado na vista
   const exactCountWrapper = document.getElementById('filter-exactcount-wrapper');
   if (activeFilters.type === 'duplicates') {
     exactCountWrapper.style.display = 'block';
@@ -2266,11 +2266,11 @@ function clearFilters() {
    RESET & ADICIONAR FICHEIROS
    -------------------------------------------------------------- */
 
-/** Voltar ï¿½ importaï¿½ï¿½o para adicionar mais ficheiros (mantï¿½m dados consolidados) */
+/** Voltar à importação para adicionar mais ficheiros (mantém dados consolidados) */
 function addMoreFiles() {
   const currentData = [...rawData];
   const currentCount = rawData.length;
-  Logger.info('ï¿½ï¿½ Modo: Adicionar Mais Ficheiros ï¿½ï¿½');
+  Logger.info('📁 Modo: Adicionar Mais Ficheiros 📁');
   Logger.info(`Dados actuais: ${currentCount.toLocaleString('pt-PT')} registos`);
   Logger.info('A aguardar novos ficheiros para mesclar...');
   hide('content'); hide('results-section'); hide('progress-section');
@@ -2285,7 +2285,7 @@ function addMoreFiles() {
   updateQueueUI();
   const hint = document.querySelector('.file-hint');
   if (hint) {
-    hint.innerHTML = `Ou arrasta mais ficheiros aqui<br><small style="color:var(--muted)">Serï¿½ mesclado com os ${currentCount.toLocaleString('pt-PT')} registos anteriores</small>`;
+    hint.innerHTML = `Ou arrasta mais ficheiros aqui<br><small style="color:var(--muted)">Será mesclado com os ${currentCount.toLocaleString('pt-PT')} registos anteriores</small>`;
   }
 }
 
@@ -2301,12 +2301,12 @@ function resetAll() {
   document.getElementById('info-sticky-bar')?.classList.remove('visible');
   updateQueueUI();
   const hint = document.querySelector('.file-hint');
-  if (hint) hint.innerHTML = 'Ou arrasta vï¿½rios ficheiros para aqui';
+  if (hint) hint.innerHTML = 'Ou arrasta vários ficheiros para aqui';
   Logger.info('Portal reiniciado.');
 }
 
 /* --------------------------------------------------------------
-   UTILITï¿½RIOS
+   UTILITÁRIOS
    -------------------------------------------------------------- */
 function show(id){ const el=document.getElementById(id); if(el) el.style.display='block'; }
 function hide(id){ const el=document.getElementById(id); if(el) el.style.display='none';  }
@@ -2335,7 +2335,7 @@ function setSummaryCards(defs){
 }
 
 function fmt(n){
-  if(n==null) return 'ï¿½';
+  if(n==null) return '—';
   return new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
 }
 function fmtN(n){ return new Intl.NumberFormat('pt-PT').format(n); }
@@ -2347,7 +2347,7 @@ function escHtml(s){
 }
 
 /* --------------------------------------------------------------
-   ORDENAï¿½ï¿½O DE DADOS
+   ORDENAÇÃO DE DADOS
    -------------------------------------------------------------- */
 function sortRecords(records, field, direction) {
   if (!field) return records;
@@ -2361,7 +2361,7 @@ function sortRecords(records, field, direction) {
     if (valA == null) return 1;
     if (valB == null) return -1;
 
-    // Ordenar nï¿½meros
+    // Ordenar números
     if (typeof valA === 'number' && typeof valB === 'number') {
       return direction === 'asc' ? valA - valB : valB - valA;
     }
@@ -2377,7 +2377,7 @@ function sortRecords(records, field, direction) {
 }
 
 function setSortField(field) {
-  // Se clica no mesmo campo, inverte direï¿½ï¿½o
+  // Se clica no mesmo campo, inverte direção
   if (sortState.field === field) {
     sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
   } else {
@@ -2385,7 +2385,7 @@ function setSortField(field) {
     sortState.field = field;
     sortState.direction = 'asc';
   }
-  currentPage = 1;  // Reset ï¿½ pï¿½gina 1
+  currentPage = 1;  // Reset — página 1
   renderDuplicates(Array.from(checkedFields));
 }
 
@@ -2395,7 +2395,7 @@ function getSortIndicator(field) {
 }
 
 /* --------------------------------------------------------------
-   FILTROS E RENDERIZAï¿½ï¿½O
+   FILTROS E RENDERIZAÇÃO
    -------------------------------------------------------------- */
 function getFilteredGroups(groups) {
   return groups.filter(group => {
@@ -2443,7 +2443,7 @@ function renderReconciliation(reconOk, reconNok, tolerance, groupField, valField
 
 
 // ---------------------------------------------------------------
-// EXPORTAï¿½ï¿½O DE DADOS
+// EXPORTAÇÃO DE DADOS
 // ---------------------------------------------------------------
 
 let exportState = {
@@ -2481,7 +2481,7 @@ function setExportFormat(format) {
   if (format === 'pdf' && document.getElementById('export-fmt-pdf')?.disabled) return;
   exportState.format = format;
 
-  // Atualizar botï¿½es visualmente
+  // Atualizar botões visualmente
   document.querySelectorAll('.export-fmt-btn').forEach(btn => {
     const isSelected = btn.getAttribute('data-format') === format;
     if (isSelected) {
@@ -2521,7 +2521,7 @@ function updatePdfBtnState({ countAll, countDups, countUnique } = {}) {
   const btn = document.getElementById('export-fmt-pdf');
   if (!btn) return;
 
-  // Determinar o nï¿½ de registos para o tipo selecionado
+  // Determinar o nº de registos para o tipo selecionado
   const counts = { all: countAll ?? rawData.length };
   if (dupGroups.length > 0) {
     counts.duplicates = countDups ?? dupGroups.reduce((s, g) => s + g.length, 0);
@@ -2581,7 +2581,7 @@ function getDataToExport() {
   if (exportState.dataType === 'all') {
     dataToExport = rawData;
   } else if (exportState.dataType === 'duplicates') {
-    // Registos que sï¿½o duplicados
+    // Registos que são duplicados
     dataToExport = rawData.filter(r => {
       return dupGroups.some(group => group.some(gr => gr === r));
     });
@@ -2613,7 +2613,7 @@ function executeExport() {
 }
 
 function exportToCSV(data, columns, filename) {
-  // Cabeï¿½alho
+  // Cabeçalho
   const header = columns.map(col => `"${col.replace(/"/g, '""')}"`).join(',');
 
   // Linhas
@@ -2630,7 +2630,7 @@ function exportToCSV(data, columns, filename) {
         stringValue = String(value).replace(/"/g, '""');
       }
 
-      // Adicionar aspas se contï¿½m vï¿½rgula ou quebra de linha
+      // Adicionar aspas se contém vírgula ou quebra de linha
       if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
         stringValue = `"${stringValue}"`;
       }
@@ -2733,7 +2733,7 @@ function exportToPDF(data, columns, filename) {
     // Truncate string to fit cell
     const trunc = (str, w) => {
       const maxCh = Math.floor((w - cellP * 2) / charW);
-      return str.length <= maxCh ? str : str.substring(0, Math.max(1, maxCh - 1)) + 'ï¿½';
+      return str.length <= maxCh ? str : str.substring(0, Math.max(1, maxCh - 1)) + '…';
     };
 
     const footerY   = pageH - 7;
@@ -2747,7 +2747,7 @@ function exportToPDF(data, columns, filename) {
       doc.setFontSize(13);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(28, 37, 38);
-      doc.text('G-FinanceSuite ï¿½ Relatï¿½rio de Exportaï¿½ï¿½o', margin, margin + 7);
+      doc.text('G-FinanceSuite — Relatório de Exportação', margin, margin + 7);
 
       doc.setFontSize(7.5);
       doc.setFont(undefined, 'normal');
@@ -2779,7 +2779,7 @@ function exportToPDF(data, columns, filename) {
       doc.setFontSize(7);
       doc.setFont(undefined, 'normal');
       doc.setTextColor(150);
-      doc.text('ï¿½ 2026 G-FinanceSuite', margin, footerY);
+      doc.text('© 2026 G-FinanceSuite', margin, footerY);
       const pgTxt = `${pg} / ${totalPages}`;
       const pgW = doc.getStringUnitWidth(pgTxt) * 7 / doc.internal.scaleFactor;
       doc.text(pgTxt, pageW - margin - pgW, footerY);
@@ -2814,7 +2814,7 @@ function exportToPDF(data, columns, filename) {
       let x = margin;
       columns.forEach((col, i) => {
         const val = record[col];
-        let str = val === null || val === undefined ? 'ï¿½'
+        let str = val === null || val === undefined ? '—'
           : typeof val === 'number' ? fmt(val)
           : String(val);
         doc.text(trunc(str, colW[i]), x + cellP, rowY + rowH - cellP - 1);
@@ -2892,11 +2892,11 @@ function renderPagination(totalPages, callback) {
     if (i===1 || i===totalPages || Math.abs(i-currentPage)<=1) addBtn(i);
     else if (i===2 || i===totalPages-1) addDots();
   }
-  if (currentPage < totalPages) addBtn(currentPage+1, 'Prï¿½xima ?');
+  if (currentPage < totalPages) addBtn(currentPage+1, 'Próxima ▶️');
 }
 
 /* --------------------------------------------------------------
-   INICIALIZAï¿½ï¿½O DA Pï¿½GINA
+   INICIALIZAÇÃO DA PÁGINA
    -------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
   hide('progress-section');

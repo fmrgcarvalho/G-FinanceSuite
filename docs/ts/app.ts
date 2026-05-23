@@ -289,7 +289,7 @@ let activeFilters: FilterState = {
 };
 let filterDebounceTimer: number | null = null;
 
-// Ordenaï¿½ï¿½o de tabela
+// Ordenaão de tabela
 let sortState: SortState = {
   field: null,
   direction: 'asc'
@@ -300,7 +300,7 @@ let _excelRows: unknown[][] = [];
 let _excelHeaders: string[] = [];
 let _excelFile: File | null = null;
 
-// Fila de processamento ï¿½ mï¿½ltiplos ficheiros
+// Fila de processamento ã mãltiplos ficheiros
 let fileQueue: FileQueueItem[] = [];
 let processingQueue: boolean = false;
 let isSequentialProcessing: boolean = false;
@@ -309,7 +309,7 @@ let mappings: Mapping = {};
 let fileDataMap: FileDataMap = {};
 
 /* --------------------------------------------------------------
-   DRAG & DROP / IMPORTAï¿½ï¿½O (Mï¿½LTIPLOS FICHEIROS)
+   DRAG & DROP / IMPORTAÃO (MÚLTIPLOS FICHEIROS)
    -------------------------------------------------------------- */
 // Setup drop zone
 const dropZone = document.getElementById('import-section');
@@ -337,7 +337,7 @@ if (fileInput) {
     }
   });
 } else {
-  console.warn('?? Elemento #file-input nï¿½o encontrado!');
+  console.warn('?? Elemento #file-input não encontrado!');
 }
 
 function isExcel(name: string): boolean {
@@ -357,7 +357,7 @@ function isXML(name: string): boolean {
 }
 
 /**
- * Adiciona ficheiros ï¿½ fila de processamento
+ * Adiciona ficheiros ã fila de processamento
  * @param {FileList} files - Lista de ficheiros a processar
  */
 function addFilesToQueue(files: FileList | File[]): void {
@@ -381,33 +381,33 @@ function addFilesToQueue(files: FileList | File[]): void {
         error: null
       });
       validCount++;
-      console.log(`? Adicionado ï¿½ fila: ${file.name}`);
+      console.log(`? Adicionado ã fila: ${file.name}`);
     }
   }
 
-  console.log(`Total de ficheiros vï¿½lidos: ${validCount}/${files.length}`);
+  console.log(`Total de ficheiros vãlidos: ${validCount}/${files.length}`);
   updateQueueUI();
 
   if (validCount === 0) {
-    alert('?? Nenhum ficheiro vï¿½lido foi seleccionado.\n\nFormatos suportados: .xlsx, .xls, .csv, .json, .xml\nTamanho mï¿½ximo: 500MB');
+    alert('?? Nenhum ficheiro vãlido foi seleccionado.\n\nFormatos suportados: .xlsx, .xls, .csv, .json, .xml\nTamanho mãximo: 500MB');
   }
 }
 
 /**
  * Valida um ficheiro (tipo e tamanho)
  * @param {File} file - Ficheiro a validar
- * @returns {boolean} Verdadeiro se o ficheiro ï¿½ vï¿½lido
+ * @returns {boolean} Verdadeiro se o ficheiro ã vãlido
  */
 function isValidFile(file: File): boolean {
   const valid: boolean = isExcel(file.name) || isCSV(file.name) || isJSON(file.name) || isXML(file.name);
   if (!valid) {
-    Logger.warn(`Ficheiro ${file.name} nï¿½o suportado ï¿½ ignorado.`);
+    Logger.warn(`Ficheiro ${file.name} não suportado ã ignorado.`);
     return false;
   }
 
   const maxSize: number = 500 * 1024 * 1024; // 500 MB
   if (file.size > maxSize) {
-    Logger.warn(`Ficheiro ${file.name} ï¿½ muito grande (${(file.size / 1024 / 1024).toFixed(0)}MB) ï¿½ limite: 500MB ï¿½ ignorado.`);
+    Logger.warn(`Ficheiro ${file.name} ã muito grande (${(file.size / 1024 / 1024).toFixed(0)}MB) ã limite: 500MB ã ignorado.`);
     return false;
   }
 
@@ -421,7 +421,7 @@ function updateQueueUI() {
   console.log('updateQueueUI: fileQueue tem', fileQueue.length, 'ficheiros');
 
   if (!queueEl || !listEl) {
-    console.warn('?? Elementos de fila nï¿½o encontrados no DOM');
+    console.warn('?? Elementos de fila não encontrados no DOM');
     return;
   }
 
@@ -435,7 +435,7 @@ function updateQueueUI() {
   console.log('Mostrando fila com', fileQueue.length, 'ficheiros');
 
   try {
-    // Botï¿½o "Processar todos" se houver mï¿½ltiplos ficheiros pendentes
+    // Botão "Processar todos" se houver mãltiplos ficheiros pendentes
     const hasPending = fileQueue.some(f => f.status === 'pending');
     const processoBtn = fileQueue.length > 1 && hasPending ? `
       <div style="margin-bottom:16px;display:flex;gap:10px;">
@@ -510,7 +510,7 @@ function updateQueueUI() {
       return html;
     }).join('');
 
-    // Mostrar botï¿½o "Analisar e Consolidar" se hï¿½ PELO MENOS 1 ficheiro pronto
+    // Mostrar botão "Analisar e Consolidar" se hã PELO MENOS 1 ficheiro pronto
     const successCount = getSuccessCount();
 
     if (successCount > 0) {
@@ -556,18 +556,18 @@ function clearQueue() {
   document.getElementById('file-input').value = '';
 }
 
-/** Processa um ficheiro individual (extrai dados, sem ir para anï¿½lise) */
+/** Processa um ficheiro individual (extrai dados, sem ir para anãlise) */
 function processSingleFile(queueIndex) {
   const item = fileQueue[queueIndex];
   if (!item) return;
 
   if (item.status === 'success') {
-    alert('Este ficheiro jï¿½ foi processado.');
+    alert('Este ficheiro jã foi processado.');
     return;
   }
 
   // Processar apenas este ficheiro
-  // REMOVER progress-section ï¿½ usar log panel em vez disso
+  // REMOVER progress-section ã usar log panel em vez disso
   // Abrir log panel automaticamente
   const logPanel = document.getElementById('log-panel');
   if (logPanel) {
@@ -604,7 +604,7 @@ function getSuccessCount() {
   return fileQueue.filter(f => f.status === 'success').length;
 }
 
-/** Consolida ficheiros processados com sucesso e salta para anï¿½lise */
+/** Consolida ficheiros processados com sucesso e salta para anãlise */
 function startAnalysis() {
   const successFiles = fileQueue.filter(f => f.status === 'success');
 
@@ -613,7 +613,7 @@ function startAnalysis() {
     return;
   }
 
-  Logger.separator(`Consolidaï¿½ï¿½o de ${successFiles.length} ficheiro(s) processado(s)`);
+  Logger.separator(`Consolidaão de ${successFiles.length} ficheiro(s) processado(s)`);
 
   // Consolidar dados de todos os ficheiros com sucesso
   consolidatedFiles = [];
@@ -644,11 +644,11 @@ function startAnalysis() {
 
     if (rawData.length === 0) {
       alert('Nenhum dado para consolidar.');
-      Logger.error('Consolidaï¿½ï¿½o: sem dados');
+      Logger.error('Consolidaão: sem dados');
       return;
     }
 
-    Logger.info(`Consolidaï¿½ï¿½o completa: ${rawData.length} registos totais`);
+    Logger.info(`Consolidaão completa: ${rawData.length} registos totais`);
 
     // Extrair campos unificados
     const allFields = new Set();
@@ -660,16 +660,16 @@ function startAnalysis() {
 
     modelFields = Array.from(allFields);
 
-    // Nï¿½O salta para anï¿½lise ï¿½ fica na pï¿½gina de upload
+    // NãO salta para anãlise ã fica na pãgina de upload
     fileName = `${successFiles.length} ficheiro${successFiles.length !== 1 ? 's' : ''} consolidado${successFiles.length !== 1 ? 's' : ''}`;
 
-    Logger.info('? Consolidaï¿½ï¿½o pronta! Os dados estï¿½o prontos para anï¿½lise.');
-    Logger.info('Clique em uma operaï¿½ï¿½o (Duplicados ou Reconciliaï¿½ï¿½o) para comeï¿½ar.');
+    Logger.info('? Consolidaão pronta! Os dados estão prontos para anãlise.');
+    Logger.info('Clique em uma operaão (Duplicados ou Reconciliaão) para comeãar.');
 
-    // Preparar anï¿½lise - chamar showContent para renderizar campos
+    // Preparar anãlise - chamar showContent para renderizar campos
     showContent();
   } catch (err) {
-    Logger.error(`Consolidaï¿½ï¿½o falhou: ${err.message}`);
+    Logger.error(`Consolidaão falhou: ${err.message}`);
     alert('Erro ao consolidar ficheiros. Abre a consola (F12) para detalhes.');
   }
 }
@@ -704,9 +704,9 @@ function startProcessing() {
   consolidatedFiles = [];
   rawData = [];
 
-  // Nï¿½o sai da pï¿½gina de upload ï¿½ mantï¿½m visualizaï¿½ï¿½o da fila
+  // Não sai da pãgina de upload ã mantãm visualizaão da fila
   Logger.separator(`Processamento de ${fileQueue.length} ficheiro(s)`);
-  Logger.info(`Iniciando processamento sequencialï¿½`);
+  Logger.info(`Iniciando processamento sequencialã`);
   processNextFile();
 }
 
@@ -715,7 +715,7 @@ function processNextFile() {
   const pending = fileQueue.find(f => f.status === 'pending');
 
   if (!pending) {
-    // Todos processados ï¿½ consolidar
+    // Todos processados ã consolidar
     finalizeConsolidation();
     return;
   }
@@ -742,7 +742,7 @@ function processNextFile() {
 }
 
 /* --------------------------------------------------------------
-   CARREGAR DE FILA ï¿½ FUNï¿½ï¿½ES PARA Mï¿½LTIPLOS FICHEIROS
+   CARREGAR DE FILA ã FUNããES PARA MãLTIPLOS FICHEIROS
    -------------------------------------------------------------- */
 
 /** Carregar JSON da fila de processamento */
@@ -769,7 +769,7 @@ function loadJSONFromQueue(queueItem) {
       updateQueueUI();
       if (isSequentialProcessing) processNextFile();
       else {
-        // Fechar log panel apï¿½s 5 segundos (tempo para ler resultado)
+        // Fechar log panel apãs 5 segundos (tempo para ler resultado)
         setTimeout(() => {
           const logPanel = document.getElementById('log-panel');
           if (logPanel && !isSequentialProcessing) {
@@ -797,7 +797,7 @@ function loadJSONFromQueue(queueItem) {
 
   reader.onerror = () => {
     queueItem.status = 'error';
-    Logger.error(`JSON ${queueItem.file.name}: Erro ao ler ficheiro${isSequentialProcessing ? ' ï¿½ a continuar com os outros' : ''}`);
+    Logger.error(`JSON ${queueItem.file.name}: Erro ao ler ficheiro${isSequentialProcessing ? ' ã a continuar com os outros' : ''}`);
     updateQueueUI();
     if (isSequentialProcessing) processNextFile();
     else {
@@ -825,7 +825,7 @@ function loadXMLFromQueue(queueItem) {
       const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
 
       if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
-        throw new Error('XML invï¿½lido ï¿½ erro de parsing');
+        throw new Error('XML invãlido ã erro de parsing');
       }
 
       const data: DataRecord[] = [];
@@ -845,7 +845,7 @@ function loadXMLFromQueue(queueItem) {
           const key = child.tagName;
           let value: unknown = child.textContent;
 
-          // Tentar converter para nï¿½mero
+          // Tentar converter para nãmero
           if (value && !isNaN(Number(value)) && value.trim() !== '') {
             value = Number(value);
           }
@@ -857,7 +857,7 @@ function loadXMLFromQueue(queueItem) {
       }
 
       if (data.length === 0) {
-        throw new Error('Nenhum registo vï¿½lido extraï¿½do do XML');
+        throw new Error('Nenhum registo vãlido extraãdo do XML');
       }
 
       // Adicionar campo de origem
@@ -900,7 +900,7 @@ function loadXMLFromQueue(queueItem) {
 
   reader.onerror = () => {
     queueItem.status = 'error';
-    Logger.error(`XML ${queueItem.file.name}: Erro ao ler ficheiro${isSequentialProcessing ? ' ï¿½ a continuar com os outros' : ''}`);
+    Logger.error(`XML ${queueItem.file.name}: Erro ao ler ficheiro${isSequentialProcessing ? ' ã a continuar com os outros' : ''}`);
     updateQueueUI();
     if (isSequentialProcessing) processNextFile();
     else {
@@ -967,7 +967,7 @@ function loadCSVFromQueue(queueItem) {
 
   reader.onerror = () => {
     queueItem.status = 'error';
-    Logger.error(`CSV ${queueItem.file.name}: Erro ao ler ficheiro${isSequentialProcessing ? ' ï¿½ a continuar com os outros' : ''}`);
+    Logger.error(`CSV ${queueItem.file.name}: Erro ao ler ficheiro${isSequentialProcessing ? ' ã a continuar com os outros' : ''}`);
     updateQueueUI();
     if (isSequentialProcessing) processNextFile();
     else {
@@ -1004,13 +1004,13 @@ function loadExcelFromQueue(queueItem) {
   const reader = new FileReader();
 
   reader.onload = e => {
-    // Usar thread principal para Excel tambï¿½m
+    // Usar thread principal para Excel tambãm
     processExcelFromQueueMainThread(e.target.result, queueItem);
   };
 
   reader.onerror = () => {
     queueItem.status = 'error';
-    Logger.error(`Excel ${queueItem.file.name}: Erro ao ler ficheiro ï¿½ a continuar com os outros`);
+    Logger.error(`Excel ${queueItem.file.name}: Erro ao ler ficheiro ã a continuar com os outros`);
     updateQueueUI();
     processNextFile();
   };
@@ -1020,7 +1020,7 @@ function loadExcelFromQueue(queueItem) {
 
 async function processExcelFromQueueMainThread(buffer, queueItem) {
   if (typeof XLSX === 'undefined') {
-    Logger.warn('SheetJS ainda nï¿½o carregado ï¿½ a aguardarï¿½');
+    Logger.warn('SheetJS ainda não carregado ã a aguardarã');
     let tries = 0;
     const wait = setInterval(() => {
       tries++;
@@ -1030,7 +1030,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
       } else if (tries >= 100) {
         clearInterval(wait);
         queueItem.status = 'error';
-        Logger.error(`Excel ${queueItem.file.name}: SheetJS nï¿½o carregou${isSequentialProcessing ? ' ï¿½ a continuar com os outros' : ''}`);
+        Logger.error(`Excel ${queueItem.file.name}: SheetJS não carregou${isSequentialProcessing ? ' ã a continuar com os outros' : ''}`);
         updateQueueUI();
         if (isSequentialProcessing) processNextFile();
         else {
@@ -1050,7 +1050,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
   try {
     const data = new Uint8Array(buffer);
     const strategies = [
-      { label: 'ultra-leve (sem fï¿½rmulas)', opts: { type: 'array', raw: true, cellDates: false, cellFormula: false, cellStyles: false, cellNF: false, sheetStubs: false } },
+      { label: 'ultra-leve (sem fãrmulas)', opts: { type: 'array', raw: true, cellDates: false, cellFormula: false, cellStyles: false, cellNF: false, sheetStubs: false } },
       { label: 'leve (sem valores)', opts: { type: 'array', raw: true, cellDates: false, cellFormula: false, cellStyles: false } },
       { label: 'sheetStubs', opts: { type: 'array', raw: true, cellDates: false, cellFormula: false, sheetStubs: true } },
       { label: 'raw:false', opts: { type: 'array', raw: false, cellDates: false, cellFormula: false, cellStyles: false } },
@@ -1062,7 +1062,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
 
     for (const strat of strategies) {
       try {
-        Logger.info(`  A tentar estratï¿½gia: ${strat.label}ï¿½`);
+        Logger.info(`  A tentar estratãgia: ${strat.label}ã`);
         const wb = XLSX.read(data, strat.opts);
         const candidates = [...new Set([...wb.SheetNames, ...Object.keys(wb.Sheets)])];
         ws = null;
@@ -1073,14 +1073,14 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
         }
 
         if (!ws) {
-          Logger.warn(`Nenhuma folha acessï¿½vel com estratï¿½gia ${strat.label}`);
+          Logger.warn(`Nenhuma folha acessãvel com estratãgia ${strat.label}`);
           continue;
         }
 
         rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
-        Logger.info(`Estratï¿½gia ${strat.label}: ${rows.length} linhas`);
+        Logger.info(`Estratãgia ${strat.label}: ${rows.length} linhas`);
 
-        // IMPORTANTE: Nï¿½o usar readCellsDirect para ficheiros com >100k linhas
+        // IMPORTANTE: Não usar readCellsDirect para ficheiros com >100k linhas
         if (rows.length < 2 && ws['!ref']) {
           try {
             const range = XLSX.utils.decode_range(ws['!ref']);
@@ -1089,7 +1089,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
               rows = readCellsDirect(ws);
               Logger.info(`readCellsDirect: ${rows.length} linhas`);
             } else {
-              Logger.warn(`Range muito grande (${maxRows} linhas) ï¿½ skipping readCellsDirect`);
+              Logger.warn(`Range muito grande (${maxRows} linhas) ã skipping readCellsDirect`);
             }
           } catch (cellErr) {
             Logger.warn(`readCellsDirect falhou: ${cellErr.message}`);
@@ -1097,27 +1097,27 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
         }
 
         if (rows.length >= 2) {
-          Logger.info(`? Estratï¿½gia ${strat.label} funcionou!`);
+          Logger.info(`? Estratãgia ${strat.label} funcionou!`);
           break;
         }
-        Logger.warn(`Estratï¿½gia ${strat.label}: dados insuficientes`);
+        Logger.warn(`Estratãgia ${strat.label}: dados insuficientes`);
       } catch (stratErr) {
         lastError = stratErr;
-        Logger.warn(`Estratï¿½gia ${strat.label} falhou: ${stratErr.message}`);
+        Logger.warn(`Estratãgia ${strat.label} falhou: ${stratErr.message}`);
         continue;
       }
     }
 
     if (!ws || rows.length < 2) {
-      throw new Error(`Ficheiro Excel sem dados legï¿½veis. ï¿½ltima estratï¿½gia erro: ${lastError?.message || 'desconhecido'}`);
+      throw new Error(`Ficheiro Excel sem dados legãveis. ãltima estratãgia erro: ${lastError?.message || 'desconhecido'}`);
     }
 
-    // Avisar se ficheiro ï¿½ muito grande
+    // Avisar se ficheiro ã muito grande
     if (rows.length > 100000) {
-      Logger.warn(`?? Ficheiro grande (${rows.length.toLocaleString('pt-PT')} linhas) ï¿½ pode ser lento`);
+      Logger.warn(`?? Ficheiro grande (${rows.length.toLocaleString('pt-PT')} linhas) ã pode ser lento`);
     }
 
-    // Detetar cabeï¿½alho
+    // Detetar cabeãalho
     let hIdx = 0;
     for (let i = 0; i < Math.min(rows.length, 10); i++) {
       if (rows[i] && rows[i].some(v => v != null && String(v).trim() !== '')) {
@@ -1141,9 +1141,9 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
     // Aumentar chunk size para ficheiros muito grandes
     const chunkSize = rows.length > 500000 ? 5000 : rows.length > 100000 ? 2000 : 1000;
     const t0 = performance.now();
-    const maxTime = 120000; // 2 minutos mï¿½ximo
+    const maxTime = 120000; // 2 minutos mãximo
 
-    Logger.info(`Iniciando conversï¿½o de registos (chunk size: ${chunkSize})ï¿½`);
+    Logger.info(`Iniciando conversão de registos (chunk size: ${chunkSize})ã`);
 
     for (let i = hIdx + 1; i < rows.length; i++) {
       const row = rows[i];
@@ -1164,17 +1164,17 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
           throw new Error(`Processamento excedeu ${maxTime / 1000}s. Ficheiro muito grande.`);
         }
         const elapsedSec = (elapsed / 1000).toFixed(1);
-        Logger.info(`  ${records.length.toLocaleString('pt-PT')} registos processados em ${elapsedSec}sï¿½`);
+        Logger.info(`  ${records.length.toLocaleString('pt-PT')} registos processados em ${elapsedSec}sã`);
         await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
 
     if (!records.length) {
-      throw new Error('Nenhum registo apï¿½s o cabeï¿½alho.');
+      throw new Error('Nenhum registo apãs o cabeãalho.');
     }
 
     const conversionTime = ((performance.now() - t0) / 1000).toFixed(1);
-    Logger.info(`? Conversï¿½o concluï¿½da: ${records.length.toLocaleString('pt-PT')} registos em ${conversionTime}s`);
+    Logger.info(`? Conversão concluãda: ${records.length.toLocaleString('pt-PT')} registos em ${conversionTime}s`);
 
     // Guardar dados num mapa separado para evitar stack overflow com arrays grandes
     fileDataMap[queueItem.file.name] = { records, mapping };
@@ -1199,8 +1199,8 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
     let errorMsg = 'Erro desconhecido';
     if (err.message.includes('Maximum call stack') || err.message.includes('stack')) {
       errorMsg = 'Stack overflow (ficheiro corrompido)';
-      Logger.error(`Excel ${queueItem.file.name}: Stack overflow ï¿½ ficheiro pode estar corrompido`);
-      Logger.info(`?? Tenta: (1) Reabrir em Excel e guardar novamente, (2) Remover fï¿½rmulas complexas, (3) Converter para CSV`);
+      Logger.error(`Excel ${queueItem.file.name}: Stack overflow ã ficheiro pode estar corrompido`);
+      Logger.info(`?? Tenta: (1) Reabrir em Excel e guardar novamente, (2) Remover fãrmulas complexas, (3) Converter para CSV`);
     } else {
       errorMsg = err.message.substring(0, 100); // Truncar mensagem longa
       Logger.error(`Excel ${queueItem.file.name}: ${err.message}`);
@@ -1220,7 +1220,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
   }
 }
 
-/** Finalizar consolidaï¿½ï¿½o ï¿½ mesclar todos os dados e avanï¿½ar */
+/** Finalizar consolidaão ã mesclar todos os dados e avanãar */
 function finalizeConsolidation() {
   // Contar sucessos e falhas
   const successCount = fileQueue.filter(f => f.status === 'success').length;
@@ -1242,11 +1242,11 @@ function finalizeConsolidation() {
     }
   });
 
-  // Verificar se hï¿½ dados anteriores (modo "Adicionar ficheiros")
+  // Verificar se hã dados anteriores (modo "Adicionar ficheiros")
   const hasPreviousData = window._previousConsolidatedData && window._previousConsolidatedData.length > 0;
   const previousCount = hasPreviousData ? window._previousConsolidatedData.length : 0;
 
-  // Relatï¿½rio de processamento
+  // Relatãrio de processamento
   Logger.separator('RESUMO DO PROCESSAMENTO');
   Logger.info(`Ficheiros novos: ${totalCount}`);
   Logger.info(`? Sucesso: ${successCount}`);
@@ -1259,14 +1259,14 @@ function finalizeConsolidation() {
     Logger.info(`? Dados novos: ${totalRecordsNew.toLocaleString('pt-PT')} registos`);
   }
 
-  // Se nï¿½o hï¿½ dados novos, verificar se hï¿½ dados anteriores
+  // Se não hã dados novos, verificar se hã dados anteriores
   if (newData.length === 0) {
     if (hasPreviousData) {
       Logger.warn('Nenhum registo encontrado nos ficheiros novos.');
       Logger.info('? Mantendo dados anteriores.');
       // Voltar aos dados anteriores
       rawData = [...window._previousConsolidatedData];
-      // Nï¿½O salta para anï¿½lise ï¿½ fica na pï¿½gina de upload
+      // NãO salta para anãlise ã fica na pãgina de upload
       return;
     } else {
       if (failCount === totalCount) {
@@ -1293,7 +1293,7 @@ function finalizeConsolidation() {
     rawData = newData;
   }
 
-  // Normalizar dados ï¿½ garantir que todos tï¿½m os mesmos campos
+  // Normalizar dados ã garantir que todos tãm os mesmos campos
   const allKeys = [...new Set(rawData.flatMap(r => Object.keys(r)))];
   rawData.forEach(r => {
     allKeys.forEach(k => {
@@ -1307,15 +1307,15 @@ function finalizeConsolidation() {
     ? consolidatedFiles[0]
     : `${consolidatedFiles.length} ficheiros consolidados`;
 
-  Logger.separator('CONSOLIDAï¿½ï¿½O CONCLUï¿½DA COM SUCESSO');
+  Logger.separator('CONSOLIDAããO CONCLUãDA COM SUCESSO');
   Logger.info(`Ficheiros com dados: ${consolidatedFiles.join(', ')}`);
   Logger.info(`Total de registos: ${rawData.length.toLocaleString('pt-PT')}`);
-  Logger.info(`Campos ï¿½nicos: ${allKeys.length}`);
+  Logger.info(`Campos ãnicos: ${allKeys.length}`);
   if (failCount > 0) {
-    Logger.info(`?? ${failCount} ficheiro(s) falharam mas continuou com os ${successCount} vï¿½lidos`);
+    Logger.info(`?? ${failCount} ficheiro(s) falharam mas continuou com os ${successCount} vãlidos`);
   }
 
-  // Limpar referï¿½ncia aos dados anteriores
+  // Limpar referãncia aos dados anteriores
   window._previousConsolidatedData = null;
   window._previousConsolidatedCount = 0;
 
@@ -1328,22 +1328,22 @@ function finalizeConsolidation() {
 }
 
 /* --------------------------------------------------------------
-   CARREGAR JSON (LEGACY ï¿½ um ficheiro)
+   CARREGAR JSON (LEGACY ã um ficheiro)
    -------------------------------------------------------------- */
 function loadJSON(file) {
-  Logger.separator('Importaï¿½ï¿½o JSON');
+  Logger.separator('Importaão JSON');
   Logger.info(`Ficheiro: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`);
 
   const reader = new FileReader();
   reader.onprogress = e => {
     if (e.lengthComputable) {
-      setProgress(Math.round(e.loaded/e.total*70), 'A ler ficheiroï¿½',
-        `${Math.round(e.loaded/e.total*100)}% ï¿½ ${(e.loaded/1024/1024).toFixed(1)} MB`);
+      setProgress(Math.round(e.loaded/e.total*70), 'A ler ficheiroã',
+        `${Math.round(e.loaded/e.total*100)}% ã ${(e.loaded/1024/1024).toFixed(1)} MB`);
     }
   };
   reader.onload = e => {
-    Logger.info('Ficheiro em memï¿½ria ï¿½ parse JSONï¿½');
-    setProgress(80, 'A processar JSONï¿½', 'A converter estrutura de dadosï¿½');
+    Logger.info('Ficheiro em memãria ã parse JSONã');
+    setProgress(80, 'A processar JSONã', 'A converter estrutura de dadosã');
     setTimeout(() => {
       try {
         const t0 = performance.now();
@@ -1352,7 +1352,7 @@ function loadJSON(file) {
         rawData = obj.registos || obj.data || obj.records || (Array.isArray(obj)?obj:[]);
         if (!rawData.length) throw new Error('Nenhum registo encontrado.');
         Logger.info(`${rawData.length.toLocaleString('pt-PT')} registos carregados`);
-        setProgress(100,'Concluï¿½do!', `${fmtN(rawData.length)} registos`);
+        setProgress(100,'Concluãdo!', `${fmtN(rawData.length)} registos`);
         setTimeout(() => showContent(), 300);
       } catch(err) {
         Logger.error(`Erro JSON: ${err.message}`);
@@ -1366,10 +1366,10 @@ function loadJSON(file) {
 }
 
 /* --------------------------------------------------------------
-   CARREGAR EXCEL ï¿½ via Web Worker (nï¿½o bloqueia o UI thread)
+   CARREGAR EXCEL ã via Web Worker (não bloqueia o UI thread)
    -------------------------------------------------------------- */
 function loadExcel(file) {
-  Logger.separator('Importaï¿½ï¿½o Excel');
+  Logger.separator('Importaão Excel');
   Logger.info(`Ficheiro: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`);
 
   const reader = new FileReader();
@@ -1377,28 +1377,28 @@ function loadExcel(file) {
     if (e.lengthComputable)
       setProgress(
         Math.round(e.loaded / e.total * 35),
-        'A ler ficheiro Excelï¿½',
-        `${Math.round(e.loaded/e.total*100)}% ï¿½ ${(e.loaded/1024/1024).toFixed(1)} MB`
+        'A ler ficheiro Excelã',
+        `${Math.round(e.loaded/e.total*100)}% ã ${(e.loaded/1024/1024).toFixed(1)} MB`
       );
   };
 
   reader.onload = e => {
-    // file:// nunca suporta Workers (origin 'null') ï¿½ ir direto ao thread principal
+    // file:// nunca suporta Workers (origin 'null') ã ir direto ao thread principal
     if (window.location.protocol === 'file:') {
-      Logger.info('Modo ficheiro local ï¿½ a processar no thread principalï¿½');
-      setProgress(38, 'A iniciar processamentoï¿½', 'thread principal');
+      Logger.info('Modo ficheiro local ã a processar no thread principalã');
+      setProgress(38, 'A iniciar processamentoã', 'thread principal');
       processExcelMainThread(e.target.result, file);
       return;
     }
 
-    setProgress(38, 'A iniciar processamentoï¿½', 'A enviar para worker threadï¿½');
-    Logger.info('Ficheiro lido ï¿½ a lanï¿½ar Web Workerï¿½');
+    setProgress(38, 'A iniciar processamentoã', 'A enviar para worker threadã');
+    Logger.info('Ficheiro lido ã a lanãar Web Workerã');
 
     let worker;
     try {
       worker = new Worker('js/excel.worker.js');
     } catch (err) {
-      Logger.warn(`Web Worker falhou (${err.message}) ï¿½ a processar no thread principalï¿½`);
+      Logger.warn(`Web Worker falhou (${err.message}) ã a processar no thread principalã`);
       processExcelMainThread(e.target.result, file);
       return;
     }
@@ -1426,7 +1426,7 @@ function loadExcel(file) {
     worker.onerror = err => {
       worker.terminate();
       Logger.error(`Worker crash: ${err.message}`);
-      Logger.warn('A tentar fallback no thread principalï¿½');
+      Logger.warn('A tentar fallback no thread principalã');
       processExcelMainThread(e.target.result, file);
     };
 
@@ -1438,35 +1438,35 @@ function loadExcel(file) {
   reader.readAsArrayBuffer(file);
 }
 
-/* Fallback: processar no thread principal se Worker nï¿½o estiver disponï¿½vel */
+/* Fallback: processar no thread principal se Worker não estiver disponãvel */
 function processExcelMainThread(buffer, file) {
-  // SheetJS pode estar ainda a carregar (injeï¿½ï¿½o dinï¿½mica) ï¿½ aguardar atï¿½ 10s
+  // SheetJS pode estar ainda a carregar (injeão dinãmica) ã aguardar atã 10s
   if (typeof XLSX === 'undefined') {
-    Logger.warn('SheetJS ainda nï¿½o carregado ï¿½ a aguardarï¿½');
+    Logger.warn('SheetJS ainda não carregado ã a aguardarã');
     let tries = 0;
     const wait = setInterval(() => {
       tries++;
       if (typeof XLSX !== 'undefined') {
         clearInterval(wait);
-        Logger.info('SheetJS carregado ï¿½ a retomar processamentoï¿½');
+        Logger.info('SheetJS carregado ã a retomar processamentoã');
         processExcelMainThread(buffer, file);
       } else if (tries >= 100) {
         clearInterval(wait);
-        const msg = 'SheetJS nï¿½o carregou apï¿½s 10s. Verifica a ligaï¿½ï¿½o ï¿½ internet.';
+        const msg = 'SheetJS não carregou apãs 10s. Verifica a ligaão ã internet.';
         Logger.error(msg); alert(msg); resetAll();
       }
     }, 100);
     return;
   }
-  setProgress(50, 'A descompactar workbookï¿½', '(thread principal)');
+  setProgress(50, 'A descompactar workbookã', '(thread principal)');
   setTimeout(() => {
     try {
       const t0   = performance.now();
       const data = new Uint8Array(buffer);
 
-      // Estratï¿½gias de leitura ï¿½ da mais leve para a mais completa
+      // Estratãgias de leitura ã da mais leve para a mais completa
       const strategies = [
-        { label:'leve (sem fï¿½rmulas/estilos)', opts:{ type:'array', raw:true,  cellDates:false, cellFormula:false, cellStyles:false, cellNF:false, sheetStubs:false } },
+        { label:'leve (sem fãrmulas/estilos)', opts:{ type:'array', raw:true,  cellDates:false, cellFormula:false, cellStyles:false, cellNF:false, sheetStubs:false } },
         { label:'sheetStubs',                  opts:{ type:'array', raw:true,  cellDates:false, cellFormula:false, sheetStubs:true  } },
         { label:'raw:false',                   opts:{ type:'array', raw:false, cellDates:false, cellFormula:false, cellStyles:false  } },
         { label:'completo',                    opts:{ type:'array', raw:true,  cellDates:false                                      } },
@@ -1475,39 +1475,39 @@ function processExcelMainThread(buffer, file) {
       let ws = null, rows = [];
       for (const strat of strategies) {
         try {
-          Logger.info(`A tentar estratï¿½gia: ${strat.label}ï¿½`);
-          setProgress(50, `A ler workbookï¿½`, strat.label);
+          Logger.info(`A tentar estratãgia: ${strat.label}ã`);
+          setProgress(50, `A ler workbookã`, strat.label);
           const wb = XLSX.read(data, strat.opts);
-          Logger.info(`SheetNames: [${wb.SheetNames.join(', ')}] ï¿½ Sheets keys: [${Object.keys(wb.Sheets).join(', ')}]`);
+          Logger.info(`SheetNames: [${wb.SheetNames.join(', ')}] ã Sheets keys: [${Object.keys(wb.Sheets).join(', ')}]`);
 
           // Encontrar folha com dados
           const candidates = [...new Set([...wb.SheetNames, ...Object.keys(wb.Sheets)])];
           ws = null;
           for (const name of candidates) {
             const s = wb.Sheets[name];
-            if (s) { ws = s; Logger.info(`Folha: "${name}" ï¿½ ref: ${s['!ref']||'sem ref'}`); break; }
+            if (s) { ws = s; Logger.info(`Folha: "${name}" ã ref: ${s['!ref']||'sem ref'}`); break; }
           }
-          if (!ws) { Logger.warn('Sem folha acessï¿½vel nesta estratï¿½gia ï¿½ a tentar prï¿½ximaï¿½'); continue; }
+          if (!ws) { Logger.warn('Sem folha acessãvel nesta estratãgia ã a tentar prãximaã'); continue; }
 
-          setProgress(70, 'A extrair linhasï¿½', '');
+          setProgress(70, 'A extrair linhasã', '');
           rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null, raw:true });
           Logger.info(`sheet_to_json: ${rows.length} linhas`);
 
           if (rows.length < 2 && ws['!ref']) {
-            Logger.warn('sheet_to_json insuficiente ï¿½ leitura diretaï¿½');
+            Logger.warn('sheet_to_json insuficiente ã leitura diretaã');
             rows = readCellsDirect(ws);
             Logger.info(`Leitura direta: ${rows.length} linhas`);
           }
 
           if (rows.length >= 2) break; // sucesso
-          Logger.warn(`Estratï¿½gia "${strat.label}" sem dados ï¿½ a tentar prï¿½ximaï¿½`);
+          Logger.warn(`Estratãgia "${strat.label}" sem dados ã a tentar prãximaã`);
         } catch (stratErr) {
-          Logger.warn(`Estratï¿½gia "${strat.label}" falhou: ${stratErr.message}`);
+          Logger.warn(`Estratãgia "${strat.label}" falhou: ${stratErr.message}`);
         }
       }
 
-      if (!ws)   throw new Error('Nenhuma estratï¿½gia conseguiu aceder ï¿½ folha.');
-      if (rows.length < 2) throw new Error('Folha sem dados legï¿½veis apï¿½s todas as estratï¿½gias. ref: ' + (ws['!ref']||'nulo'));
+      if (!ws)   throw new Error('Nenhuma estratãgia conseguiu aceder ã folha.');
+      if (rows.length < 2) throw new Error('Folha sem dados legãveis apãs todas as estratãgias. ref: ' + (ws['!ref']||'nulo'));
 
       Logger.info(`${rows.length.toLocaleString('pt-PT')} linhas em ${(performance.now()-t0).toFixed(0)} ms`);
       finishExcelLoad(rows, file);
@@ -1519,7 +1519,7 @@ function processExcelMainThread(buffer, file) {
   }, 60);
 }
 
-/* Passo final: detetar cabeï¿½alho e mostrar ecrï¿½ de mapeamento */
+/* Passo final: detetar cabeãalho e mostrar ecrã de mapeamento */
 function finishExcelLoad(rows, file) {
   let hIdx = 0;
   for (let i = 0; i < Math.min(rows.length, 10); i++) {
@@ -1528,7 +1528,7 @@ function finishExcelLoad(rows, file) {
     }
   }
   const headers = rows[hIdx].map(h => h != null ? String(h).trim() : '');
-  Logger.info(`Cabeï¿½alho linha ${hIdx+1}: ${headers.filter(Boolean).join(' | ')}`);
+  Logger.info(`Cabeãalho linha ${hIdx+1}: ${headers.filter(Boolean).join(' | ')}`);
   Logger.info(`${(rows.length - hIdx - 1).toLocaleString('pt-PT')} linhas de dados`);
 
   _excelRows    = rows;
@@ -1543,22 +1543,22 @@ function finishExcelLoad(rows, file) {
 }
 
 /**
- * Fallback: lï¿½ uma folha SheetJS cï¿½lula a cï¿½lula via !ref.
- * ï¿½til quando sheet_to_json devolve 0 linhas em ficheiros complexos.
- * ?? LIMITE: Mï¿½ximo 100k linhas para evitar stack overflow
+ * Fallback: lã uma folha SheetJS cãlula a cãlula via !ref.
+ * ãtil quando sheet_to_json devolve 0 linhas em ficheiros complexos.
+ * ?? LIMITE: Mãximo 100k linhas para evitar stack overflow
  */
 function readCellsDirect(ws) {
   if (!ws['!ref']) return [];
   const range = XLSX.utils.decode_range(ws['!ref']);
   const maxRows = 100000;
 
-  // Se o range ï¿½ muito grande, abort e deixar sheet_to_json resultado
+  // Se o range ã muito grande, abort e deixar sheet_to_json resultado
   if ((range.e.r - range.s.r + 1) > maxRows) {
-    Logger.warn(`  Range muito grande (${range.e.r - range.s.r + 1} linhas) ï¿½ abortando readCellsDirect para evitar stack overflow`);
+    Logger.warn(`  Range muito grande (${range.e.r - range.s.r + 1} linhas) ã abortando readCellsDirect para evitar stack overflow`);
     return [];
   }
 
-  Logger.info(`  Range direto: R${range.s.r}C${range.s.c} ? R${range.e.r}C${range.e.c} (${range.e.r-range.s.r+1} linhas ï¿½ ${range.e.c-range.s.c+1} cols)`);
+  Logger.info(`  Range direto: R${range.s.r}C${range.s.c} ? R${range.e.r}C${range.e.c} (${range.e.r-range.s.r+1} linhas ã ${range.e.c-range.s.c+1} cols)`);
 
   const rows = [];
   try {
@@ -1572,22 +1572,22 @@ function readCellsDirect(ws) {
       rows.push(row);
     }
   } catch (err) {
-    Logger.warn(`  Erro em readCellsDirect (${err.message}) ï¿½ retornando ${rows.length} linhas jï¿½ lidas`);
-    if (rows.length === 0) throw err; // Se nï¿½o conseguiu nada, propagar erro
+    Logger.warn(`  Erro em readCellsDirect (${err.message}) ã retornando ${rows.length} linhas jã lidas`);
+    if (rows.length === 0) throw err; // Se não conseguiu nada, propagar erro
   }
 
   return rows;
 }
 
 /* --------------------------------------------------------------
-   MAPEAMENTO ï¿½ ecrï¿½ de confirmaï¿½ï¿½o
+   MAPEAMENTO ã ecrã de confirmaão
    -------------------------------------------------------------- */
 function showMappingStep(headers, rows, hIdx) {
   show('mapping-section');
 
   const previewRow = rows[hIdx+1] || [];
 
-  // Datalist com sugestï¿½es conhecidas (aliases ï¿½nicos)
+  // Datalist com sugestães conhecidas (aliases ãnicos)
   const knownSuggestions = [...new Set(Object.values(COLUMN_ALIASES))].sort();
   const datalist = `<datalist id="field-suggestions">
     ${knownSuggestions.map(s=>`<option value="${s}">`).join('')}
@@ -1596,7 +1596,7 @@ function showMappingStep(headers, rows, hIdx) {
   const rowsHtml = headers.map((h, i) => {
     if (!h) return '';
     const suggested = suggestField(h) || '';
-    const preview   = previewRow[i]!=null ? String(previewRow[i]).substring(0,50) : 'ï¿½';
+    const preview   = previewRow[i]!=null ? String(previewRow[i]).substring(0,50) : 'ã';
     const typeHint  = guessFieldType(suggested, previewRow[i]);
 
     return `<tr id="map-row-${i}">
@@ -1628,22 +1628,22 @@ function showMappingStep(headers, rows, hIdx) {
     <table class="map-table">
       <thead><tr>
         <th>Coluna no ficheiro</th>
-        <th>Exemplo ï¿½ tipo detetado</th>
+        <th>Exemplo ã tipo detetado</th>
         <th></th>
-        <th>Nome do campo (editï¿½vel)</th>
+        <th>Nome do campo (editãvel)</th>
       </tr></thead>
       <tbody>${rowsHtml}</tbody>
     </table>`;
 
   updateMapSummary();
-  Logger.info('Mapeamento dinï¿½mico apresentado ï¿½ campos livres, editï¿½veis pelo utilizador.');
+  Logger.info('Mapeamento dinãmico apresentado ã campos livres, editãveis pelo utilizador.');
 }
 
-/** Indica o tipo provï¿½vel de um campo para ajudar o utilizador */
+/** Indica o tipo provãvel de um campo para ajudar o utilizador */
 function guessFieldType(fieldName, sampleVal) {
   if (isLikelyDate(fieldName, sampleVal))    return '?? data';
-  if (isLikelyNumeric(fieldName, sampleVal)) return '?? numï¿½rico';
-  if (sampleVal==null)                        return 'ï¿½ vazio';
+  if (isLikelyNumeric(fieldName, sampleVal)) return '?? numãrico';
+  if (sampleVal==null)                        return 'ã vazio';
   return '?? texto';
 }
 
@@ -1693,13 +1693,13 @@ function updateMapSummary() {
   const mapped  = inputs.filter(i=>!i.disabled && i.value.trim()).length;
   const ignored = inputs.filter(i=>i.disabled || !i.value.trim()).length;
   const hasDups = checkDuplicateMappings();
-  let html = `<strong>${mapped}</strong> campo(s) ï¿½ <span style="color:var(--muted)">${ignored} ignorados</span>`;
-  if (hasDups) html += ` ï¿½ <span style="color:var(--red)">? nomes duplicados</span>`;
+  let html = `<strong>${mapped}</strong> campo(s) ã <span style="color:var(--muted)">${ignored} ignorados</span>`;
+  if (hasDups) html += ` ã <span style="color:var(--red)">? nomes duplicados</span>`;
   document.getElementById('map-summary').innerHTML = html;
 }
 
 /* --------------------------------------------------------------
-   CONFIRMAR MAPEAMENTO ï¿½ fase 2: converter e avanï¿½ar
+   CONFIRMAR MAPEAMENTO ã fase 2: converter e avanãar
    -------------------------------------------------------------- */
 function confirmMapping() {
   // Ler mapeamento dos inputs de texto: colIdx ? fieldKey
@@ -1715,14 +1715,14 @@ function confirmMapping() {
     return;
   }
 
-  Logger.separator('Conversï¿½o Excel ? Modelo');
+  Logger.separator('Conversão Excel ? Modelo');
   Object.entries(mapping).forEach(([ci, fk]) =>
     Logger.info(`  Coluna "${_excelHeaders[parseInt(ci)]}" ? ${fk}`)
   );
 
   hide('mapping-section');
   show('progress-section');
-  setProgress(10,'A converter registosï¿½','');
+  setProgress(10,'A converter registosã','');
 
   setTimeout(() => {
     try {
@@ -1740,14 +1740,14 @@ function confirmMapping() {
         records.push(buildRecord(row, mapping, fileName));
         if (i%5000===0) setProgress(
           10+Math.round((i/_excelRows.length)*80),
-          `A converterï¿½`,`${fmtN(i)} de ${fmtN(_excelRows.length)} linhas`
+          `A converterã`,`${fmtN(i)} de ${fmtN(_excelRows.length)} linhas`
         );
       }
 
-      if (!records.length) throw new Error('Nenhum registo encontrado apï¿½s o cabeï¿½alho.');
+      if (!records.length) throw new Error('Nenhum registo encontrado apãs o cabeãalho.');
       Logger.info(`${records.length.toLocaleString('pt-PT')} registos convertidos em ${(performance.now()-t0).toFixed(0)} ms`);
 
-      // Estatï¿½sticas rï¿½pidas
+      // Estatãsticas rãpidas
       const mappedFields = [...new Set(Object.values(mapping))];
       const numField = mappedFields.find(f=>f==='montante');
       if (numField) {
@@ -1756,12 +1756,12 @@ function confirmMapping() {
       }
 
       rawData = records;
-      setProgress(100,'Concluï¿½do!',`${fmtN(records.length)} registos`);
+      setProgress(100,'Concluãdo!',`${fmtN(records.length)} registos`);
       setTimeout(() => showContent(), 300);
 
     } catch(err) {
-      Logger.error(`Erro na conversï¿½o: ${err.message}`);
-      alert('Erro na conversï¿½o:\n'+err.message);
+      Logger.error(`Erro na conversão: ${err.message}`);
+      alert('Erro na conversão:\n'+err.message);
       resetAll();
     }
   }, 60);
@@ -1791,7 +1791,7 @@ function buildRecord(row, mapping, srcFile) {
   return rec;
 }
 
-/** Deteta se um campo ï¿½ provavelmente numï¿½rico pelo nome e/ou pelo valor */
+/** Deteta se um campo ã provavelmente numãrico pelo nome e/ou pelo valor */
 function isLikelyNumeric(fieldName, sampleVal) {
   if (/montante|valor|amount|importe|saldo|price|preco|total|quantidade|qty|custo|cost/i.test(fieldName))
     return true;
@@ -1800,10 +1800,10 @@ function isLikelyNumeric(fieldName, sampleVal) {
   return false;
 }
 
-/** Deteta se um campo ï¿½ provavelmente uma data pelo nome e/ou pelo valor */
+/** Deteta se um campo ã provavelmente uma data pelo nome e/ou pelo valor */
 function isLikelyDate(fieldName, sampleVal) {
   if (/data|date|datum|dt_/i.test(fieldName)) return true;
-  // Nï¿½mero serial Excel em intervalo plausï¿½vel (1/1/1990 a 31/12/2100)
+  // Nãmero serial Excel em intervalo plausãvel (1/1/1990 a 31/12/2100)
   if (typeof sampleVal === 'number' && sampleVal > 32874 && sampleVal < 73051) return true;
   if (typeof sampleVal === 'string') {
     const s = sampleVal.trim();
@@ -1817,7 +1817,7 @@ function isNumericField(field) {
   return isLikelyNumeric(field, null);
 }
 
-/* -- Conversï¿½o de data Excel ------------------------------- */
+/* -- Conversão de data Excel ------------------------------- */
 function parseExcelDate(val) {
   if (val==null||val==='') return null;
   if (val instanceof Date) return isNaN(val)?null:val.toISOString().split('T')[0];
@@ -1837,10 +1837,10 @@ function parseExcelDate(val) {
 }
 
 /* --------------------------------------------------------------
-   SHOW CONTENT ï¿½ constrï¿½i UI de anï¿½lise a partir dos dados reais
+   SHOW CONTENT ã constrãi UI de anãlise a partir dos dados reais
    -------------------------------------------------------------- */
 function showContent() {
-  hide('import-section');    // Esconder secï¿½ï¿½o de upload
+  hide('import-section');    // Esconder secão de upload
   hide('progress-section');
   hide('mapping-section');
   show('content');
@@ -1849,7 +1849,7 @@ function showContent() {
   document.getElementById('fi-name').textContent  = fileName;
   document.getElementById('fi-total').textContent = fmtN(rawData.length);
 
-  // Detetar campos disponï¿½veis dinamicamente
+  // Detetar campos disponãveis dinamicamente
   const sample = rawData[0] || {};
   availableFields = Object.keys(sample)
     .filter(k => {
@@ -1862,12 +1862,12 @@ function showContent() {
       desc:  guessFieldType(k, sample[k]),
     }));
 
-  Logger.info(`Campos disponï¿½veis: ${availableFields.map(f=>f.key).join(', ')}`);
+  Logger.info(`Campos disponãveis: ${availableFields.map(f=>f.key).join(', ')}`);
   document.getElementById('fi-campos').textContent = availableFields.length;
   document.getElementById('fi-sub').textContent =
     isExcel(fileName) ? 'Excel convertido com sucesso' : 'JSON carregado com sucesso';
 
-  // Reset campos selecionados ï¿½ escolher campos ï¿½teis por defeito
+  // Reset campos selecionados ã escolher campos ãteis por defeito
   checkedFields = new Set();
   const defaults = ['numero_documento','atribuicao','montante'];
   availableFields.forEach(f => { if (defaults.includes(f.key)) checkedFields.add(f.key); });
@@ -1879,7 +1879,7 @@ function showContent() {
 }
 
 /* --------------------------------------------------------------
-   OP 1 ï¿½ SELETOR DE CAMPOS DINï¿½MICO
+   OP 1 ã SELETOR DE CAMPOS DINãMICO
    -------------------------------------------------------------- */
 function buildFieldSelector() {
   const grid = document.getElementById('fields-grid');
@@ -1899,15 +1899,15 @@ function buildSumFieldSelector() {
   const sel = document.getElementById('sum-field-select');
   if (!sel) return;
 
-  // Mostrar campos numï¿½ricos (detectados por tipo)
+  // Mostrar campos numãricos (detectados por tipo)
   const numericFields = availableFields.filter(f =>
-    f.desc && (f.desc.includes('numï¿½rico') || f.desc.includes('nï¿½mero') || f.desc.includes('numeric'))
+    f.desc && (f.desc.includes('numãrico') || f.desc.includes('nãmero') || f.desc.includes('numeric'))
   );
 
   const opts = numericFields.map(f =>
     `<option value="${f.key}">${f.label || f.key}</option>`).join('');
 
-  sel.innerHTML = '<option value="">ï¿½ Nenhum (sem soma) ï¿½</option>' + opts;
+  sel.innerHTML = '<option value="">ã Nenhum (sem soma) ã</option>' + opts;
 
   // Default: detectar campo de montante automaticamente
   const autoDetect = ['montante','MONTANTE','Montante','valor','VALOR','Valor','amount','AMOUNT']
@@ -1916,7 +1916,7 @@ function buildSumFieldSelector() {
   if (autoDetect) {
     sel.value = autoDetect;
     selectedSumField = autoDetect;
-    Logger.info(`Campo de soma automï¿½tico: ${autoDetect}`);
+    Logger.info(`Campo de soma automãtico: ${autoDetect}`);
   }
 
   sel.onchange = (e) => {
@@ -1944,7 +1944,7 @@ function clearAllFields() {
 }
 
 /* --------------------------------------------------------------
-   OP 2 ï¿½ CONFIGURAï¿½ï¿½O DINï¿½MICA (agrupar por + campo de valor)
+   OP 2 ã CONFIGURAããO DINãMICA (agrupar por + campo de valor)
    -------------------------------------------------------------- */
 function buildReconConfig() {
   // Preencher Op 3 field selects (faz todo o trabalho automaticamente)
@@ -1955,7 +1955,7 @@ function buildReconConfig() {
 }
 
 /* --------------------------------------------------------------
-   SELEï¿½ï¿½O DE OPERAï¿½ï¿½O
+   SELEããO DE OPERAããO
    -------------------------------------------------------------- */
 function selectOp(n) {
   selectedOp = n;
@@ -1969,7 +1969,7 @@ function selectOp(n) {
 }
 
 /* --------------------------------------------------------------
-   EXECUTAR ANï¿½LISE
+   EXECUTAR ANãLISE
    -------------------------------------------------------------- */
 function runAnalysis() {
   if (selectedOp===1) runDuplicates(); else runReconciliation();
@@ -1980,8 +1980,8 @@ function runDuplicates() {
   const fields = [...checkedFields];
   if (!fields.length) { alert('Seleciona pelo menos um campo.'); return; }
 
-  Logger.separator('Anï¿½lise de Duplicados');
-  Logger.info(`Campos: ${fields.join(', ')} ï¿½ ${rawData.length.toLocaleString('pt-PT')} registos`);
+  Logger.separator('Anãlise de Duplicados');
+  Logger.info(`Campos: ${fields.join(', ')} ã ${rawData.length.toLocaleString('pt-PT')} registos`);
 
   const groupMap = new Map();
   rawData.forEach(r => {
@@ -1999,7 +1999,7 @@ function runDuplicates() {
   dupGroups.sort((a,b)=>b.length-a.length);
   const dupCount = dupGroups.reduce((s,g)=>s+g.length,0);
 
-  // Extrair registos ï¿½nicos (grupos com 1 registo)
+  // Extrair registos ãnicos (grupos com 1 registo)
   uniqueRecords = [...groupMap.values()]
     .filter(g=>g.length===1)
     .map(g=>g[0]);  // Converter de grupos para registos
@@ -2010,19 +2010,19 @@ function runDuplicates() {
   setSummaryCards([
     {id:'s-total',  val:fmtN(rawData.length),          label:'Total de registos',   cls:'total'},
     {id:'s-dups',   val:fmtN(dupCount),                 label:'Registos duplicados', cls:'dups'},
-    {id:'s-unique', val:fmtN(rawData.length-dupCount),  label:'Registos ï¿½nicos',     cls:'clean'},
+    {id:'s-unique', val:fmtN(rawData.length-dupCount),  label:'Registos ãnicos',     cls:'clean'},
     {id:'s-groups', val:fmtN(dupGroups.length),         label:'Grupos duplicados',   cls:'info'},
   ]);
 
   document.getElementById('results-title').textContent = '';
   currentPage=1;
-  activeFilters.type = 'all';  // Comeï¿½ar com "Total registos"
+  activeFilters.type = 'all';  // Comeãar com "Total registos"
   show('results-section');
   setFilterTypeFromCard('all');  // Isso chama renderDuplicates com tipo correto
   document.getElementById('results-section').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-/* -- OP 2: RECONCILIAï¿½ï¿½O (dinï¿½mica) ------------------------- */
+/* -- OP 2: RECONCILIAããO (dinãmica) ------------------------- */
 function runReconciliation() {
   const groupField = document.getElementById('op3-group-field-select').value;
   const valField   = document.getElementById('op3-value-field-select').value;
@@ -2031,8 +2031,8 @@ function runReconciliation() {
   if (!groupField) { alert('Escolhe o campo de agrupamento.'); return; }
   if (!valField)   { alert('Escolhe o campo de valor.'); return; }
 
-  Logger.separator('Reconciliaï¿½ï¿½o');
-  Logger.info(`Agrupar por: ${groupField} ï¿½ Valor: ${valField} ï¿½ Tolerï¿½ncia: ï¿½${tolerance.toFixed(2)}`);
+  Logger.separator('Reconciliaão');
+  Logger.info(`Agrupar por: ${groupField} ã Valor: ${valField} ã Tolerãncia: ã${tolerance.toFixed(2)}`);
 
   const groupMap = new Map();
   rawData.forEach(r => {
@@ -2051,19 +2051,19 @@ function runReconciliation() {
   reconOk.sort((a,b)=>Math.abs(a.saldo)-Math.abs(b.saldo));
   dupGroups=[...reconNok.map(e=>({...e,_recon:'nok'})),...reconOk.map(e=>({...e,_recon:'ok'}))];
 
-  Logger.info(`Reconciliados: ${reconOk.length} ï¿½ Por reconciliar: ${reconNok.length}`);
-  if (reconNok.length) Logger.warn(`${reconNok.length} grupo(s) com saldo acima da tolerï¿½ncia.`);
+  Logger.info(`Reconciliados: ${reconOk.length} ã Por reconciliar: ${reconNok.length}`);
+  if (reconNok.length) Logger.warn(`${reconNok.length} grupo(s) com saldo acima da tolerãncia.`);
 
   setSummaryCards([
     {id:'s-total',  val:fmtN(groupMap.size),  label:`Grupos (${groupField})`,  cls:'total'},
     {id:'s-dups',   val:fmtN(reconNok.length), label:'Por reconciliar',         cls:'dups'},
     {id:'s-unique', val:fmtN(reconOk.length),  label:'Reconciliados',           cls:'clean'},
-    {id:'s-groups', val:`ï¿½ ${fmt(tolerance)}`, label:'Tolerï¿½ncia',              cls:'info'},
+    {id:'s-groups', val:`ã ${fmt(tolerance)}`, label:'Tolerãncia',              cls:'info'},
   ]);
 
   document.getElementById('results-title').textContent = '';
   document.getElementById('results-meta').textContent  =
-    `${fmtN(reconNok.length)} por reconciliar ï¿½ ${fmtN(reconOk.length)} reconciliados`;
+    `${fmtN(reconNok.length)} por reconciliar ã ${fmtN(reconOk.length)} reconciliados`;
 
   currentPage=1;
   show('results-section');
@@ -2085,7 +2085,7 @@ function renderDuplicates(fields) {
       hide('pagination'); return;
     }
 
-    // Aplicar ordenaï¿½ï¿½o
+    // Aplicar ordenaão
     const sortedRecords = sortState.field ? sortRecords(allRecords, sortState.field, sortState.direction) : allRecords;
 
     const totalPages = Math.ceil(sortedRecords.length/PAGE_SIZE);
@@ -2097,14 +2097,14 @@ function renderDuplicates(fields) {
     const rows = slice.map(r=>`<tr>${showCols.map(f=>{
       const v=r[f];
       if (typeof v==='number') return `<td class="${v<0?'amount-neg':'amount-pos'}">${fmt(v)}</td>`;
-      return `<td class="${['numero_documento','atribuicao','conta','referencia'].includes(f)?'mono':''}">${v??'ï¿½'}</td>`;
+      return `<td class="${['numero_documento','atribuicao','conta','referencia'].includes(f)?'mono':''}">${v??'ã'}</td>`;
     }).join('')}</tr>`).join('');
 
     const headerCells = showCols.map(f=>
       `<th style="cursor:pointer;user-select:none;padding:8px;background:#f5f5f5;border-bottom:2px solid #ddd;" onclick="setSortField('${f}')">${f.replace(/_/g,' ')}${getSortIndicator(f)}</th>`
     ).join('');
 
-    // Calcular somatï¿½rio total de todos os registos
+    // Calcular somatãrio total de todos os registos
     const totalAll = selectedSumField
       ? sortedRecords.reduce((s,r)=>s+(typeof r[selectedSumField]==='number'?r[selectedSumField]:0),0)
       : 0;
@@ -2127,14 +2127,14 @@ function renderDuplicates(fields) {
         <thead><tr>${headerCells}</tr></thead>
         <tbody>${rows}</tbody>
       </table></div>`;
-    document.getElementById('pag-info').textContent = `Registos ${start+1}ï¿½${Math.min(start+PAGE_SIZE,sortedRecords.length)} de ${fmtN(sortedRecords.length)}`;
+    document.getElementById('pag-info').textContent = `Registos ${start+1}ã${Math.min(start+PAGE_SIZE,sortedRecords.length)} de ${fmtN(sortedRecords.length)}`;
     renderPagination(totalPages,()=>renderDuplicates(fields));
     document.getElementById('pagination').style.display = sortedRecords.length > PAGE_SIZE ? 'flex' : 'none';
     setupFilters(() => renderDuplicates(fields));
     return;
   }
 
-  // MODO "DUPLICADOS" e "ï¿½NICOS" - COM AGRUPAMENTO
+  // MODO "DUPLICADOS" e "ãNICOS" - COM AGRUPAMENTO
   let dataToShow = dupGroups;
   if (activeFilters.type === 'unique') {
     dataToShow = uniqueRecords.map(r => [r]);
@@ -2142,7 +2142,7 @@ function renderDuplicates(fields) {
 
   if (!dataToShow.length) {
     let msg = '? Nenhum duplicado encontrado.';
-    if (activeFilters.type === 'unique') msg = '? Nenhum registo ï¿½nico encontrado.';
+    if (activeFilters.type === 'unique') msg = '? Nenhum registo ãnico encontrado.';
     el.innerHTML=`<div class="no-dups"><div class="big">?</div><p>${msg}</p></div>`;
     hide('pagination'); return;
   }
@@ -2155,7 +2155,7 @@ function renderDuplicates(fields) {
     hide('pagination'); return;
   }
 
-  // Aplicar ordenaï¿½ï¿½o aos grupos (ordena pelo primeiro registo do grupo)
+  // Aplicar ordenaão aos grupos (ordena pelo primeiro registo do grupo)
   if (sortState.field) {
     filteredGroups = [...filteredGroups].sort((groupA, groupB) => {
       const valA = groupA[0]?.[sortState.field];
@@ -2180,7 +2180,7 @@ function renderDuplicates(fields) {
   const start      = (currentPage-1)*PAGE_SIZE;
   const slice      = filteredGroups.slice(start,start+PAGE_SIZE);
 
-  // Colunas de contexto: campos selecionados + campos ï¿½teis disponï¿½veis
+  // Colunas de contexto: campos selecionados + campos ãteis disponãveis
   const ctxKeys  = availableFields.map(f=>f.key);
   const showCols = [...new Set([...fields,...ctxKeys])].filter(k=>k in (rawData[0]||{}));
 
@@ -2189,18 +2189,18 @@ function renderDuplicates(fields) {
     // Flatten para lista simples (cada grupo tem 1 registo)
     const allRecords = slice.flatMap(group => group);
 
-    // Calcular somatï¿½rio total dos registos ï¿½nicos
+    // Calcular somatãrio total dos registos ãnicos
     const totalUnique = selectedSumField
       ? allRecords.reduce((s,r)=>s+(typeof r[selectedSumField]==='number'?r[selectedSumField]:0),0)
       : 0;
 
     const rows = allRecords.map(r=>`<tr>
-      <td style="padding:8px;text-align:center;"><span style="cursor:help;font-size:20px;" title="Registo ï¿½nico">??</span></td>
+      <td style="padding:8px;text-align:center;"><span style="cursor:help;font-size:20px;" title="Registo ãnico">??</span></td>
       ${showCols.map(f=>{
         const v=r[f];
         if (typeof v==='number')
           return `<td class="${v<0?'amount-neg':'amount-pos'}">${fmt(v)}</td>`;
-        return `<td class="${['numero_documento','atribuicao','conta','referencia'].includes(f)?'mono':''}">${v??'ï¿½'}</td>`;
+        return `<td class="${['numero_documento','atribuicao','conta','referencia'].includes(f)?'mono':''}">${v??'ã'}</td>`;
       }).join('')}
     </tr>`).join('');
 
@@ -2211,7 +2211,7 @@ function renderDuplicates(fields) {
     el.innerHTML=`
       <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;padding:12px;background:#f0f8f4;border-radius:8px;border:1px solid #c5e8a0;">
         <div style="display:flex;align-items:center;gap:16px">
-          <span style="display:inline-block;background:#4caf50;color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">Registos ï¿½nicos</span>
+          <span style="display:inline-block;background:#4caf50;color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">Registos ãnicos</span>
           <span style="font-size:14px;color:#555;font-weight:500;">S montante: ${fmt(totalUnique)}</span>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
@@ -2227,7 +2227,7 @@ function renderDuplicates(fields) {
         <tbody>${rows}</tbody>
       </table></div>`;
 
-    document.getElementById('pag-info').textContent = `Registos ${start+1}ï¿½${Math.min(start+PAGE_SIZE,filteredGroups.length)} de ${fmtN(filteredGroups.length)}`;
+    document.getElementById('pag-info').textContent = `Registos ${start+1}ã${Math.min(start+PAGE_SIZE,filteredGroups.length)} de ${fmtN(filteredGroups.length)}`;
     renderPagination(totalPages,()=>renderDuplicates(fields));
     document.getElementById('pagination').style.display=filteredGroups.length>PAGE_SIZE?'flex':'none';
     setupFilters(() => renderDuplicates(fields));
@@ -2235,7 +2235,7 @@ function renderDuplicates(fields) {
   }
 
   // MODO "DUPLICADOS" - COM GRUPOS
-  // Calcular somatï¿½rio total de todos os duplicados (nï¿½o apenas da pï¿½gina)
+  // Calcular somatãrio total de todos os duplicados (não apenas da pãgina)
   const totalDuplicates = selectedSumField
     ? filteredGroups.reduce((sum, group) =>
         sum + group.reduce((s,r)=>s+(typeof r[selectedSumField]==='number'?r[selectedSumField]:0),0), 0)
@@ -2244,15 +2244,15 @@ function renderDuplicates(fields) {
   const groupsHtml = slice.map(group => {
     const keyParts = fields.map(f=>{
       const v=group[0][f];
-      return typeof v==='number'?`${f}: ${fmt(v)}`:`${f}: ${v??'ï¿½'}`;
-    }).join(' ï¿½ ');
+      return typeof v==='number'?`${f}: ${fmt(v)}`:`${f}: ${v??'ã'}`;
+    }).join(' ã ');
 
     // Usar o campo selecionado pelo utilizador
     const total = selectedSumField && group.length > 0
                 ? group.reduce((s,r)=>s+(typeof r[selectedSumField]==='number'?r[selectedSumField]:0),0)
                 : 0;
 
-    // Ordenar registos dentro do grupo tambï¿½m
+    // Ordenar registos dentro do grupo tambãm
     let groupRecords = [...group];
     if (sortState.field) {
       groupRecords = sortRecords(groupRecords, sortState.field, sortState.direction);
@@ -2262,7 +2262,7 @@ function renderDuplicates(fields) {
       const v=r[f];
       if (typeof v==='number')
         return `<td class="${v<0?'amount-neg':'amount-pos'}">${fmt(v)}</td>`;
-      return `<td class="${['numero_documento','atribuicao','conta','referencia'].includes(f)?'mono':''}">${v??'ï¿½'}</td>`;
+      return `<td class="${['numero_documento','atribuicao','conta','referencia'].includes(f)?'mono':''}">${v??'ã'}</td>`;
     }).join('')}</tr>`).join('');
 
     const headerCells = showCols.map(f=>
@@ -2271,7 +2271,7 @@ function renderDuplicates(fields) {
 
     return `<div class="group-block">
       <div class="group-header">
-        <span class="group-count">${group.length}ï¿½ duplicado</span>
+        <span class="group-count">${group.length}ã duplicado</span>
         <span class="group-total">S montante: ${fmt(total)}</span>
       </div>
       <div style="overflow-x:auto"><table>
@@ -2298,7 +2298,7 @@ function renderDuplicates(fields) {
     ${groupsHtml}`;
 
   document.getElementById('pag-info').textContent =
-    `Grupos ${start+1}ï¿½${Math.min(start+PAGE_SIZE,filteredGroups.length)} de ${fmtN(filteredGroups.length)}`;
+    `Grupos ${start+1}ã${Math.min(start+PAGE_SIZE,filteredGroups.length)} de ${fmtN(filteredGroups.length)}`;
   renderPagination(totalPages,()=>renderDuplicates(fields));
   document.getElementById('pagination').style.display=filteredGroups.length>PAGE_SIZE?'flex':'none';
 
@@ -2327,7 +2327,7 @@ function setupFilters(callback) {
 
   show('filters-section');
 
-  // Mostrar/esconder filtro de "Nï¿½ duplicados" baseado na vista
+  // Mostrar/esconder filtro de "Nã duplicados" baseado na vista
   const exactCountWrapper = document.getElementById('filter-exactcount-wrapper');
   if (activeFilters.type === 'duplicates') {
     exactCountWrapper.style.display = 'block';
@@ -2341,12 +2341,12 @@ function setupFilters(callback) {
   const maxAmtInput = document.getElementById('filter-maxamt');
 
   const applyFilters = () => {
-    // activeFilters.type jï¿½ ï¿½ set por setFilterType()
+    // activeFilters.type jã ã set por setFilterType()
     activeFilters.search = (searchInput?.value || '').toLowerCase();
     activeFilters.exactCount = exactCountInput?.value ? parseInt(exactCountInput.value) : null;
     activeFilters.minAmount = minAmtInput?.value ? parseFloat(minAmtInput.value) : null;
     activeFilters.maxAmount = maxAmtInput?.value ? parseFloat(maxAmtInput.value) : null;
-    currentPage = 1; // Reset para pï¿½gina 1
+    currentPage = 1; // Reset para pãgina 1
     callback();
   };
 
@@ -2384,11 +2384,11 @@ function clearFilters() {
    RESET & ADICIONAR FICHEIROS
    -------------------------------------------------------------- */
 
-/** Voltar ï¿½ importaï¿½ï¿½o para adicionar mais ficheiros (mantï¿½m dados consolidados) */
+/** Voltar ã importaão para adicionar mais ficheiros (mantãm dados consolidados) */
 function addMoreFiles() {
   const currentData = [...rawData];
   const currentCount = rawData.length;
-  Logger.info('ï¿½ï¿½ Modo: Adicionar Mais Ficheiros ï¿½ï¿½');
+  Logger.info('ãã Modo: Adicionar Mais Ficheiros ãã');
   Logger.info(`Dados actuais: ${currentCount.toLocaleString('pt-PT')} registos`);
   Logger.info('A aguardar novos ficheiros para mesclar...');
   hide('content'); hide('results-section'); hide('progress-section');
@@ -2403,7 +2403,7 @@ function addMoreFiles() {
   updateQueueUI();
   const hint = document.querySelector('.file-hint');
   if (hint) {
-    hint.innerHTML = `Ou arrasta mais ficheiros aqui<br><small style="color:var(--muted)">Serï¿½ mesclado com os ${currentCount.toLocaleString('pt-PT')} registos anteriores</small>`;
+    hint.innerHTML = `Ou arrasta mais ficheiros aqui<br><small style="color:var(--muted)">Serã mesclado com os ${currentCount.toLocaleString('pt-PT')} registos anteriores</small>`;
   }
 }
 
@@ -2417,12 +2417,12 @@ function resetAll() {
   hide('progress-section'); hide('mapping-section'); hide('content'); hide('results-section');
   document.getElementById('file-input').value='';
   const hint = document.querySelector('.file-hint');
-  if (hint) hint.innerHTML = 'Ou arrasta vï¿½rios ficheiros para aqui';
+  if (hint) hint.innerHTML = 'Ou arrasta vãrios ficheiros para aqui';
   Logger.info('Portal reiniciado.');
 }
 
 /* --------------------------------------------------------------
-   UTILITï¿½RIOS
+   UTILITãRIOS
    -------------------------------------------------------------- */
 function show(id){ const el=document.getElementById(id); if(el) el.style.display='block'; }
 function hide(id){ const el=document.getElementById(id); if(el) el.style.display='none';  }
@@ -2451,7 +2451,7 @@ function setSummaryCards(defs){
 }
 
 function fmt(n){
-  if(n==null) return 'ï¿½';
+  if(n==null) return 'ã';
   return new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
 }
 function fmtN(n){ return new Intl.NumberFormat('pt-PT').format(n); }
@@ -2463,7 +2463,7 @@ function escHtml(s){
 }
 
 /* --------------------------------------------------------------
-   ORDENAï¿½ï¿½O DE DADOS
+   ORDENAããO DE DADOS
    -------------------------------------------------------------- */
 function sortRecords(records, field, direction) {
   if (!field) return records;
@@ -2477,7 +2477,7 @@ function sortRecords(records, field, direction) {
     if (valA == null) return 1;
     if (valB == null) return -1;
 
-    // Ordenar nï¿½meros
+    // Ordenar nãmeros
     if (typeof valA === 'number' && typeof valB === 'number') {
       return direction === 'asc' ? valA - valB : valB - valA;
     }
@@ -2493,7 +2493,7 @@ function sortRecords(records, field, direction) {
 }
 
 function setSortField(field) {
-  // Se clica no mesmo campo, inverte direï¿½ï¿½o
+  // Se clica no mesmo campo, inverte direão
   if (sortState.field === field) {
     sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
   } else {
@@ -2501,7 +2501,7 @@ function setSortField(field) {
     sortState.field = field;
     sortState.direction = 'asc';
   }
-  currentPage = 1;  // Reset ï¿½ pï¿½gina 1
+  currentPage = 1;  // Reset ã pãgina 1
   renderDuplicates(Array.from(checkedFields));
 }
 
@@ -2511,7 +2511,7 @@ function getSortIndicator(field) {
 }
 
 /* --------------------------------------------------------------
-   FILTROS E RENDERIZAï¿½ï¿½O
+   FILTROS E RENDERIZAããO
    -------------------------------------------------------------- */
 function getFilteredGroups(groups) {
   return groups.filter(group => {
@@ -2567,7 +2567,7 @@ let exportState: ExportState = {
 };
 
 /**
- * Abre o modal de exportaï¿½ï¿½o
+ * Abre o modal de exportaão
  */
 function openExportModal(): void {
   const modal = document.getElementById('export-modal') as HTMLElement | null;
@@ -2602,7 +2602,7 @@ function openExportModal(): void {
 }
 
 /**
- * Fecha o modal de exportaï¿½ï¿½o
+ * Fecha o modal de exportaão
  */
 function closeExportModal(): void {
   const modal = document.getElementById('export-modal') as HTMLElement | null;
@@ -2620,7 +2620,7 @@ function setExportDataType(type: ExportState['dataType']): void {
 }
 
 /**
- * Define o formato de exportaï¿½ï¿½o
+ * Define o formato de exportaão
  * @param {ExportState['format']} format - Formato: 'csv', 'json', 'xml' ou 'pdf'
  */
 function setExportFormat(format: ExportState['format']): void {
@@ -2652,7 +2652,7 @@ function setExportFormat(format: ExportState['format']): void {
 }
 
 /**
- * Atualiza as contagens de registos no modal de exportaï¿½ï¿½o
+ * Atualiza as contagens de registos no modal de exportaão
  */
 function updateExportCounts(): void {
   let countAll: number = rawData.length;
@@ -2697,7 +2697,7 @@ function updateExportPreview(): void {
 }
 
 /**
- * Obtém as colunas visï¿½veis para exportaï¿½ï¿½o
+ * Obtém as colunas visãveis para exportaão
  * @returns {string[]} Array de nomes de colunas
  */
 function getVisibleColumns(): string[] {
@@ -2853,15 +2853,15 @@ function exportToXML(data, columns, filename) {
 }
 
 /**
- * Exporta dados para PDF com relatï¿½rio formatado
+ * Exporta dados para PDF com relatãrio formatado
  * @param {DataRecord[]} data - Array de registos
  * @param {string[]} columns - Nomes das colunas
  * @param {string} filename - Nome do ficheiro (sem extensão)
  */
 function exportToPDF(data: DataRecord[], columns: string[], filename: string): void {
-  // Priority 1: Validar biblioteca jsPDF antes de comeï¿½ar
+  // Priority 1: Validar biblioteca jsPDF antes de comeãar
   if (typeof (window as any).jspdf === 'undefined') {
-    Logger.error('Biblioteca jsPDF nï¿½o carregou');
+    Logger.error('Biblioteca jsPDF não carregou');
     alert('?? Biblioteca PDF ainda a carregar. Tenta novamente em alguns segundos.');
     return;
   }
@@ -2875,11 +2875,11 @@ function exportToPDF(data: DataRecord[], columns: string[], filename: string): v
     let pdfData = data;
     if (data.length > MAX_PDF_ROWS) {
       Logger.warn(`?? PDF limitado a ${fmtN(MAX_PDF_ROWS)} registos (total: ${fmtN(data.length)})`);
-      alert(`?? PDF contï¿½m muitos registos (${fmtN(data.length)}).\nSendo exportados apenas os primeiros ${fmtN(MAX_PDF_ROWS)} registos.`);
+      alert(`?? PDF contãm muitos registos (${fmtN(data.length)}).\nSendo exportados apenas os primeiros ${fmtN(MAX_PDF_ROWS)} registos.`);
       pdfData = data.slice(0, MAX_PDF_ROWS);
     }
 
-    // Try/catch granular ï¿½ Priority 1
+    // Try/catch granular ã Priority 1
     try {
       doc = new jsPDF();
     } catch (e) {
@@ -2887,7 +2887,7 @@ function exportToPDF(data: DataRecord[], columns: string[], filename: string): v
       throw e;
     }
 
-    // Configuraï¿½ï¿½es
+    // Configuraãães
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 10;
@@ -2895,7 +2895,7 @@ function exportToPDF(data: DataRecord[], columns: string[], filename: string): v
     const rowHeight = 6;
     const cellPadding = 2;
     const tableMargin = margin;
-    const dataStartY = 50; // Espaï¿½o para cabeï¿½alho na primeira pï¿½gina
+    const dataStartY = 50; // Espaão para cabeãalho na primeira pãgina
 
     // Calcular larguras das colunas
     let columnWidths = [];
@@ -2905,16 +2905,16 @@ function exportToPDF(data: DataRecord[], columns: string[], filename: string): v
       columnWidths.push(availableWidth / numCols);
     });
 
-    // Calcular nï¿½mero de pï¿½ginas
-    const rowsPerPage = Math.floor((pageHeight - dataStartY - 15) / rowHeight); // 15 para rodapï¿½
+    // Calcular nãmero de pãginas
+    const rowsPerPage = Math.floor((pageHeight - dataStartY - 15) / rowHeight); // 15 para rodapã
     const totalPages = Math.ceil(pdfData.length / rowsPerPage);
 
-    // Funï¿½ï¿½o para desenhar cabeï¿½alho de pï¿½gina
+    // Funão para desenhar cabeãalho de pãgina
     const drawPageHeader = (pageNum) => {
       const y = margin;
       doc.setFontSize(16);
       doc.setTextColor(0);
-      doc.text('G-FinanceSuite ï¿½ Relatï¿½rio de Exportaï¿½ï¿½o', margin, y);
+      doc.text('G-FinanceSuite ã Relatãrio de Exportaão', margin, y);
 
       doc.setFontSize(9);
       doc.setTextColor(100);
@@ -2926,7 +2926,7 @@ function exportToPDF(data: DataRecord[], columns: string[], filename: string): v
       doc.line(margin, y + 18, pageWidth - margin, y + 18);
     };
 
-    // Funï¿½ï¿½o para desenhar cabeï¿½alho da tabela
+    // Funão para desenhar cabeãalho da tabela
     const drawTableHeader = (startY) => {
       doc.setFont(undefined, 'bold');
       doc.setFontSize(9);
@@ -2946,20 +2946,20 @@ function exportToPDF(data: DataRecord[], columns: string[], filename: string): v
       });
     };
 
-    // Funï¿½ï¿½o para desenhar rodapï¿½ com paginaï¿½ï¿½o
+    // Funão para desenhar rodapã com paginaão
     const drawPageFooter = (currentPageNum) => {
       const footerY = pageHeight - 6;
       doc.setFontSize(8);
       doc.setTextColor(150);
-      doc.text('ï¿½ 2026 G-FinanceSuite', margin, footerY);
+      doc.text('ã 2026 G-FinanceSuite', margin, footerY);
 
-      // Paginaï¿½ï¿½o
+      // Paginaão
       const pageText = `${currentPageNum}/${totalPages}`;
       const pageTextWidth = doc.getStringUnitWidth(pageText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
       doc.text(pageText, pageWidth - margin - pageTextWidth, footerY);
     };
 
-    // Primeira pï¿½gina - cabeï¿½alho
+    // Primeira pãgina - cabeãalho
     let currentY = dataStartY;
     drawPageHeader(1);
     drawTableHeader(currentY);
@@ -2974,18 +2974,18 @@ function exportToPDF(data: DataRecord[], columns: string[], filename: string): v
     let rowsInPage = 0;
 
     pdfData.forEach((record, dataIdx) => {
-      // Verificar se precisa nova pï¿½gina
+      // Verificar se precisa nova pãgina
       if (rowsInPage >= rowsPerPage && currentY + rowHeight > pageHeight - 15) {
-        // Desenhar rodapï¿½ da pï¿½gina atual
+        // Desenhar rodapã da pãgina atual
         drawPageFooter(currentPage);
 
-        // Nova pï¿½gina
+        // Nova pãgina
         doc.addPage();
         currentPage++;
-        currentY = margin + 8; // Espaï¿½o pequeno no topo
+        currentY = margin + 8; // Espaão pequeno no topo
         rowsInPage = 0;
 
-        // Desenhar cabeï¿½alho da tabela na nova pï¿½gina
+        // Desenhar cabeãalho da tabela na nova pãgina
         drawTableHeader(currentY);
         currentY += rowHeight;
       }
@@ -2997,7 +2997,7 @@ function exportToPDF(data: DataRecord[], columns: string[], filename: string): v
         let displayValue = '';
 
         if (cellValue === null || cellValue === undefined) {
-          displayValue = 'ï¿½';
+          displayValue = 'ã';
         } else if (typeof cellValue === 'number') {
           displayValue = fmt(cellValue);
         } else {
@@ -3021,7 +3021,7 @@ function exportToPDF(data: DataRecord[], columns: string[], filename: string): v
       rowsInPage++;
     });
 
-    // Rodapï¿½ da ï¿½ltima pï¿½gina
+    // Rodapã da ãltima pãgina
     drawPageFooter(currentPage);
 
     // Salvar (Priority 1: Try/catch granular)
@@ -3054,18 +3054,18 @@ function downloadFile(blob: Blob, filename: string): void {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
-      // Verificar se precisa nova pï¿½gina
+      // Verificar se precisa nova pãgina
       if (rowsInPage >= rowsPerPage && currentY + rowHeight > pageHeight - 15) {
-        // Desenhar rodapï¿½ da pï¿½gina atual
+        // Desenhar rodapã da pãgina atual
         drawPageFooter(currentPage);
 
-        // Nova pï¿½gina
+        // Nova pãgina
         doc.addPage();
         currentPage++;
-        currentY = margin + 8; // Espaï¿½o pequeno no topo
+        currentY = margin + 8; // Espaão pequeno no topo
         rowsInPage = 0;
 
-        // Desenhar cabeï¿½alho da tabela na nova pï¿½gina
+        // Desenhar cabeãalho da tabela na nova pãgina
         drawTableHeader(currentY);
         currentY += rowHeight;
       }
@@ -3077,7 +3077,7 @@ function downloadFile(blob: Blob, filename: string): void {
         let displayValue = '';
 
         if (cellValue === null || cellValue === undefined) {
-          displayValue = 'ï¿½';
+          displayValue = 'ã';
         } else if (typeof cellValue === 'number') {
           displayValue = fmt(cellValue);
         } else {
@@ -3101,7 +3101,7 @@ function downloadFile(blob: Blob, filename: string): void {
       rowsInPage++;
     });
 
-    // Rodapï¿½ da ï¿½ltima pï¿½gina
+    // Rodapã da ãltima pãgina
     drawPageFooter(currentPage);
 
     // Salvar (Priority 1: Try/catch granular)
@@ -3155,11 +3155,11 @@ function renderPagination(totalPages, callback) {
     if (i===1 || i===totalPages || Math.abs(i-currentPage)<=1) addBtn(i);
     else if (i===2 || i===totalPages-1) pagBtns.appendChild(document.createTextNode('...'));
   }
-  if (currentPage < totalPages) addBtn(currentPage+1, 'Prï¿½xima ?');
+  if (currentPage < totalPages) addBtn(currentPage+1, 'Prãxima ?');
 }
 
 /* --------------------------------------------------------------
-   INICIALIZAï¿½ï¿½O DA Pï¿½GINA
+   INICIALIZAããO DA PãGINA
    -------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
   hide('progress-section');
@@ -3181,20 +3181,20 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
 
-    // Funï¿½ï¿½o para desenhar rodapï¿½ com paginaï¿½ï¿½o
+    // Funão para desenhar rodapã com paginaão
     const drawPageFooter = (currentPageNum) => {
       const footerY = pageHeight - 6;
       doc.setFontSize(8);
       doc.setTextColor(150);
-      doc.text('ï¿½ 2026 G-FinanceSuite', margin, footerY);
+      doc.text('ã 2026 G-FinanceSuite', margin, footerY);
 
-      // Paginaï¿½ï¿½o
+      // Paginaão
       const pageText = `${currentPageNum}/${totalPages}`;
       const pageTextWidth = doc.getStringUnitWidth(pageText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
       doc.text(pageText, pageWidth - margin - pageTextWidth, footerY);
     };
 
-    // Primeira pï¿½gina - cabeï¿½alho
+    // Primeira pãgina - cabeãalho
     let currentY = dataStartY;
     drawPageHeader(1);
     drawTableHeader(currentY);
@@ -3209,18 +3209,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let rowsInPage = 0;
 
     pdfData.forEach((record, dataIdx) => {
-      // Verificar se precisa nova pï¿½gina
+      // Verificar se precisa nova pãgina
       if (rowsInPage >= rowsPerPage && currentY + rowHeight > pageHeight - 15) {
-        // Desenhar rodapï¿½ da pï¿½gina atual
+        // Desenhar rodapã da pãgina atual
         drawPageFooter(currentPage);
 
-        // Nova pï¿½gina
+        // Nova pãgina
         doc.addPage();
         currentPage++;
-        currentY = margin + 8; // Espaï¿½o pequeno no topo
+        currentY = margin + 8; // Espaão pequeno no topo
         rowsInPage = 0;
 
-        // Desenhar cabeï¿½alho da tabela na nova pï¿½gina
+        // Desenhar cabeãalho da tabela na nova pãgina
         drawTableHeader(currentY);
         currentY += rowHeight;
       }
@@ -3232,7 +3232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let displayValue = '';
 
         if (cellValue === null || cellValue === undefined) {
-          displayValue = 'ï¿½';
+          displayValue = 'ã';
         } else if (typeof cellValue === 'number') {
           displayValue = fmt(cellValue);
         } else {
@@ -3256,7 +3256,7 @@ document.addEventListener('DOMContentLoaded', () => {
       rowsInPage++;
     });
 
-    // Rodapï¿½ da ï¿½ltima pï¿½gina
+    // Rodapã da ãltima pãgina
     drawPageFooter(currentPage);
 
     // Salvar (Priority 1: Try/catch granular)
