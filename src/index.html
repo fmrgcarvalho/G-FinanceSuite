@@ -1,0 +1,327 @@
+﻿<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G-FinanceSuite — Análise de Duplicados e Reconciliação</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    /* Carregar SheetJS do CDN (mais confiável) */
+    var script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = function() {
+      console.log('✓ SheetJS carregado com sucesso');
+    };
+    script.onerror = function() {
+      console.error('❌ Erro ao carregar SheetJS do CDN');
+      alert('⚠️ Erro: Não conseguiu carregar a biblioteca SheetJS.\n\nVerifica a tua ligação à internet.');
+    };
+    document.head.appendChild(script);
+
+    /* Carregar jsPDF do CDN */
+    var jsPdfScript = document.createElement('script');
+    jsPdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    document.head.appendChild(jsPdfScript);
+  </script>
+</head>
+<body>
+
+<header>
+  <div class="logo">G-FinanceSuite</div>
+  <h1>Análise de Duplicados e Reconciliação</h1>
+</header>
+
+<!-- Barra de info sticky (aparece ao fazer scroll) -->
+<div id="info-sticky-bar" class="info-sticky-bar">
+  <div class="info-sticky-inner">
+    <div class="is-dot"></div>
+    <span class="is-name" id="is-name">—</span>
+    <div class="is-sep"></div>
+    <span class="is-stat">📄 <strong id="is-total">—</strong> <span class="is-label">registos</span></span>
+    <div class="is-sep"></div>
+    <span class="is-stat">🔑 <strong id="is-campos">—</strong> <span class="is-label">campos</span></span>
+    <div class="is-sep"></div>
+    <button class="is-op-btn" id="is-op1" onclick="selectOp(1)">Identificar duplicados</button>
+    <button class="is-op-btn is-op-blue" id="is-op2" onclick="selectOp(2)">Reconciliação</button>
+    <div class="is-spacer"></div>
+    <button class="is-btn" onclick="resetAll()">↩ Nova Análise</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ── 1. IMPORTAÇÃO (MÚLTIPLOS FICHEIROS) ── -->
+  <div id="import-section">
+    <div class="import-icon">📂</div>
+    <h2>Importar ficheiros</h2>
+    <p>Suporta <strong>Excel (.xlsx, .xls)</strong>, <strong>CSV</strong> e <strong>JSON</strong> com dados contabilísticos.</p>
+    <p style="font-size:0.9em;color:var(--muted)">✓ Carregue <strong>múltiplos ficheiros</strong> — serão automaticamente consolidados</p>
+    <label class="btn-import" for="file-input">Selecionar ficheiros</label>
+    <input type="file" id="file-input" accept=".json,.xlsx,.xls,.csv" multiple>
+    <p class="file-hint">Ou arrasta vários ficheiros para aqui</p>
+
+    <!-- Lista de ficheiros carregados -->
+    <div id="files-queue" style="display:none;margin-top:20px;padding:20px;background:var(--white);border:1px solid var(--gray-border);border-radius:10px">
+      <h4 style="margin-bottom:14px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Ficheiros a processar</h4>
+      <div id="files-queue-list"></div>
+    </div>
+  </div>
+
+  <!-- ── 2. PROGRESSO ── -->
+  <div id="progress-section" style="display:none">
+    <div class="spinner"></div>
+    <p class="prog-label" id="prog-label">A carregar…</p>
+    <p class="prog-sub"   id="prog-sub"></p>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  </div>
+
+  <!-- ── 3. MAPEAMENTO DE COLUNAS (só Excel) ── -->
+  <div id="mapping-section" style="display:none">
+    <div class="map-card">
+      <div class="map-header">
+        <div>
+          <h2 class="map-title">Mapeamento de colunas</h2>
+          <p class="map-subtitle">
+            O portal sugeriu o mapeamento automaticamente com base nos nomes das colunas.<br>
+            Revê e ajusta antes de continuar — usa <em>"— Ignorar —"</em> para excluir uma coluna.
+          </p>
+        </div>
+        <button class="btn-new" onclick="resetAll()">↩ Cancelar</button>
+      </div>
+
+      <div class="map-table-wrap" id="map-table-wrap">
+        <!-- preenchido por JS -->
+      </div>
+
+      <div class="map-footer">
+        <span class="map-summary" id="map-summary"></span>
+        <button class="btn-run" onclick="confirmMapping()">✓ Confirmar e analisar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4. ANÁLISE ── -->
+  <div id="content" style="display:none">
+
+    <!-- Toolbar unificada: info + operações -->
+    <div class="content-toolbar">
+      <div class="ctb-file">
+        <span class="ctb-file-icon">📊</span>
+        <div class="ctb-file-text">
+          <span class="ctb-filename" id="fi-name">—</span>
+          <span class="ctb-filesub" id="fi-sub">A carregar...</span>
+        </div>
+      </div>
+
+      <div class="ctb-vsep"></div>
+
+      <div class="ctb-chips">
+        <span class="ctb-chip">
+          <span class="ctb-chip-val" id="fi-total">—</span>
+          <span class="ctb-chip-lbl">registos</span>
+        </span>
+        <span class="ctb-chip">
+          <span class="ctb-chip-val" id="fi-campos">—</span>
+          <span class="ctb-chip-lbl">campos</span>
+        </span>
+      </div>
+
+      <div class="ctb-vsep"></div>
+
+      <div class="ctb-seg">
+        <div class="ctb-seg-btn active" id="op1-card" onclick="selectOp(1)">
+          🔍 Duplicados
+        </div>
+        <div class="ctb-seg-btn" id="op2-card" onclick="selectOp(2)">
+          ⚖️ Reconciliação
+        </div>
+      </div>
+
+      <div class="ctb-spacer"></div>
+
+      <button class="ctb-reset" onclick="resetAll()">↩ Nova Análise</button>
+    </div>
+
+    <!-- Op 1 — seletor de campos dinâmico -->
+    <div id="field-selector" style="display:none" class="fs-panel">
+      <div class="fs-header">
+        <div>
+          <h4 class="fs-title">Campos para identificar duplicados</h4>
+          <p class="fs-desc">Assinala os campos que devem ser <strong>iguais</strong> para considerar dois registos duplicados.</p>
+        </div>
+        <div class="fs-header-actions">
+          <button class="btn-sm" onclick="selectAllFields()">Selecionar todos</button>
+          <button class="btn-sm" onclick="clearAllFields()">Limpar todos</button>
+        </div>
+      </div>
+      <div class="fields-grid" id="fields-grid"></div>
+      <div class="fs-footer">
+        <div class="fs-sum-row">
+          <span class="fs-sum-label">Σ Campo para somar:</span>
+          <select id="sum-field-select" class="config-select">
+            <option value="">— Nenhum —</option>
+          </select>
+        </div>
+        <button class="btn-run" id="btn-run" onclick="runAnalysis()">▶ Executar análise</button>
+      </div>
+    </div>
+
+    <!-- Op 2 — configuração dinâmica -->
+    <div id="recon-config" style="display:none;margin-top:14px">
+      <div class="config-row" style="margin-bottom:10px">
+        <label class="config-label">Agrupar por campo:</label>
+        <select id="group-field-select" class="config-select"></select>
+        <span class="config-hint">Campo que define cada grupo de reconciliação</span>
+      </div>
+      <div class="config-row" style="margin-bottom:10px">
+        <label class="config-label">Campo de valor (montante):</label>
+        <select id="value-field-select" class="config-select"></select>
+        <span class="config-hint">Campo numérico cujo saldo líquido é calculado</span>
+      </div>
+      <div class="config-row tol-row-inline">
+        <label class="config-label" for="tolerance-input">Tolerância de saldo:</label>
+        <input type="number" id="tolerance-input" value="1.00" min="0" step="0.01" class="tol-input">
+        <span class="config-hint">Grupos com |saldo| ≤ este valor são <strong>reconciliados</strong></span>
+      </div>
+      <button class="btn-run" onclick="runAnalysis()" style="margin-top:16px">▶ Executar análise</button>
+    </div>
+
+    <!-- Resultados -->
+    <div id="results-section" style="display:none">
+      <div class="divider"></div>
+      <div class="dup-summary" id="summary-cards">
+        <div class="sum-card total selected" id="card-all" onclick="setFilterTypeFromCard('all')" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="s-total">—</div><div class="sl">Total registos</div></div>
+        <div class="sum-card clean" id="card-unique" onclick="setFilterTypeFromCard('unique')" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="s-unique">—</div><div class="sl" id="sl-unique">—</div></div>
+        <div class="sum-card dups" id="card-dups" onclick="setFilterTypeFromCard('duplicates')" style="cursor:pointer;transition:all 0.2s"> <div class="sv" id="s-dups">—</div> <div class="sl" id="sl-dups">—</div></div>
+        <div class="sum-card info" id="card-groups"> <div class="sv" id="s-groups">—</div><div class="sl" id="sl-groups">—</div></div>
+      </div>
+      <div class="results-header">
+        <h2 id="results-title">Resultados</h2>
+      </div>
+
+      <!-- MODAL DE EXPORT AVANÇADO -->
+      <div id="export-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+        <div style="background:white;border-radius:12px;padding:28px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3)">
+          <h2 style="margin-bottom:20px;color:#1c2526">Exportar Dados</h2>
+
+          <!-- Seleção de Dados -->
+          <div style="margin-bottom:24px">
+            <label style="font-weight:600;font-size:13px;color:#6b7280;text-transform:uppercase;margin-bottom:10px;display:block">📊 Selecione os dados:</label>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1.5px solid #ddd;border-radius:8px;background:#fafafa;transition:all 0.2s">
+                <input type="radio" name="export-type" value="all" checked onchange="setExportDataType('all')" style="cursor:pointer;width:18px;height:18px">
+                <span style="flex:1"><strong>📋 Todos os registos</strong><br><span style="font-size:11px;color:#999" id="count-all">—</span></span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1.5px solid #ddd;border-radius:8px;background:#fff3cd;transition:all 0.2s">
+                <input type="radio" name="export-type" value="duplicates" onchange="setExportDataType('duplicates')" style="cursor:pointer;width:18px;height:18px">
+                <span style="flex:1"><strong>🔴 Apenas duplicados</strong><br><span style="font-size:11px;color:#999" id="count-dups">—</span></span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1.5px solid #ddd;border-radius:8px;background:#e8f5e9;transition:all 0.2s">
+                <input type="radio" name="export-type" value="unique" onchange="setExportDataType('unique')" style="cursor:pointer;width:18px;height:18px">
+                <span style="flex:1"><strong>🟢 Apenas únicos</strong><br><span style="font-size:11px;color:#999" id="count-unique">—</span></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Seleção de Formato -->
+          <div style="margin-bottom:24px">
+            <label style="font-weight:600;font-size:13px;color:#6b7280;text-transform:uppercase;margin-bottom:10px;display:block">📁 Formato:</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+              <button class="export-fmt-btn" data-format="csv" onclick="setExportFormat('csv')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📊 CSV</button>
+              <button class="export-fmt-btn" data-format="json" onclick="setExportFormat('json')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">{ } JSON</button>
+              <button class="export-fmt-btn" data-format="xml" onclick="setExportFormat('xml')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">&lt;/&gt; XML</button>
+              <button class="export-fmt-btn" id="export-fmt-pdf" data-format="pdf" onclick="setExportFormat('pdf')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📄 PDF</button>
+            </div>
+          </div>
+
+          <!-- Informação de Preview -->
+          <div id="export-preview" style="background:#f0f1f3;padding:12px;border-radius:8px;font-size:12px;color:#6b7280;margin-bottom:20px;text-align:center">
+            Selecione formato
+          </div>
+
+          <!-- Botões de Ação -->
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button onclick="closeExportModal()" style="padding:10px 20px;border:1px solid #ddd;background:white;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">✕ Cancelar</button>
+            <button onclick="executeExport()" style="padding:10px 24px;background:#8ec73d;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">⬇ Exportar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BARRA DE FILTROS DINÂMICA -->
+      <div id="filters-section" style="background:linear-gradient(135deg,#f8f9fa 0%,#f0f1f3 100%);border:1px solid var(--gray-border);border-radius:10px;padding:12px 16px;margin-bottom:18px;display:none">
+        <!-- Filtros: Procura, Nº duplicados, Montante -->
+        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+          <!-- Procura por texto -->
+          <div style="flex:1;min-width:220px">
+            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">🔍 Procurar</label>
+            <div style="display:flex;gap:6px;align-items:stretch">
+              <input type="text" id="filter-search" placeholder="Escreva para procurar..." style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+              <div style="position:relative;flex-shrink:0" id="search-field-wrapper">
+                <button id="search-field-btn" onclick="toggleSearchFieldPanel()" style="height:100%;padding:0 10px;border:1px solid var(--gray-border);border-radius:6px;background:white;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:4px">
+                  <span id="search-field-label">Todos os campos</span> <span style="font-size:9px">▾</span>
+                </button>
+                <div id="search-field-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:210px;background:white;border:1px solid var(--gray-border);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.13);z-index:200;padding:4px 0;max-height:280px;overflow-y:auto">
+                  <!-- preenchido por JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtro por número de duplicados (exato) — SÓ PARA VISTA DUPLICADOS -->
+          <div id="filter-exactcount-wrapper" style="min-width:120px;display:none">
+            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Nº duplicados</label>
+            <input type="number" id="filter-exactcount" min="1" placeholder="Exato" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+          </div>
+
+          <!-- Filtro por montante mín -->
+          <div style="min-width:130px">
+            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Montante mín (€)</label>
+            <input type="number" id="filter-minamt" step="0.01" placeholder="Min" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+          </div>
+
+          <!-- Filtro por montante máx -->
+          <div style="min-width:130px">
+            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Montante máx (€)</label>
+            <input type="number" id="filter-maxamt" step="0.01" placeholder="Max" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+          </div>
+
+          <!-- Botão Limpar -->
+          <button onclick="clearFilters()" style="padding:8px 14px;background:#e8e9eb;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">🗑 Limpar</button>
+        </div>
+      </div>
+
+      <div class="pagination" id="pagination-top" style="display:none;margin-bottom:12px">
+        <span class="pag-info" id="pag-info-top"></span>
+        <div class="pag-btns" id="pag-btns-top"></div>
+      </div>
+
+      <div id="dup-list"></div>
+      <div class="pagination" id="pagination" style="display:none">
+        <span class="pag-info" id="pag-info"></span>
+        <div class="pag-btns" id="pag-btns"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer><strong>G-FinanceSuite</strong></footer>
+
+<!-- ── PAINEL DE LOG (com toggle automático) ── -->
+<div id="log-panel" class="collapsed">
+  <div id="log-header" onclick="toggleLog()" style="cursor: pointer; user-select: none;">
+    <div class="log-dot idle" id="log-dot"></div>
+    <span id="log-title">Log do sistema</span>
+    <span id="log-count">0 entradas</span>
+    <span class="log-toggle" id="log-chevron">▼</span>
+  </div>
+  <div id="log-body"></div>
+  <div id="log-actions">
+    <button class="log-btn primary" onclick="exportLog()">⬇ Exportar .txt</button>
+    <button class="log-btn"        onclick="clearLog()">🗑 Limpar</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

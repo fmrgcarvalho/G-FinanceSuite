@@ -1,0 +1,38 @@
+# Ambiente
+node_modules/
+.env
+.env.local
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testes
+coverage/
+.nyc_output/
+*.lcov
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Output
+dist/
+build/
+*.csv
+*.xlsx
+*.xls
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependências externas
+lib/xlsx.full.min.js.js
+
+# Arquivos temporários
+temp/
+tmp/
+*.tmp
