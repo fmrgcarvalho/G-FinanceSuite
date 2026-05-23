@@ -2024,12 +2024,16 @@ function runDuplicates() {
 
 /* -- OP 2: RECONCILIAããO (dinãmica) ------------------------- */
 function runReconciliation() {
-  const groupField = document.getElementById('op3-group-field-select').value;
-  const valField   = document.getElementById('op3-value-field-select').value;
-  const tolerance  = Math.abs(parseFloat(document.getElementById('op3-tolerance-input').value)||1);
+  const groupFieldEl = document.getElementById('group-field-select') as HTMLSelectElement | null;
+  const valFieldEl = document.getElementById('value-field-select') as HTMLSelectElement | null;
+  const toleranceEl = document.getElementById('tolerance-input') as HTMLInputElement | null;
+
+  const groupField = groupFieldEl?.value || '';
+  const valField = valFieldEl?.value || '';
+  const tolerance = Math.abs(parseFloat(toleranceEl?.value || '1')) || 1;
 
   if (!groupField) { alert('Escolhe o campo de agrupamento.'); return; }
-  if (!valField)   { alert('Escolhe o campo de valor.'); return; }
+  if (!valField) { alert('Escolhe o campo de valor.'); return; }
 
   Logger.separator('Reconciliaão');
   Logger.info(`Agrupar por: ${groupField} ã Valor: ${valField} ã Tolerãncia: ã${tolerance.toFixed(2)}`);
