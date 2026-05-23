@@ -7,7 +7,8 @@
       "Bash(git commit -m 'fix: substituir ícones de sort por emojis *)",
       "Bash(git commit -m ' *)",
       "Bash(cd && grep -n \"format.*csv.*json.*xml\" docs/ts/app.ts | head -5)",
-      "Read(//c/Users/FábioCarvalho/**)"
+      "Read(//c/Users/FábioCarvalho/**)",
+      "PowerShell(node C:\\\\temp\\\\test_recon_logic.js)"
     ]
   }
 }

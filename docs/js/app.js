@@ -2996,6 +2996,8 @@ function renderReconDashboard(reconOk, reconNok, tolerance, groupField, valField
   reconDashboardState.allGroups = [...reconNok, ...reconOk];
   reconDashboardState.filteredGroups = [...reconDashboardState.allGroups];
 
+  Logger.info(`renderReconDashboard: ${reconOk.length} reconciliados + ${reconNok.length} por reconciliar = ${reconDashboardState.allGroups.length} total`);
+
   show('reconciliation-dashboard');
   show('results-header-section');
   renderReconPieChart(reconOk, reconNok);
@@ -3077,6 +3079,16 @@ function renderReconBarChart(reconNok, valField) {
 }
 
 function renderReconStats(groups) {
+  if (!groups || groups.length === 0) {
+    Logger.warn('renderReconStats: nenhum grupo recebido');
+    // Preencher com valores vazios
+    ['stat-total-balance', 'stat-avg-balance', 'stat-median-balance', 'stat-max-balance'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '—';
+    });
+    return;
+  }
+
   const saldos = groups.map(g => g.saldo);
   const totalBalance = saldos.reduce((s, v) => s + v, 0);
   const avgBalance = saldos.length > 0 ? totalBalance / saldos.length : 0;
@@ -3088,9 +3100,16 @@ function renderReconStats(groups) {
 
   const update = (id, val) => {
     const el = document.getElementById(id);
-    if (el) el.textContent = fmt(val);
+    if (el) {
+      const formattedVal = fmt(val);
+      el.textContent = formattedVal;
+      Logger.debug(`stat ${id} = ${formattedVal}`);
+    } else {
+      Logger.warn(`renderReconStats: elemento ${id} não encontrado`);
+    }
   };
 
+  Logger.info(`renderReconStats: ${groups.length} grupos processados | total: ${fmt(totalBalance)}`);
   update('stat-total-balance', totalBalance);
   update('stat-avg-balance', avgBalance);
   update('stat-median-balance', medianBalance);
@@ -3099,7 +3118,16 @@ function renderReconStats(groups) {
 
 function renderReconTable(groups, groupField, valField, tolerance) {
   const tbody = document.getElementById('recon-table-body');
-  if (!tbody) return;
+  if (!tbody) {
+    Logger.warn('renderReconTable: elemento recon-table-body não encontrado');
+    return;
+  }
+
+  if (!groups || groups.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:#999">Nenhum grupo encontrado</td></tr>';
+    Logger.warn('renderReconTable: nenhum grupo recebido');
+    return;
+  }
 
   const rows = groups.map(g => {
     const status = Math.abs(g.saldo) <= tolerance ? '✅ Reconciliado' : '❌ Por reconciliar';
@@ -3115,6 +3143,7 @@ function renderReconTable(groups, groupField, valField, tolerance) {
   });
 
   tbody.innerHTML = rows.join('');
+  Logger.info(`renderReconTable: ${groups.length} grupos renderizados`);
 }
 
 function applyReconFilters() {
