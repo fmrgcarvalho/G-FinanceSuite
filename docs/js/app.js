@@ -2185,13 +2185,11 @@ function buildSearchFieldPanel() {
   const panel = document.getElementById('search-field-panel');
   if (!panel || !availableFields.length) return;
 
-  const typeIcon = { texto: 'T', numerico: '#', data: 'D', numero: '#', numeric: '#', text: 'T', date: 'D' };
-
   panel.innerHTML = `
     <div style="padding:6px 12px 4px;font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #f0f0f0;margin-bottom:4px">Pesquisar em:</div>
     ${availableFields.map(f => {
       const checked = activeFilters.searchFields.includes(f.key);
-      const icon = typeIcon[f.desc] || '?';
+      const icon = f.desc ? f.desc.split(' ')[0] : '❓';
       return `<label title="${f.desc || f.key}" style="display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;font-size:12px;color:var(--dark);user-select:none;transition:background .12s${checked ? ';background:#f2f9e8' : ''}" onmouseenter="this.style.background='${checked ? '#eaf5d6' : '#f7f8f6'}'" onmouseleave="this.style.background='${checked ? '#f2f9e8' : 'transparent'}'">
         <input type="checkbox" value="${f.key}" onchange="onSearchFieldChange()"
                style="accent-color:var(--green);width:13px;height:13px;cursor:pointer;flex-shrink:0"
