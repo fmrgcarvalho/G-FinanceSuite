@@ -2956,12 +2956,12 @@ function renderPagination(totalPages, callback, isRecon = false) {
     if (pagBtnsTop) pagBtnsTop.appendChild(document.createTextNode('...'));
   };
 
-  if (currentPage > 1) addBtn(currentPage-1, '? Anterior');
+  if (currentPage > 1) addBtn(currentPage-1, '◀ Anterior');
   for (let i=1; i<=totalPages; i++) {
     if (i===1 || i===totalPages || Math.abs(i-currentPage)<=1) addBtn(i);
     else if (i===2 || i===totalPages-1) addDots();
   }
-  if (currentPage < totalPages) addBtn(currentPage+1, 'Próxima ▶️');
+  if (currentPage < totalPages) addBtn(currentPage+1, 'Próxima ▶');
 }
 
 /* --------------------------------------------------------------
@@ -3305,11 +3305,162 @@ function setReconFilterType(type) {
 }
 
 function toggleReconCharts() {
-  const container = document.getElementById('recon-charts-container');
-  const btn = event.target;
-  if (container) {
-    const isVisible = container.style.display !== 'none';
-    container.style.display = isVisible ? 'none' : 'grid';
-    btn.textContent = isVisible ? '▶ Expandir' : '▼ Colapsar';
+  const content = document.getElementById('recon-collapsible-content');
+  const btn = document.getElementById('recon-toggle-btn');
+  const icon = document.getElementById('recon-toggle-icon');
+  const text = document.getElementById('recon-toggle-text');
+
+  if (content && btn) {
+    const isVisible = content.style.display !== 'none';
+
+    // Toggle visibility of all collapsible content
+    content.style.display = isVisible ? 'none' : 'block';
+
+    // Update button appearance
+    if (isVisible) {
+      icon.textContent = '▶';
+      text.textContent = 'Expandir';
+      btn.style.background = '#f3f4f6';
+    } else {
+      icon.textContent = '▼';
+      text.textContent = 'Colapsar';
+      btn.style.background = 'white';
+    }
+
+    Logger.info(`Dashboard ${isVisible ? 'colapsado' : 'expandido'}`);
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   EXPORT PARA RECONCILIAÇÃO
+   ──────────────────────────────────────────────────────────────── */
+let reconExportState = {
+  dataType: 'all',      // all, reconciliados, por_reconciliar
+  format: 'xlsx'
+};
+
+function openReconExportModal() {
+  const modal = document.getElementById('recon-export-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  updateReconExportCounts();
+  Logger.info('Modal de exportação de reconciliação aberto');
+}
+
+function closeReconExportModal() {
+  const modal = document.getElementById('recon-export-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function setReconExportDataType(type) {
+  reconExportState.dataType = type;
+  updateReconExportCounts();
+  Logger.info(`Tipo de exportação: ${type}`);
+}
+
+function setReconExportFormat(format) {
+  reconExportState.format = format;
+  updateReconExportPreview();
+
+  // Visual feedback
+  document.querySelectorAll('.recon-export-fmt-btn').forEach(btn => {
+    if (btn.dataset.format === format) {
+      btn.style.borderColor = '#8ec73d';
+      btn.style.background = '#f0f8f4';
+      btn.style.color = '#1f2937';
+    } else {
+      btn.style.borderColor = '#ddd';
+      btn.style.background = 'white';
+      btn.style.color = '#999';
+    }
+  });
+}
+
+function updateReconExportCounts() {
+  const allGroups = reconDashboardState.allGroups || [];
+  const reconciliados = allGroups.filter(g => Math.abs(g.saldo) <= reconDashboardState.tolerance);
+  const porReconciliar = allGroups.filter(g => Math.abs(g.saldo) > reconDashboardState.tolerance);
+
+  const countAll = document.getElementById('recon-count-all');
+  const countRec = document.getElementById('recon-count-reconciliados');
+  const countPor = document.getElementById('recon-count-por-reconciliar');
+
+  if (countAll) countAll.textContent = `${fmtN(allGroups.length)} grupo${allGroups.length !== 1 ? 's' : ''}`;
+  if (countRec) countRec.textContent = `${fmtN(reconciliados.length)} grupo${reconciliados.length !== 1 ? 's' : ''}`;
+  if (countPor) countPor.textContent = `${fmtN(porReconciliar.length)} grupo${porReconciliar.length !== 1 ? 's' : ''}`;
+}
+
+function updateReconExportPreview() {
+  const format = reconExportState.format;
+  const preview = document.getElementById('recon-export-preview');
+  if (!preview) return;
+
+  const formats = {
+    csv: '📊 CSV — Compatível com Excel e cálculos',
+    json: '{ } JSON — Dados estruturados, ideal para integração',
+    xml: '&lt;/&gt; XML — Formato universal, fácil de processar',
+    xlsx: '📈 XLSX — Excel com formatação avançada',
+    pdf: '📄 PDF — Relatório pronto para impressão (até 2000 registos)'
+  };
+
+  preview.innerHTML = formats[format] || 'Selecione formato';
+}
+
+function getReconDataToExport() {
+  const allGroups = reconDashboardState.allGroups || [];
+  const tolerance = reconDashboardState.tolerance || 1;
+  const groupField = reconDashboardState.groupField || 'grupo';
+  const valField = reconDashboardState.valField || 'saldo';
+
+  let groupsToExport = allGroups;
+
+  if (reconExportState.dataType === 'reconciliados') {
+    groupsToExport = allGroups.filter(g => Math.abs(g.saldo) <= tolerance);
+  } else if (reconExportState.dataType === 'por_reconciliar') {
+    groupsToExport = allGroups.filter(g => Math.abs(g.saldo) > tolerance);
+  }
+
+  // Preparar dados para exportação
+  const data = groupsToExport.map(g => ({
+    'Grupo': g.grp,
+    'Registos': g.records.length,
+    'Saldo': g.saldo,
+    'Status': Math.abs(g.saldo) <= tolerance ? 'Reconciliado' : 'Por reconciliar',
+    'Documentos': g.records.map(r => r.numero_documento || '—').join('; ')
+  }));
+
+  const columns = ['Grupo', 'Registos', 'Saldo', 'Status', 'Documentos'];
+
+  return { data, columns };
+}
+
+function executeReconExport() {
+  const { data, columns } = getReconDataToExport();
+  const format = reconExportState.format;
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+  const typeLabel = reconExportState.dataType === 'all' ? 'todos' : reconExportState.dataType;
+  const filename = `G-FinanceSuite_reconciliacao_${typeLabel}_${timestamp}`;
+
+  try {
+    if (format === 'csv') {
+      exportToCSV(data, columns, filename);
+    } else if (format === 'json') {
+      exportToJSON(data, columns, filename);
+    } else if (format === 'xml') {
+      exportToXML(data, columns, filename);
+    } else if (format === 'xlsx') {
+      exportToXLSX(data, columns, filename);
+    } else if (format === 'pdf') {
+      if (data.length > 2000) {
+        alert('⚠️ PDF limitado a 2000 registos. Tem ' + data.length + ' registos. Exporte em CSV ou JSON para todos os dados.');
+        return;
+      }
+      exportToPDF(data, columns, filename);
+    }
+    Logger.info(`✅ Reconciliação exportada em ${format.toUpperCase()}: ${filename}`);
+    closeReconExportModal();
+  } catch (err) {
+    Logger.error(`Erro ao exportar reconciliação: ${err.message}`);
+    alert('Erro ao exportar:\n' + err.message);
   }
 }

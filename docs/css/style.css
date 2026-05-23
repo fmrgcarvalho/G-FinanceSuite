@@ -1032,3 +1032,20 @@ footer strong{color:var(--green)}
 .btn-run:active {
   transform: translateY(0);
 }
+
+/* ── BOTÃO COLAPSAR DASHBOARD ── */
+#recon-toggle-btn {
+  transition: all 0.2s ease;
+}
+
+#recon-toggle-btn:hover {
+  background: white !important;
+  border-color: var(--green);
+  color: var(--green);
+  box-shadow: 0 2px 8px rgba(142, 199, 61, 0.2);
+  transform: translateY(-1px);
+}
+
+#recon-toggle-btn:active {
+  transform: translateY(0);
+}
