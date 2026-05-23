@@ -29,6 +29,7 @@
 <header>
   <div class="logo">G-FinanceSuite</div>
   <h1>Análise de Duplicados e Reconciliação</h1>
+  <button class="header-btn" id="log-btn" onclick="toggleLog()" title="Abrir/Fechar Log">📋 Log</button>
 </header>
 
 <!-- Barra de info sticky (aparece ao fazer scroll) -->
@@ -44,7 +45,6 @@
     <button class="is-op-btn" id="is-op1" onclick="selectOp(1)">Identificar duplicados</button>
     <button class="is-op-btn is-op-blue" id="is-op2" onclick="selectOp(2)">Reconciliação</button>
     <div class="is-spacer"></div>
-    <button class="is-btn" id="log-toggle-btn" onclick="toggleLog()" title="Abrir/Fechar Log">📋 Log</button>
     <button class="is-btn" onclick="resetAll()">↩ Nova Análise</button>
   </div>
 </div>
