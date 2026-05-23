@@ -1766,8 +1766,19 @@ function selectOp(n) {
   document.getElementById('op1-card').classList.remove('active-blue');
   document.getElementById('op2-card').classList.toggle('active-blue', n===2);
   document.getElementById('op2-card').classList.remove('active');
-  document.getElementById('field-selector').style.display = n===1?'block':'none';
-  document.getElementById('recon-config').style.display   = n===2?'block':'none';
+
+  if (n === 1) {
+    // Duplicados
+    show('field-selector');
+    hide('recon-config');
+    hide('pagination-recon-top');
+    hide('pagination-recon-bottom');
+  } else {
+    // Reconciliação
+    hide('field-selector');
+    show('recon-config');
+  }
+
   hide('results-section');
   // Sincronizar botões na sticky bar
   document.getElementById('is-op1')?.classList.toggle('is-active', n===1);
