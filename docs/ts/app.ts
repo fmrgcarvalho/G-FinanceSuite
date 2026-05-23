@@ -156,12 +156,9 @@ const Logger = (() => {
 function toggleLog() {
   const panel = document.getElementById('log-panel');
   const chevron = document.getElementById('log-chevron');
-  const main = document.getElementById('main');
-  if (!panel || !chevron || !main) return;
+  if (!panel || !chevron) return;
   panel.classList.toggle('collapsed');
-  const isCollapsed = panel.classList.contains('collapsed');
-  chevron.textContent = isCollapsed ? '⬇️' : '⬆️';
-  main.style.paddingTop = isCollapsed ? '0' : '320px';
+  chevron.textContent = panel.classList.contains('collapsed') ? '⬇️' : '⬆️';
 }
 
 function exportLog()  {
