@@ -106,7 +106,7 @@ const Logger = (() => {
       if (logDot) logDot.className = 'log-dot error';
     }
     const consoleMethod = level === 'ERROR' ? 'error' : level === 'WARN' ? 'warn' : 'log';
-    console[consoleMethod as keyof typeof console](`[${level}] ${msg}`);
+    (console[consoleMethod as keyof typeof console] as Function)(`[${level}] ${msg}`);
   }
 
   function render(entry: LogEntry): void {
@@ -669,7 +669,7 @@ function startAnalysis() {
     // Preparar anãlise - chamar showContent para renderizar campos
     showContent();
   } catch (err) {
-    Logger.error(`Consolidaão falhou: ${err.message}`);
+    Logger.error(`Consolidação falhou: ${err instanceof Error ? err.message : String(err)}`);
     alert('Erro ao consolidar ficheiros. Abre a consola (F12) para detalhes.');
   }
 }
@@ -780,7 +780,7 @@ function loadJSONFromQueue(queueItem) {
       }
     } catch (err) {
       queueItem.status = 'error';
-      Logger.error(`JSON ${queueItem.file.name}: ${err.message}`);
+      Logger.error(`JSON ${queueItem.file.name}: ${err instanceof Error ? err.message : String(err)}`);
       updateQueueUI();
       if (isSequentialProcessing) processNextFile();
       else {
@@ -950,7 +950,7 @@ function loadCSVFromQueue(queueItem) {
       }
     } catch (err) {
       queueItem.status = 'error';
-      Logger.error(`CSV ${queueItem.file.name}: ${err.message}`);
+      Logger.error(`CSV ${queueItem.file.name}: ${err instanceof Error ? err.message : String(err)}`);
       updateQueueUI();
       if (isSequentialProcessing) processNextFile();
       else {
@@ -1092,7 +1092,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
               Logger.warn(`Range muito grande (${maxRows} linhas) ã skipping readCellsDirect`);
             }
           } catch (cellErr) {
-            Logger.warn(`readCellsDirect falhou: ${cellErr.message}`);
+            Logger.warn(`readCellsDirect falhou: ${cellErr instanceof Error ? cellErr.message : String(cellErr)}`);
           }
         }
 
@@ -1103,7 +1103,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
         Logger.warn(`Estratãgia ${strat.label}: dados insuficientes`);
       } catch (stratErr) {
         lastError = stratErr;
-        Logger.warn(`Estratãgia ${strat.label} falhou: ${stratErr.message}`);
+        Logger.warn(`Estratégia ${strat.label} falhou: ${stratErr instanceof Error ? stratErr.message : String(stratErr)}`);
         continue;
       }
     }
@@ -1153,7 +1153,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
         const rec = buildRecord(row, mapping, queueItem.file.name);
         records.push(rec);
       } catch (recordErr) {
-        Logger.warn(`Linha ${i + 1}: Erro ao converter (${recordErr.message})`);
+        Logger.warn(`Linha ${i + 1}: Erro ao converter (${recordErr instanceof Error ? recordErr.message : String(recordErr)})`);
         continue;
       }
 
@@ -1203,7 +1203,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
       Logger.info(`?? Tenta: (1) Reabrir em Excel e guardar novamente, (2) Remover fãrmulas complexas, (3) Converter para CSV`);
     } else {
       errorMsg = err.message.substring(0, 100); // Truncar mensagem longa
-      Logger.error(`Excel ${queueItem.file.name}: ${err.message}`);
+      Logger.error(`Excel ${queueItem.file.name}: ${err instanceof Error ? err.message : String(err)}`);
       Logger.error(`Stack trace: ${err.stack?.substring(0, 500) || 'N/A'}`);
     }
     setFileError(queueItem, errorMsg);
@@ -1355,8 +1355,8 @@ function loadJSON(file) {
         setProgress(100,'Concluãdo!', `${fmtN(rawData.length)} registos`);
         setTimeout(() => showContent(), 300);
       } catch(err) {
-        Logger.error(`Erro JSON: ${err.message}`);
-        alert('Erro ao processar o ficheiro:\n'+err.message);
+        Logger.error(`Erro JSON: ${err instanceof Error ? err.message : String(err)}`);
+        alert('Erro ao processar o ficheiro:\n'+(err instanceof Error ? err.message : String(err)));
         resetAll();
       }
     }, 50);
@@ -1512,8 +1512,8 @@ function processExcelMainThread(buffer, file) {
       Logger.info(`${rows.length.toLocaleString('pt-PT')} linhas em ${(performance.now()-t0).toFixed(0)} ms`);
       finishExcelLoad(rows, file);
     } catch(err) {
-      Logger.error(`Fallback error: ${err.message}`);
-      alert('Erro ao processar o Excel:\n' + err.message);
+      Logger.error(`Fallback error: ${err instanceof Error ? err.message : String(err)}`);
+      alert('Erro ao processar o Excel:\n' + (err instanceof Error ? err.message : String(err)));
       resetAll();
     }
   }, 60);
@@ -1761,7 +1761,7 @@ function confirmMapping() {
 
     } catch(err) {
       Logger.error(`Erro na conversão: ${err.message}`);
-      alert('Erro na conversão:\n'+err.message);
+      alert('Erro na conversão:\n'+(err instanceof Error ? err.message : String(err)));
       resetAll();
     }
   }, 60);
