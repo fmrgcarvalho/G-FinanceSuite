@@ -226,10 +226,11 @@
           <!-- Seleção de Formato -->
           <div style="margin-bottom:24px">
             <label style="font-weight:600;font-size:13px;color:#6b7280;text-transform:uppercase;margin-bottom:10px;display:block">📁 Formato:</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
               <button class="export-fmt-btn" data-format="csv" onclick="setExportFormat('csv')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📊 CSV</button>
               <button class="export-fmt-btn" data-format="json" onclick="setExportFormat('json')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">{ } JSON</button>
               <button class="export-fmt-btn" data-format="xml" onclick="setExportFormat('xml')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">&lt;/&gt; XML</button>
+              <button class="export-fmt-btn" data-format="xlsx" onclick="setExportFormat('xlsx')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📈 XLSX</button>
               <button class="export-fmt-btn" id="export-fmt-pdf" data-format="pdf" onclick="setExportFormat('pdf')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📄 PDF</button>
             </div>
           </div>
