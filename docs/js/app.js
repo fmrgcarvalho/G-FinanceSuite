@@ -1820,10 +1820,14 @@ function runDuplicates() {
     {id:'s-groups', val:fmtN(dupGroups.length),         label:'Grupos duplicados',   cls:'info'},
   ]);
 
+  hide('reconciliation-dashboard');
+  hide('results-header-section');
+
   document.getElementById('results-title').textContent = '';
   currentPage=1;
   activeFilters.type = 'all';  // Começar com "Total registos"
   show('results-section');
+  show('filters-section');
   setFilterTypeFromCard('all');  // Isso chama renderDuplicates com tipo correto
   document.getElementById('results-section').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -1866,6 +1870,11 @@ function runReconciliation() {
     {id:'s-unique', val:fmtN(reconOk.length),  label:'Reconciliados',           cls:'clean'},
     {id:'s-groups', val:`€ ${fmt(tolerance)}`, label:'Tolerância',              cls:'info'},
   ]);
+
+  hide('filters-section');
+  hide('dup-list');
+  hide('pagination');
+  hide('pagination-top');
 
   const titleEl = document.getElementById('results-title');
   const metaEl = document.getElementById('results-meta');
