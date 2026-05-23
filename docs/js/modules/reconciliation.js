@@ -8,6 +8,7 @@
 import { AppState, PAGE_SIZE } from '../state.js';
 import { show, hide, fmt, fmtN, escHtml, setSummaryCards } from './ui.js';
 import { setPagination, renderPagination } from './pagination.js';
+import { exportToCSV, exportToJSON, exportToXML, exportToXLSX, exportToPDF } from './export.js';
 
 // Acesso ao Logger via shim global (temporário)
 const L = () => window.Logger || console;
@@ -411,18 +412,17 @@ export function executeReconExport() {
   const filename  = `G-FinanceSuite_reconciliacao_${typeLabel}_${timestamp}`;
 
   try {
-    // exportTo* functions still in app.js until Phase 6 — accessed via window shims
-    if      (format === 'csv')  window._exportToCSV(data, columns, filename);
-    else if (format === 'json') window._exportToJSON(data, columns, filename);
-    else if (format === 'xml')  window._exportToXML(data, columns, filename);
-    else if (format === 'xlsx') window._exportToXLSX(data, columns, filename);
+    if      (format === 'csv')  exportToCSV(data, columns, filename);
+    else if (format === 'json') exportToJSON(data, columns, filename);
+    else if (format === 'xml')  exportToXML(data, columns, filename);
+    else if (format === 'xlsx') exportToXLSX(data, columns, filename);
     else if (format === 'pdf') {
       const PDF_MAX = 2000;
       if (data.length > PDF_MAX) {
         alert(`⚠️ PDF limitado a ${PDF_MAX} registos. Tem ${data.length} registos. Exporte em CSV ou JSON para todos os dados.`);
         return;
       }
-      window._exportToPDF(data, columns, filename);
+      exportToPDF(data, columns, filename);
     }
     L().info(`✅ Reconciliação exportada em ${format.toUpperCase()}: ${filename}`);
     closeReconExportModal();
