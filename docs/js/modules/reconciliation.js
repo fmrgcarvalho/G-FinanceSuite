@@ -293,21 +293,24 @@ export function renderReconTable(groups, groupField, valField, tolerance) {
         <td style="padding:10px 12px;text-align:right;color:#dc2626;font-size:11px">${credito > 0 ? fmt(credito) : '—'}</td>
         <td style="padding:10px 12px;text-align:right;font-weight:bold;color:${Math.abs(g.saldo) > 10000 ? '#ef4444' : '#333'}">${fmt(g.saldo)}</td>
         <td style="padding:10px 12px;text-align:center;color:${statusColor};font-weight:600">${status}</td>
-        <td style="padding:10px 12px;font-size:11px;color:#6b7280;white-space:nowrap">
-          ${docPreview}
-          ${docNumbers ? `<button data-copy-docs="${escHtml(docNumbers)}" title="Copiar documentos" style="margin-left:6px;background:none;border:1px solid #d1d5db;border-radius:4px;padding:2px 5px;cursor:pointer;font-size:10px;color:#6b7280;line-height:1;vertical-align:middle;transition:all .15s" onmouseenter="this.style.background='#f3f4f6';this.style.borderColor='#9ca3af'" onmouseleave="this.style.background='none';this.style.borderColor='#d1d5db'">⧉</button>` : ''}
-        </td>
+        <td style="padding:10px 12px;font-size:11px;color:#6b7280;white-space:nowrap">${docPreview}</td>
       </tr>
       <tr id="${expandId}" style="display:none;background:#f8f9fa">
         <td colspan="7" style="padding:12px 16px">
           <div style="background:white;border:1px solid #e5e7eb;border-radius:6px;padding:12px">
             <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:8px;text-transform:uppercase">Documentos neste grupo:</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;font-size:12px">
-              ${g.records.map(r => `
-                <div style="padding:8px;background:#f3f4f6;border-radius:4px;border-left:3px solid #8ec73d">
-                  <div style="font-weight:600;color:#1c2526">${escHtml(String(r.numero_documento || '—'))}</div>
-                  <div style="font-size:11px;color:#6b7280">Montante: ${fmt(r[valField] || 0)}</div>
-                </div>`).join('')}
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;font-size:12px">
+              ${g.records.map(r => {
+                const docVal = String(r.numero_documento || '—');
+                return `
+                <div style="padding:8px 10px;background:#f3f4f6;border-radius:4px;border-left:3px solid #8ec73d;display:flex;align-items:center;justify-content:space-between;gap:8px">
+                  <div>
+                    <div style="font-weight:600;color:#1c2526">${escHtml(docVal)}</div>
+                    <div style="font-size:11px;color:#6b7280;margin-top:2px">Montante: ${fmt(r[valField] || 0)}</div>
+                  </div>
+                  ${docVal !== '—' ? `<button data-copy-docs="${escHtml(docVal)}" title="Copiar" style="flex-shrink:0;background:none;border:1px solid #d1d5db;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:11px;color:#6b7280;line-height:1;transition:all .15s" onmouseenter="this.style.background='#e5e7eb'" onmouseleave="this.style.background='none'">⧉</button>` : ''}
+                </div>`;
+              }).join('')}
             </div>
           </div>
         </td>
