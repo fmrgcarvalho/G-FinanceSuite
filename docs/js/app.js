@@ -3,6 +3,8 @@
    ============================================================ */
 'use strict';
 
+const APP_VERSION = '1.0.0';
+
 /* --------------------------------------------------------------
    LOGGER
    -------------------------------------------------------------- */
@@ -2953,6 +2955,10 @@ function renderPagination(totalPages, callback) {
    INICIALIZAÇÃO DA PÁGINA
    -------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
+  // Atualizar badge de versão
+  const versionBadge = document.getElementById('version-badge');
+  if (versionBadge) versionBadge.textContent = `v${APP_VERSION}`;
+
   hide('progress-section');
   hide('mapping-section');
   hide('content');

@@ -3,6 +3,8 @@
    TypeScript Version
    ============================================================ */
 
+const APP_VERSION = '1.0.0';
+
 /* --------------------------------------------------------------
    TIPOS E INTERFACES
    -------------------------------------------------------------- */
@@ -3222,15 +3224,19 @@ function renderPagination(totalPages, callback) {
    INICIALIZAããO DA PãGINA
    -------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
+  // Atualizar badge de versão
+  const versionBadge = document.getElementById('version-badge') as HTMLElement | null;
+  if (versionBadge) versionBadge.textContent = `v${APP_VERSION}`;
+
   hide('progress-section');
   hide('mapping-section');
   hide('content');
   hide('results-section');
   show('import-section');
-  const logPanel = document.getElementById('log-panel');
+  const logPanel = document.getElementById('log-panel') as HTMLElement | null;
   if (logPanel) {
     logPanel.classList.add('collapsed');
-    const chevron = document.getElementById('log-chevron');
+    const chevron = document.getElementById('log-chevron') as HTMLElement | null;
     if (chevron) chevron.textContent = '?';
   }
   Logger.info('Portal inicializado');
