@@ -1134,7 +1134,7 @@ function loadJSON(file) {
         rawData = obj.registos || obj.data || obj.records || (Array.isArray(obj)?obj:[]);
         if (!rawData.length) throw new Error('Nenhum registo encontrado.');
         Logger.info(`${rawData.length.toLocaleString('pt-PT')} registos carregados`);
-        setProgress(100,'Concluï¿½do!', `${fmtN(rawData.length)} registos`);
+        setProgress(100,'Concluído!', `${fmtN(rawData.length)} registos`);
         setTimeout(() => showContent(), 300);
       } catch(err) {
         Logger.error(`Erro JSON: ${err.message}`);
@@ -1543,7 +1543,7 @@ function confirmMapping() {
 
     } catch(err) {
       Logger.error(`Erro na conversão: ${err.message}`);
-      alert('Erro na conversï¿½o:\n'+err.message);
+      alert('Erro na conversão:\n'+err.message);
       resetAll();
     }
   }, 60);
@@ -2057,7 +2057,7 @@ function renderDuplicates(fields) {
   }
 
   // MODO "DUPLICADOS" - COM GRUPOS
-  // Calcular somatï¿½rio total de todos os duplicados (nï¿½o apenas da pï¿½gina)
+  // Calcular somatório total de todos os duplicados (não apenas da página)
   const totalDuplicates = selectedSumField
     ? filteredGroups.reduce((sum, group) =>
         sum + group.reduce((s,r)=>s+(typeof r[selectedSumField]==='number'?r[selectedSumField]:0),0), 0)
@@ -2066,8 +2066,8 @@ function renderDuplicates(fields) {
   const groupsHtml = slice.map(group => {
     const keyParts = fields.map(f=>{
       const v=group[0][f];
-      return typeof v==='number'?`${f}: ${fmt(v)}`:`${f}: ${v??'ï¿½'}`;
-    }).join(' ï¿½ ');
+      return typeof v==='number'?`${f}: ${fmt(v)}`:`${f}: ${v??'—'}`;
+    }).join(' — ');
 
     // Usar o campo selecionado pelo utilizador
     const total = selectedSumField && group.length > 0
