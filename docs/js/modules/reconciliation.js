@@ -27,6 +27,23 @@ export const REQUIRED_IDS = [
 export function initReconEvents() {
   const tbody = document.getElementById('recon-table-body');
   if (tbody) tbody.addEventListener('click', e => {
+    const copyBtn = e.target.closest('[data-copy-docs]');
+    if (copyBtn) {
+      e.stopPropagation();
+      const text = copyBtn.dataset.copyDocs;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = copyBtn.innerHTML;
+        copyBtn.innerHTML = '✓';
+        copyBtn.style.color = '#16a34a';
+        setTimeout(() => { copyBtn.innerHTML = orig; copyBtn.style.color = ''; }, 1500);
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta);
+      });
+      return;
+    }
     const tr = e.target.closest('[data-expand]');
     if (tr) toggleReconExpand(tr.dataset.expand);
   });
@@ -263,7 +280,8 @@ export function renderReconTable(groups, groupField, valField, tolerance) {
     const status      = Math.abs(g.saldo) <= tolerance ? '✅ Reconciliado' : '❌ Por reconciliar';
     const statusColor = Math.abs(g.saldo) <= tolerance ? '#22c55e' : '#ef4444';
     const expandId    = `recon-expand-${start + idx}`;
-    const docNumbers  = g.records.map(r => r.numero_documento).filter(n => n).join(', ');
+    const docNumbers     = g.records.map(r => r.numero_documento).filter(n => n).join(', ');
+    const docPreview     = docNumbers.substring(0, 30) + (docNumbers.length > 30 ? '...' : '');
     const debito  = g.records.reduce((s, r) => { const v = r[valField]; return s + (typeof v === 'number' && v > 0 ? v : 0); }, 0);
     const credito = Math.abs(g.records.reduce((s, r) => { const v = r[valField]; return s + (typeof v === 'number' && v < 0 ? v : 0); }, 0));
 
@@ -275,7 +293,10 @@ export function renderReconTable(groups, groupField, valField, tolerance) {
         <td style="padding:10px 12px;text-align:right;color:#dc2626;font-size:11px">${credito > 0 ? fmt(credito) : '—'}</td>
         <td style="padding:10px 12px;text-align:right;font-weight:bold;color:${Math.abs(g.saldo) > 10000 ? '#ef4444' : '#333'}">${fmt(g.saldo)}</td>
         <td style="padding:10px 12px;text-align:center;color:${statusColor};font-weight:600">${status}</td>
-        <td style="padding:10px 12px;font-size:11px;color:#6b7280">${docNumbers.substring(0, 30)}${docNumbers.length > 30 ? '...' : ''}</td>
+        <td style="padding:10px 12px;font-size:11px;color:#6b7280;white-space:nowrap">
+          ${docPreview}
+          ${docNumbers ? `<button data-copy-docs="${escHtml(docNumbers)}" title="Copiar documentos" style="margin-left:6px;background:none;border:1px solid #d1d5db;border-radius:4px;padding:2px 5px;cursor:pointer;font-size:10px;color:#6b7280;line-height:1;vertical-align:middle;transition:all .15s" onmouseenter="this.style.background='#f3f4f6';this.style.borderColor='#9ca3af'" onmouseleave="this.style.background='none';this.style.borderColor='#d1d5db'">⧉</button>` : ''}
+        </td>
       </tr>
       <tr id="${expandId}" style="display:none;background:#f8f9fa">
         <td colspan="7" style="padding:12px 16px">
