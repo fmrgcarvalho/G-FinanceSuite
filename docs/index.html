@@ -201,60 +201,73 @@
         <div class="sum-card dups" id="card-dups" onclick="setFilterTypeFromCard('duplicates')" style="cursor:pointer;transition:all 0.2s"> <div class="sv" id="s-dups">—</div> <div class="sl" id="sl-dups">—</div></div>
         <div class="sum-card info" id="card-groups"> <div class="sv" id="s-groups">—</div><div class="sl" id="sl-groups">—</div></div>
       </div>
+      <div id="filters-section" style="background:linear-gradient(135deg,#f8f9fa 0%,#f0f1f3 100%);border:1px solid var(--gray-border);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:none"></div>
+      <div id="dup-list" style="margin-bottom:20px"></div>
+    </div>
+
+    <!-- Seção de Resultados da Reconciliação (SEPARADA) -->
+    <div id="recon-results-section" style="display:none">
+      <div class="divider"></div>
+      <div class="dup-summary" id="recon-summary-cards">
+        <div class="sum-card total selected" id="recon-card-all" onclick="setFilterTypeFromCard('all')" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="recon-s-total">—</div><div class="sl">Total grupos</div></div>
+        <div class="sum-card dups" id="recon-card-nok" onclick="setFilterTypeFromCard('por_reconciliar')" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="recon-s-nok">—</div><div class="sl">Por reconciliar</div></div>
+        <div class="sum-card clean" id="recon-card-ok" onclick="setFilterTypeFromCard('reconciliados')" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="recon-s-ok">—</div><div class="sl">Reconciliados</div></div>
+        <div class="sum-card info" id="recon-card-tol"> <div class="sv" id="recon-s-tol">—</div><div class="sl">Tolerância</div></div>
+      </div>
       <!-- FILTROS DE RECONCILIAÇÃO -->
-        <div style="background:linear-gradient(135deg,#f8f9fa 0%,#f0f1f3 100%);border:1px solid var(--gray-border);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
-          <div style="min-width:130px">
-            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Saldo mín (€)</label>
-            <input type="number" id="recon-min-saldo" placeholder="Min" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
-          </div>
-          <div style="min-width:130px">
-            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Saldo máx (€)</label>
-            <input type="number" id="recon-max-saldo" placeholder="Max" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
-          </div>
-          <button onclick="applyReconFilters()" style="padding:8px 14px;background:#4a9d83;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">✓ Aplicar Filtro</button>
-          <button onclick="clearReconFilters()" style="padding:8px 14px;background:#e8e9eb;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">🗑 Limpar</button>
-          <div style="flex:1;min-width:20px"></div>
-          <div style="display:flex;flex-direction:column;gap:2px;text-align:right">
-            <div style="font-weight:600;color:#1e40af;font-size:12px">📤 Exportar</div>
-            <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, XLSX, PDF</div>
-          </div>
-          <button onclick="openReconExportModal()" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇ Exportar</button>
+      <div style="background:linear-gradient(135deg,#f8f9fa 0%,#f0f1f3 100%);border:1px solid var(--gray-border);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div style="min-width:130px">
+          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Saldo mín (€)</label>
+          <input type="number" id="recon-min-saldo" placeholder="Min" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+        </div>
+        <div style="min-width:130px">
+          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Saldo máx (€)</label>
+          <input type="number" id="recon-max-saldo" placeholder="Max" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+        </div>
+        <button onclick="applyReconFilters()" style="padding:8px 14px;background:#4a9d83;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">✓ Aplicar Filtro</button>
+        <button onclick="clearReconFilters()" style="padding:8px 14px;background:#e8e9eb;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">🗑 Limpar</button>
+        <div style="flex:1;min-width:20px"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;text-align:right">
+          <div style="font-weight:600;color:#1e40af;font-size:12px">📤 Exportar</div>
+          <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, XLSX, PDF</div>
+        </div>
+        <button onclick="openReconExportModal()" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇ Exportar</button>
+      </div>
+
+      <!-- TABELA ESTRUTURADA COM PAGINAÇÃO -->
+      <div style="background:white;border:1px solid var(--gray-border);border-radius:10px;overflow:hidden;margin-bottom:20px">
+        <h4 style="margin:16px 16px 12px 16px;color:#333;font-size:13px;font-weight:600;text-transform:uppercase">Grupos - Visão Detalhada</h4>
+
+        <!-- Paginação Topo -->
+        <div class="pagination" id="pagination-recon-top" style="display:none;margin:12px 16px 0 16px;padding-bottom:12px;border-bottom:1px solid #f0f0f0">
+          <span class="pag-info" id="pag-info-recon-top"></span>
+          <div class="pag-btns" id="pag-btns-recon-top"></div>
         </div>
 
-        <!-- TABELA ESTRUTURADA COM PAGINAÇÃO -->
-        <div style="background:white;border:1px solid var(--gray-border);border-radius:10px;overflow:hidden;margin-bottom:20px">
-          <h4 style="margin:16px 16px 12px 16px;color:#333;font-size:13px;font-weight:600;text-transform:uppercase">Grupos - Visão Detalhada</h4>
+        <div style="overflow-x:auto">
+          <table id="recon-table" style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead style="background:#f8f9fa;border-bottom:2px solid var(--gray-border)">
+              <tr>
+                <th style="padding:10px 12px;text-align:left;font-weight:600;color:#333">Grupo</th>
+                <th style="padding:10px 12px;text-align:center;font-weight:600;color:#333">Registos</th>
+                <th style="padding:10px 12px;text-align:right;font-weight:600;color:#333">Saldo</th>
+                <th style="padding:10px 12px;text-align:center;font-weight:600;color:#333">Status</th>
+                <th style="padding:10px 12px;text-align:left;font-weight:600;color:#333;font-size:11px">Documentos</th>
+              </tr>
+            </thead>
+            <tbody id="recon-table-body">
+              <!-- preenchido por JS -->
+            </tbody>
+          </table>
+        </div>
 
-          <!-- Paginação Topo -->
-          <div class="pagination" id="pagination-recon-top" style="display:none;margin:12px 16px 0 16px;padding-bottom:12px;border-bottom:1px solid #f0f0f0">
-            <span class="pag-info" id="pag-info-recon-top"></span>
-            <div class="pag-btns" id="pag-btns-recon-top"></div>
-          </div>
-
-          <div style="overflow-x:auto">
-            <table id="recon-table" style="width:100%;border-collapse:collapse;font-size:12px">
-              <thead style="background:#f8f9fa;border-bottom:2px solid var(--gray-border)">
-                <tr>
-                  <th style="padding:10px 12px;text-align:left;font-weight:600;color:#333">Grupo</th>
-                  <th style="padding:10px 12px;text-align:center;font-weight:600;color:#333">Registos</th>
-                  <th style="padding:10px 12px;text-align:right;font-weight:600;color:#333">Saldo</th>
-                  <th style="padding:10px 12px;text-align:center;font-weight:600;color:#333">Status</th>
-                  <th style="padding:10px 12px;text-align:left;font-weight:600;color:#333;font-size:11px">Documentos</th>
-                </tr>
-              </thead>
-              <tbody id="recon-table-body">
-                <!-- preenchido por JS -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Paginação Fundo -->
-          <div class="pagination" id="pagination-recon-bottom" style="display:none;margin:12px 16px 0 16px;padding-top:12px;border-top:1px solid #f0f0f0">
-            <span class="pag-info" id="pag-info-recon-bottom"></span>
-            <div class="pag-btns" id="pag-btns-recon-bottom"></div>
-          </div>
+        <!-- Paginação Fundo -->
+        <div class="pagination" id="pagination-recon-bottom" style="display:none;margin:12px 16px 0 16px;padding-top:12px;border-top:1px solid #f0f0f0">
+          <span class="pag-info" id="pag-info-recon-bottom"></span>
+          <div class="pag-btns" id="pag-btns-recon-bottom"></div>
         </div>
       </div>
+    </div>
 
       <div class="results-header" id="results-header-section" style="display:none">
         <h2 id="results-title">Resultados</h2>

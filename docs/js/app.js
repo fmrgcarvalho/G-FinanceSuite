@@ -1771,6 +1771,7 @@ function selectOp(n) {
     // Duplicados
     show('field-selector');
     hide('recon-config');
+    hide('recon-results-section');
     hide('pagination-recon-top');
     hide('pagination-recon-bottom');
   } else {
@@ -1780,6 +1781,7 @@ function selectOp(n) {
   }
 
   hide('results-section');
+  hide('recon-results-section');
   // Sincronizar botões na sticky bar
   document.getElementById('is-op1')?.classList.toggle('is-active', n===1);
   document.getElementById('is-op2')?.classList.toggle('is-active', n===2);
@@ -1887,10 +1889,8 @@ function runReconciliation() {
     {id:'s-groups', val:`€ ${fmt(tolerance)}`, label:'Tolerância',              cls:'info'},
   ]);
 
-  hide('filters-section');
-  hide('dup-list');
-  hide('pagination');
-  hide('pagination-top');
+  hide('results-section');
+  show('recon-results-section');
   show('recon-config');
   show('pagination-recon-top');
   show('pagination-recon-bottom');
