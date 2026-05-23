@@ -36,3 +36,6 @@ lib/xlsx.full.min.js.js
 temp/
 tmp/
 *.tmp
+
+# Verificação / desenvolvimento
+verify-shots/
