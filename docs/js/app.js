@@ -2895,22 +2895,36 @@ function downloadFile(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
-function setPagination(display, infoText) {
-  const bottom = document.getElementById('pagination');
-  const top    = document.getElementById('pagination-top');
-  if (bottom) bottom.style.display = display;
-  if (top)    top.style.display    = display;
-  if (infoText !== undefined) {
-    const bi = document.getElementById('pag-info');
-    const ti = document.getElementById('pag-info-top');
-    if (bi) bi.textContent = infoText;
-    if (ti) ti.textContent = infoText;
+function setPagination(display, infoText, isRecon = false) {
+  if (isRecon) {
+    const bottom = document.getElementById('pagination-recon-bottom');
+    const top    = document.getElementById('pagination-recon-top');
+    if (bottom) bottom.style.display = display;
+    if (top)    top.style.display    = display;
+    if (infoText !== undefined) {
+      const bi = document.getElementById('pag-info-recon-bottom');
+      const ti = document.getElementById('pag-info-recon-top');
+      if (bi) bi.textContent = infoText;
+      if (ti) ti.textContent = infoText;
+    }
+  } else {
+    const bottom = document.getElementById('pagination');
+    const top    = document.getElementById('pagination-top');
+    if (bottom) bottom.style.display = display;
+    if (top)    top.style.display    = display;
+    if (infoText !== undefined) {
+      const bi = document.getElementById('pag-info');
+      const ti = document.getElementById('pag-info-top');
+      if (bi) bi.textContent = infoText;
+      if (ti) ti.textContent = infoText;
+    }
   }
 }
 
-function renderPagination(totalPages, callback) {
-  const pagBtns    = document.getElementById('pag-btns');
-  const pagBtnsTop = document.getElementById('pag-btns-top');
+function renderPagination(totalPages, callback, isRecon = false) {
+  const suffix = isRecon ? '-recon' : '';
+  const pagBtns    = document.getElementById(`pag-btns${suffix}-bottom`);
+  const pagBtnsTop = document.getElementById(`pag-btns${suffix}-top`);
   if (!pagBtns) return;
 
   pagBtns.innerHTML = '';
@@ -3129,11 +3143,17 @@ function renderReconTable(groups, groupField, valField, tolerance) {
 
   if (!groups || groups.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:#999">Nenhum grupo encontrado</td></tr>';
+    setPagination('none');
     Logger.warn('renderReconTable: nenhum grupo recebido');
     return;
   }
 
-  const rows = groups.map(g => {
+  // Paginação: 100 registos por página
+  const totalPages = Math.ceil(groups.length / PAGE_SIZE);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const slice = groups.slice(start, start + PAGE_SIZE);
+
+  const rows = slice.map(g => {
     const status = Math.abs(g.saldo) <= tolerance ? '✅ Reconciliado' : '❌ Por reconciliar';
     const statusColor = Math.abs(g.saldo) <= tolerance ? '#22c55e' : '#ef4444';
     return `
@@ -3147,7 +3167,10 @@ function renderReconTable(groups, groupField, valField, tolerance) {
   });
 
   tbody.innerHTML = rows.join('');
-  Logger.info(`renderReconTable: ${groups.length} grupos renderizados`);
+  setPagination(groups.length > PAGE_SIZE ? 'flex' : 'none', `Grupos ${start+1}–${Math.min(start+PAGE_SIZE,groups.length)} de ${fmtN(groups.length)}`, true);
+  renderPagination(totalPages, () => renderReconTable(reconDashboardState.filteredGroups, groupField, valField, tolerance), true);
+
+  Logger.info(`renderReconTable: ${slice.length}/${groups.length} grupos renderizados (página ${currentPage}/${totalPages})`);
 }
 
 function applyReconFilters() {
