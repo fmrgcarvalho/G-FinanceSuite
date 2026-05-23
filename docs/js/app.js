@@ -2448,7 +2448,7 @@ function renderReconciliation(reconOk, reconNok, tolerance, groupField, valField
 
 let exportState = {
   dataType: 'all',      // all, duplicates, unique
-  format: 'csv',        // csv, json, xml, pdf
+  format: 'xlsx',       // csv, json, xml, xlsx, pdf
 };
 
 function openExportModal() {
@@ -2462,7 +2462,7 @@ function openExportModal() {
 
   // Atualizar contagens e preview
   updateExportCounts();
-  setExportFormat('csv');
+  setExportFormat('xlsx');
 }
 
 function closeExportModal() {
@@ -2546,8 +2546,8 @@ function updatePdfBtnState({ countAll, countDups, countUnique } = {}) {
     btn.style.opacity = '.38';
     btn.style.cursor = 'not-allowed';
     btn.style.filter = 'grayscale(1)';
-    // Se estava selecionado, mudar para CSV
-    if (exportState.format === 'pdf') setExportFormat('csv');
+    // Se estava selecionado, mudar para XLSX
+    if (exportState.format === 'pdf') setExportFormat('xlsx');
   }
 }
 

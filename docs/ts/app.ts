@@ -2563,7 +2563,7 @@ function renderReconciliation(reconOk, reconNok, tolerance, groupField, valField
 
 let exportState: ExportState = {
   dataType: 'all',
-  format: 'csv'
+  format: 'xlsx'
 };
 
 /**
@@ -2598,7 +2598,7 @@ function openExportModal(): void {
   }
 
   updateExportCounts();
-  setExportFormat('csv');
+  setExportFormat('xlsx');
 }
 
 /**
