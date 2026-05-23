@@ -1822,12 +1822,17 @@ function runDuplicates() {
 
   hide('reconciliation-dashboard');
   hide('results-header-section');
+  hide('recon-config');
+  hide('pagination-recon-top');
+  hide('pagination-recon-bottom');
+  show('filters-section');
+  show('pagination');
+  show('pagination-top');
 
   document.getElementById('results-title').textContent = '';
   currentPage=1;
   activeFilters.type = 'all';  // Começar com "Total registos"
   show('results-section');
-  show('filters-section');
   setFilterTypeFromCard('all');  // Isso chama renderDuplicates com tipo correto
   document.getElementById('results-section').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -1875,6 +1880,9 @@ function runReconciliation() {
   hide('dup-list');
   hide('pagination');
   hide('pagination-top');
+  show('recon-config');
+  show('pagination-recon-top');
+  show('pagination-recon-bottom');
 
   const titleEl = document.getElementById('results-title');
   const metaEl = document.getElementById('results-meta');
