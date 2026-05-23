@@ -2563,7 +2563,7 @@ function updateExportPreview() {
   } else if (format === 'xml') {
     previewText = '📁 XML — Formato estruturado para sistemas';
   } else if (format === 'xlsx') {
-    previewText = `📈 XLSX — Ficheiro Excel com formatação (máx. ${fmtN(PDF_MAX_RECORDS)} registos)`;
+    previewText = '📈 XLSX — Ficheiro Excel com formatação (sem limite)';
   } else if (format === 'pdf') {
     previewText = `📄 PDF — Relatório formatado (máx. ${fmtN(PDF_MAX_RECORDS)} registos)`;
   }

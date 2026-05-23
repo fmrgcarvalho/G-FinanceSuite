@@ -2688,9 +2688,9 @@ function updateExportPreview(): void {
   } else if (format === 'xml') {
     previewText = '📁 XML — Formato estruturado para sistemas';
   } else if (format === 'xlsx') {
-    previewText = '📈 XLSX — Ficheiro Excel com formatação';
+    previewText = '📈 XLSX — Ficheiro Excel com formatação (sem limite)';
   } else if (format === 'pdf') {
-    previewText = '📄 PDF — Relatório formatado e imprimível';
+    previewText = '📄 PDF — Relatório formatado (máx. 2000 registos)';
   }
 
   preview.textContent = previewText;
