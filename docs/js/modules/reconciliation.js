@@ -15,7 +15,7 @@ export const REQUIRED_IDS = [
   'group-field-select', 'value-field-select', 'tolerance-input',
   'recon-results-section', 'recon-config',
   'reconciliation-dashboard', 'results-header-section',
-  'card-all', 'card-dups', 'card-unique',
+  'recon-card-all', 'recon-card-nok', 'recon-card-ok',
   'recon-pie-chart', 'recon-bar-chart',
   'stat-total-balance', 'stat-avg-balance', 'stat-median-balance', 'stat-max-balance',
   'recon-table-body',
@@ -65,10 +65,10 @@ export function runReconciliation() {
   if (reconNok.length) Logger.warn(`${reconNok.length} grupo(s) com saldo acima da tolerância.`);
 
   setSummaryCards([
-    { id:'s-total',  val:fmtN(groupMap.size),   label:`Grupos (${groupField})`, cls:'total' },
-    { id:'s-dups',   val:fmtN(reconNok.length),  label:'Por reconciliar',        cls:'dups'  },
-    { id:'s-unique', val:fmtN(reconOk.length),   label:'Reconciliados',          cls:'clean' },
-    { id:'s-groups', val:`€ ${fmt(tolerance)}`,  label:'Tolerância',             cls:'info'  },
+    { id:'recon-s-total', val:fmtN(groupMap.size),   label:`Grupos (${groupField})`, cls:'total' },
+    { id:'recon-s-nok',   val:fmtN(reconNok.length),  label:'Por reconciliar',        cls:'dups'  },
+    { id:'recon-s-ok',    val:fmtN(reconOk.length),   label:'Reconciliados',          cls:'clean' },
+    { id:'recon-s-tol',   val:`€ ${fmt(tolerance)}`,  label:'Tolerância',             cls:'info'  },
   ]);
 
   hide('results-section');
@@ -83,9 +83,8 @@ export function runReconciliation() {
   if (metaEl)  metaEl.textContent  = `${fmtN(reconNok.length)} por reconciliar — ${fmtN(reconOk.length)} reconciliados`;
 
   AppState.currentPage = 1;
-  show('results-section');
   renderReconDashboard(reconOk, reconNok, tolerance, groupField, valField);
-  document.getElementById('results-section').scrollIntoView({ behavior:'smooth', block:'start' });
+  document.getElementById('recon-results-section').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 // ── Dashboard principal ────────────────────────────────────────
@@ -101,12 +100,12 @@ export function renderReconDashboard(reconOk, reconNok, tolerance, groupField, v
   show('reconciliation-dashboard');
   show('results-header-section');
 
-  const slDups   = document.querySelector('#card-dups .sl');
-  const slUnique = document.querySelector('#card-unique .sl');
-  const slGroups = document.querySelector('#card-groups .sl');
-  if (slDups)   slDups.textContent   = 'Por reconciliar';
-  if (slUnique) slUnique.textContent = 'Reconciliados';
-  if (slGroups) slGroups.textContent = 'Tolerância';
+  const slNok = document.querySelector('#recon-card-nok .sl');
+  const slOk  = document.querySelector('#recon-card-ok .sl');
+  const slTol = document.querySelector('#recon-card-tol .sl');
+  if (slNok) slNok.textContent = 'Por reconciliar';
+  if (slOk)  slOk.textContent  = 'Reconciliados';
+  if (slTol) slTol.textContent = 'Tolerância';
 
   renderReconPieChart(reconOk, reconNok);
   renderReconBarChart(reconNok, valField);
@@ -293,10 +292,10 @@ export function setReconFilterType(type) {
   AppState.reconDashboardState.filteredGroups = filtered;
   AppState.currentPage = 1;
 
-  ['card-all', 'card-dups', 'card-unique'].forEach(id => {
+  ['recon-card-all', 'recon-card-nok', 'recon-card-ok'].forEach(id => {
     const card = document.getElementById(id);
     if (!card) return;
-    const cardType = id === 'card-all' ? 'all' : id === 'card-unique' ? 'reconciliados' : 'por_reconciliar';
+    const cardType = id === 'recon-card-all' ? 'all' : id === 'recon-card-ok' ? 'reconciliados' : 'por_reconciliar';
     card.style.opacity   = type === cardType ? '1' : '0.6';
     card.style.transform = type === cardType ? 'scale(1.02)' : 'scale(1)';
   });
