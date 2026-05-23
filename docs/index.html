@@ -202,7 +202,11 @@
       </div>
       <!-- DASHBOARD DE RECONCILIAÇÃO -->
       <div id="reconciliation-dashboard" style="display:none;margin:20px 0">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 style="margin:0;font-size:14px;color:#333;font-weight:600">DASHBOARD</h3>
+          <button onclick="toggleReconCharts()" style="padding:6px 12px;background:#f0f1f3;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;transition:all 0.2s;font-weight:500">▼ Colapsar</button>
+        </div>
+        <div id="recon-charts-container" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
           <div style="background:white;border:1px solid var(--gray-border);border-radius:10px;padding:16px">
             <h4 style="margin:0 0 12px 0;color:#333;font-size:13px;font-weight:600;text-transform:uppercase">Status de Reconciliação</h4>
             <canvas id="recon-pie-chart" style="max-height:250px"></canvas>

@@ -2138,6 +2138,13 @@ function renderDuplicates(fields) {
 
 /** Muda o tipo de filtro via cards e aplica imediatamente */
 function setFilterTypeFromCard(type) {
+  // Se estamos em reconciliação, chamar a função de reconciliação
+  if (selectedOp === 2 && reconDashboardState.allGroups.length > 0) {
+    setReconFilterType(type);
+    return;
+  }
+
+  // Caso contrário, duplicados
   activeFilters.type = type;
   currentPage = 1;
 
@@ -3003,21 +3010,47 @@ let reconDashboardState = {
   filteredGroups: [],
   minSaldo: null,
   maxSaldo: null,
-  charts: {}
+  charts: {},
+  filterType: 'all',  // all, reconciliados, por_reconciliar
+  tolerance: 1,
+  groupField: '',
+  valField: ''
 };
 
 function renderReconDashboard(reconOk, reconNok, tolerance, groupField, valField) {
   reconDashboardState.allGroups = [...reconNok, ...reconOk];
-  reconDashboardState.filteredGroups = [...reconDashboardState.allGroups];
+  reconDashboardState.tolerance = tolerance;
+  reconDashboardState.groupField = groupField;
+  reconDashboardState.valField = valField;
+  reconDashboardState.filterType = 'all';
 
   Logger.info(`renderReconDashboard: ${reconOk.length} reconciliados + ${reconNok.length} por reconciliar = ${reconDashboardState.allGroups.length} total`);
 
   show('reconciliation-dashboard');
   show('results-header-section');
+
+  // Adicionar onclick aos cards para filtros de reconciliação
+  const cardAll = document.getElementById('card-all');
+  const cardDups = document.getElementById('card-dups');
+  const cardUnique = document.getElementById('card-unique');
+  if (cardAll) cardAll.onclick = () => setFilterTypeFromCard('all');
+  if (cardDups) cardDups.onclick = () => setFilterTypeFromCard('por_reconciliar');
+  if (cardUnique) cardUnique.onclick = () => setFilterTypeFromCard('reconciliados');
+
+  // Alterar labels dos cards para reconciliação
+  const slDups = document.querySelector('#card-dups .sl');
+  const slUnique = document.querySelector('#card-unique .sl');
+  const slGroups = document.querySelector('#card-groups .sl');
+  if (slDups) slDups.textContent = 'Por reconciliar';
+  if (slUnique) slUnique.textContent = 'Reconciliados';
+  if (slGroups) slGroups.textContent = 'Tolerância';
+
   renderReconPieChart(reconOk, reconNok);
   renderReconBarChart(reconNok, valField);
   renderReconStats(reconDashboardState.allGroups);
-  renderReconTable(reconDashboardState.filteredGroups, groupField, valField, tolerance);
+
+  // Aplicar filtro inicial (all)
+  setReconFilterType('all');
 }
 
 function renderReconPieChart(reconOk, reconNok) {
@@ -3239,5 +3272,44 @@ function toggleReconExpand(expandId) {
   if (el) {
     const isVisible = el.style.display !== 'none';
     el.style.display = isVisible ? 'none' : 'table-row';
+  }
+}
+
+function setReconFilterType(type) {
+  reconDashboardState.filterType = type;
+
+  // Aplicar filtro baseado no tipo
+  let filtered = reconDashboardState.allGroups;
+  if (type === 'reconciliados') {
+    filtered = reconDashboardState.allGroups.filter(g => Math.abs(g.saldo) <= reconDashboardState.tolerance);
+  } else if (type === 'por_reconciliar') {
+    filtered = reconDashboardState.allGroups.filter(g => Math.abs(g.saldo) > reconDashboardState.tolerance);
+  }
+
+  reconDashboardState.filteredGroups = filtered;
+  currentPage = 1;
+
+  // Atualizar cards visuais
+  ['card-all', 'card-dups', 'card-unique'].forEach(id => {
+    const card = document.getElementById(id);
+    if (card) {
+      const cardType = id === 'card-all' ? 'all' : (id === 'card-unique' ? 'reconciliados' : 'por_reconciliar');
+      card.style.opacity = type === cardType ? '1' : '0.6';
+      card.style.transform = type === cardType ? 'scale(1.02)' : 'scale(1)';
+    }
+  });
+
+  // Re-renderizar tabela
+  renderReconTable(reconDashboardState.filteredGroups, reconDashboardState.groupField, reconDashboardState.valField, reconDashboardState.tolerance);
+  Logger.info(`Filtro: ${type} | ${reconDashboardState.filteredGroups.length} grupos mostrados`);
+}
+
+function toggleReconCharts() {
+  const container = document.getElementById('recon-charts-container');
+  const btn = event.target;
+  if (container) {
+    const isVisible = container.style.display !== 'none';
+    container.style.display = isVisible ? 'none' : 'grid';
+    btn.textContent = isVisible ? '▶ Expandir' : '▼ Colapsar';
   }
 }
