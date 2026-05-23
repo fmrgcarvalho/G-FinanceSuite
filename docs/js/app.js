@@ -64,8 +64,8 @@ function toggleLog() {
   const panel = document.getElementById('log-panel');
   const chevron = document.getElementById('log-chevron');
   panel.classList.toggle('collapsed');
-  // Atualizar ícone: ▼ quando fechado, ▲ quando aberto
-  chevron.textContent = panel.classList.contains('collapsed') ? '▼' : '▲';
+  // Atualizar ícone: ⬇️ quando fechado, ⬆️ quando aberto
+  chevron.textContent = panel.classList.contains('collapsed') ? '⬇️' : '⬆️';
 }
 
 function exportLog()  {
@@ -1387,7 +1387,7 @@ function showMappingStep(headers, rows, hIdx) {
         <span class="map-preview" title="${escHtml(String(previewRow[i]??''))}">${escHtml(preview)}</span>
         <span style="font-size:10px;color:var(--muted);display:block;margin-top:2px">${typeHint}</span>
       </td>
-      <td class="map-arrow">→</td>
+      <td class="map-arrow">➡️</td>
       <td class="map-input-cell">
         <input type="text"
                id="map-inp-${i}"
@@ -1497,9 +1497,9 @@ function confirmMapping() {
     return;
   }
 
-  Logger.separator('Conversão Excel → Modelo');
+  Logger.separator('Conversão Excel ➡️ Modelo');
   Object.entries(mapping).forEach(([ci, fk]) =>
-    Logger.info(`  Coluna "${_excelHeaders[parseInt(ci)]}" → ${fk}`)
+    Logger.info(`  Coluna "${_excelHeaders[parseInt(ci)]}" ➡️ ${fk}`)
   );
 
   hide('mapping-section');

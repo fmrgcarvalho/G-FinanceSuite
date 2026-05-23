@@ -157,8 +157,8 @@ function toggleLog() {
   const panel = document.getElementById('log-panel');
   const chevron = document.getElementById('log-chevron');
   panel.classList.toggle('collapsed');
-  // Atualizar ícone: ▼ quando fechado, ▲ quando aberto
-  chevron.textContent = panel.classList.contains('collapsed') ? '▼' : '▲';
+  // Atualizar ícone: ⬇️ quando fechado, ⬆️ quando aberto
+  chevron.textContent = panel.classList.contains('collapsed') ? '⬇️' : '⬆️';
 }
 
 function exportLog()  {
