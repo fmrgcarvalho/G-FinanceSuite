@@ -19,12 +19,31 @@ export const REQUIRED_IDS = [
 ];
 
 // ── Seletor de campos Op1 ──────────────────────────────────────
+export function initDuplicatesEvents() {
+  const grid = document.getElementById('fields-grid');
+  if (grid) grid.addEventListener('change', e => {
+    const inp = e.target.closest('input[type=checkbox][data-field]');
+    if (inp) toggleField(inp.dataset.field, inp);
+  });
+
+  const searchPanel = document.getElementById('search-field-panel');
+  if (searchPanel) searchPanel.addEventListener('change', e => {
+    if (e.target.type === 'checkbox') onSearchFieldChange();
+  });
+
+  const dupList = document.getElementById('dup-list');
+  if (dupList) dupList.addEventListener('click', e => {
+    const sortTh = e.target.closest('[data-sort]');
+    if (sortTh) { setSortField(sortTh.dataset.sort); return; }
+  });
+}
+
 export function buildFieldSelector() {
   const grid = document.getElementById('fields-grid');
   grid.innerHTML = AppState.availableFields.map(f => `
     <label class="field-chk ${AppState.checkedFields.has(f.key)?'checked':''}" id="lbl-${f.key}">
-      <input type="checkbox" ${AppState.checkedFields.has(f.key)?'checked':''}
-             onchange="toggleField('${f.key}',this)">
+      <input type="checkbox" data-field="${f.key}" ${AppState.checkedFields.has(f.key)?'checked':''}
+             >
       <span class="fname">${f.key}</span>
       <span class="fdesc">${f.desc}</span>
     </label>`).join('');
@@ -174,7 +193,7 @@ export function renderDuplicates(fields) {
             <div style="font-weight:600;color:#1e40af;font-size:12px">📊 Exportar dados</div>
             <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, XLSX, PDF</div>
           </div>
-          <button onclick="openExportModal()" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇️ Exportar</button>
+          <button data-action="open-export" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇️ Exportar</button>
         </div>
       </div>
       <div style="overflow-x:auto"><table>
@@ -242,7 +261,7 @@ export function renderDuplicates(fields) {
             <div style="font-weight:600;color:#1e40af;font-size:12px">📊 Exportar dados</div>
             <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, XLSX, PDF</div>
           </div>
-          <button onclick="openExportModal()" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇️ Exportar</button>
+          <button data-action="open-export" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇️ Exportar</button>
         </div>
       </div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;">
@@ -291,7 +310,7 @@ export function renderDuplicates(fields) {
           <div style="font-weight:600;color:#1e40af;font-size:12px">📤 Exportar dados</div>
           <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, XLSX, PDF</div>
         </div>
-        <button onclick="openExportModal()" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇ Exportar</button>
+        <button data-action="open-export" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇ Exportar</button>
       </div>
     </div>
     ${groupsHtml}`;
@@ -353,7 +372,7 @@ export function buildSearchFieldPanel() {
       const checked = AppState.activeFilters.searchFields.includes(f.key);
       const icon = f.desc ? f.desc.split(' ')[0] : '❓';
       return `<label title="${f.desc || f.key}" style="display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;font-size:12px;color:var(--dark);user-select:none;transition:background .12s${checked ? ';background:#f2f9e8' : ''}" onmouseenter="this.style.background='${checked ? '#eaf5d6' : '#f7f8f6'}'" onmouseleave="this.style.background='${checked ? '#f2f9e8' : 'transparent'}'">
-        <input type="checkbox" value="${f.key}" onchange="onSearchFieldChange()"
+        <input type="checkbox" value="${f.key}"
                style="accent-color:var(--green);width:13px;height:13px;cursor:pointer;flex-shrink:0"
                ${checked ? 'checked' : ''}>
         <span style="font-family:monospace;font-size:12px;font-weight:${checked ? '700' : '500'};color:${checked ? 'var(--green-dark)' : 'var(--dark)'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.key}</span>
@@ -476,7 +495,7 @@ function _visibleCols(fields) {
 
 function _headerCells(cols) {
   return cols.map(f =>
-    `<th style="cursor:pointer;user-select:none;padding:8px;background:#f5f5f5;border-bottom:2px solid #ddd;" onclick="setSortField('${f}')">${f.replace(/_/g,' ')}${getSortIndicator(f)}</th>`
+    `<th style="cursor:pointer;user-select:none;padding:8px;background:#f5f5f5;border-bottom:2px solid #ddd;" data-sort="${f}">${f.replace(/_/g,' ')}${getSortIndicator(f)}</th>`
   ).join('');
 }
 

@@ -1,9 +1,9 @@
 /* ============================================================
    G-FinanceSuite — Orquestrador principal
-   Migração gradual para ES6 modules.
    ============================================================ */
 
 import { AppState, APP_VERSION, PAGE_SIZE, PDF_MAX_RECORDS } from './state.js';
+import { Logger } from './modules/logger.js';
 import { show, hide, setProgress, fmt, fmtN, escHtml, setSummaryCards, guessFieldType } from './modules/ui.js';
 import { setPagination, renderPagination } from './modules/pagination.js';
 import {
@@ -17,6 +17,7 @@ import {
   setFilterTypeFromCard as setDupFilterTypeFromCard, setupFilters,
   buildSearchFieldPanel, onSearchFieldChange, updateSearchFieldBtn, toggleSearchFieldPanel,
   clearFilters, sortRecords, setSortField, getSortIndicator, getFilteredGroups,
+  initDuplicatesEvents,
 } from './modules/duplicates.js';
 import {
   runReconciliation, renderReconDashboard,
@@ -24,6 +25,7 @@ import {
   applyReconFilters, clearReconFilters, toggleReconExpand, setReconFilterType, toggleReconCharts,
   openReconExportModal, closeReconExportModal, setReconExportDataType, setReconExportFormat,
   updateReconExportCounts, updateReconExportPreview, getReconDataToExport, executeReconExport,
+  initReconEvents,
 } from './modules/reconciliation.js';
 import {
   openExportModal, closeExportModal, setExportDataType, setExportFormat,
@@ -33,62 +35,8 @@ import {
 } from './modules/export.js';
 
 /* --------------------------------------------------------------
-   LOGGER
+   LOG UI
    -------------------------------------------------------------- */
-const Logger = (() => {
-  const entries = [];
-  let hasError  = false;
-
-  const ts = () => new Date().toISOString().replace('T',' ').substring(0,23);
-
-  function push(level, msg) {
-    const entry = { ts: ts(), level, msg };
-    entries.push(entry);
-    render(entry);
-    updateHeader();
-    if (level === 'ERROR') {
-      hasError = true;
-      document.getElementById('log-panel').classList.remove('collapsed');
-      document.getElementById('log-dot').className = 'log-dot error';
-    }
-    console[level==='ERROR'?'error':level==='WARN'?'warn':'log'](`[${level}] ${msg}`);
-  }
-
-  function render(entry) {
-    const body = document.getElementById('log-body');
-    const el   = document.createElement('div');
-    el.className = `log-entry ${entry.level}`;
-    el.innerHTML = `<span class="log-ts">${entry.ts.substring(11)}</span><span class="log-msg">${esc(entry.msg)}</span>`;
-    body.appendChild(el);
-    body.scrollTop = body.scrollHeight;
-  }
-
-  function updateHeader() {
-    document.getElementById('log-count').textContent =
-      `${entries.length} entrada${entries.length!==1?'s':''}`;
-    if (!hasError)
-      document.getElementById('log-dot').className = entries.length ? 'log-dot' : 'log-dot idle';
-  }
-
-  const esc = s => String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-
-  return {
-    info     : msg => push('INFO',  msg),
-    warn     : msg => push('WARN',  msg),
-    error    : msg => push('ERROR', msg),
-    separator: lbl => push('INFO',  `---- ${lbl} ----`),
-    all      : ()  => entries,
-    clear    : ()  => {
-      entries.length = 0; hasError = false;
-      document.getElementById('log-body').innerHTML = '';
-      document.getElementById('log-dot').className  = 'log-dot idle';
-      updateHeader();
-    },
-  };
-})();
-
 function toggleLog() {
   const modal = document.getElementById('log-modal');
   if (!modal) return;
@@ -108,7 +56,7 @@ function exportLog() {
 function clearLog() { Logger.clear(); }
 
 /* --------------------------------------------------------------
-   SHOW CONTENT — constrói UI de análise a partir dos dados reais
+   SHOW CONTENT
    -------------------------------------------------------------- */
 function showContent() {
   hide('import-section');
@@ -153,11 +101,8 @@ function showContent() {
   selectOp(1);
 }
 
-// buildFieldSelector, buildSumFieldSelector, toggleField,
-// selectAllFields, clearAllFields → modules/duplicates.js
-
 /* --------------------------------------------------------------
-   OP 2 — CONFIGURAÇÃO DINÂMICA (agrupar por + campo de valor)
+   OP 2 — CONFIGURAÇÃO DINÂMICA
    -------------------------------------------------------------- */
 function buildReconConfig() {
   const groupSel = document.getElementById('group-field-select');
@@ -215,15 +160,8 @@ function runAnalysis() {
   if (AppState.selectedOp===1) runDuplicates(); else runReconciliation();
 }
 
-// runDuplicates → modules/duplicates.js
-
-// runReconciliation → modules/reconciliation.js
-
-// renderDuplicates, filter/sort functions → modules/duplicates.js
-
-
 /* --------------------------------------------------------------
-   FILTRO POR CARD — orquestra entre Op1 e Op2
+   FILTRO POR CARD
    -------------------------------------------------------------- */
 function setFilterTypeFromCard(type) {
   if (AppState.selectedOp === 2 && AppState.reconDashboardState.allGroups.length > 0) {
@@ -232,10 +170,6 @@ function setFilterTypeFromCard(type) {
   }
   setDupFilterTypeFromCard(type);
 }
-
-// setupFilters, buildSearchFieldPanel, onSearchFieldChange, updateSearchFieldBtn,
-// toggleSearchFieldPanel, clearFilters, sortRecords, setSortField, getSortIndicator,
-// getFilteredGroups → modules/duplicates.js
 
 /* --------------------------------------------------------------
    RESET & ADICIONAR FICHEIROS
@@ -280,7 +214,24 @@ function renderReconciliation(reconOk, reconNok, tolerance, groupField, valField
   renderReconDashboard(reconOk, reconNok, tolerance, groupField, valField);
 }
 
-// export functions → modules/export.js
+/* --------------------------------------------------------------
+   VALIDAÇÃO DE DOM
+   -------------------------------------------------------------- */
+function validateDOM() {
+  const allIds = [
+    'import-section', 'file-input', 'files-queue', 'files-queue-list',
+    'mapping-section', 'map-table-wrap', 'map-summary',
+    'progress-section', 'prog-fill', 'prog-label', 'prog-sub',
+    'content', 'results-section', 'recon-results-section',
+    'fields-grid', 'sum-field-select', 'dup-list', 'filters-section',
+    'group-field-select', 'value-field-select', 'tolerance-input',
+    'recon-table-body', 'export-modal', 'recon-export-modal',
+    'log-modal', 'log-body', 'log-dot', 'log-count',
+  ];
+  const missing = allIds.filter(id => !document.getElementById(id));
+  if (missing.length) Logger.warn(`DOM incompleto — em falta: ${missing.join(', ')}`);
+  return missing.length === 0;
+}
 
 /* --------------------------------------------------------------
    INICIALIZAÇÃO DA PÁGINA
@@ -295,17 +246,94 @@ document.addEventListener('DOMContentLoaded', () => {
   hide('results-section');
   show('import-section');
 
-  const logPanel = document.getElementById('log-panel');
-  if (logPanel) {
-    logPanel.classList.add('collapsed');
-    const chevron = document.getElementById('log-chevron');
-    if (chevron) chevron.textContent = '▼';
-  }
+  validateDOM();
 
   initImport({ onConsolidationComplete: showContent });
+  initDuplicatesEvents();
+  initReconEvents();
 
   Logger.info('Portal inicializado');
 
+  // ── Log modal ──────────────────────────────────────────────────
+  document.getElementById('log-btn')?.addEventListener('click', toggleLog);
+  document.getElementById('log-modal-backdrop')?.addEventListener('click', toggleLog);
+  document.getElementById('log-modal-close')?.addEventListener('click', toggleLog);
+  document.getElementById('btn-export-log')?.addEventListener('click', exportLog);
+  document.getElementById('btn-clear-log')?.addEventListener('click', clearLog);
+
+  // ── Op selection ───────────────────────────────────────────────
+  document.getElementById('op1-card')?.addEventListener('click', () => selectOp(1));
+  document.getElementById('op2-card')?.addEventListener('click', () => selectOp(2));
+  document.getElementById('is-op1')?.addEventListener('click', () => selectOp(1));
+  document.getElementById('is-op2')?.addEventListener('click', () => selectOp(2));
+
+  // ── Reset / nova análise ───────────────────────────────────────
+  document.getElementById('btn-sticky-reset')?.addEventListener('click', resetAll);
+  document.getElementById('btn-ctb-reset')?.addEventListener('click', resetAll);
+  document.getElementById('btn-cancel-mapping')?.addEventListener('click', resetAll);
+
+  // ── Mapeamento ─────────────────────────────────────────────────
+  document.getElementById('btn-confirm-mapping')?.addEventListener('click', confirmMapping);
+
+  // ── Seleção de campos Op1 ──────────────────────────────────────
+  document.getElementById('btn-select-all-fields')?.addEventListener('click', selectAllFields);
+  document.getElementById('btn-clear-all-fields')?.addEventListener('click', clearAllFields);
+
+  // ── Executar análise ───────────────────────────────────────────
+  document.getElementById('btn-run')?.addEventListener('click', runAnalysis);
+  document.getElementById('btn-run-recon')?.addEventListener('click', runAnalysis);
+
+  // ── Cards de sumário (delegação em ambos os containers) ────────
+  document.getElementById('summary-cards')?.addEventListener('click', e => {
+    const card = e.target.closest('[data-filter]');
+    if (card) setFilterTypeFromCard(card.dataset.filter);
+  });
+  document.getElementById('recon-summary-cards')?.addEventListener('click', e => {
+    const card = e.target.closest('[data-filter]');
+    if (card) setFilterTypeFromCard(card.dataset.filter);
+  });
+
+  // ── Filtros Op1 ────────────────────────────────────────────────
+  document.getElementById('search-field-btn')?.addEventListener('click', toggleSearchFieldPanel);
+  document.getElementById('btn-clear-filters')?.addEventListener('click', clearFilters);
+
+  // ── Filtros Op2 ────────────────────────────────────────────────
+  document.getElementById('btn-apply-recon-filters')?.addEventListener('click', applyReconFilters);
+  document.getElementById('btn-clear-recon-filters')?.addEventListener('click', clearReconFilters);
+  document.getElementById('btn-open-recon-export')?.addEventListener('click', openReconExportModal);
+
+  // ── Export modal Op1 ───────────────────────────────────────────
+  document.getElementById('btn-close-export-modal')?.addEventListener('click', closeExportModal);
+  document.getElementById('btn-execute-export')?.addEventListener('click', executeExport);
+
+  document.getElementById('export-modal')?.addEventListener('change', e => {
+    const radio = e.target.closest('input[name=export-type]');
+    if (radio) setExportDataType(radio.value);
+  });
+  document.getElementById('export-modal')?.addEventListener('click', e => {
+    const btn = e.target.closest('.export-fmt-btn[data-format]');
+    if (btn) setExportFormat(btn.dataset.format);
+  });
+
+  // ── Export modal Op2 ───────────────────────────────────────────
+  document.getElementById('btn-close-recon-export-modal')?.addEventListener('click', closeReconExportModal);
+  document.getElementById('btn-execute-recon-export')?.addEventListener('click', executeReconExport);
+
+  document.getElementById('recon-export-modal')?.addEventListener('change', e => {
+    const radio = e.target.closest('input[name=recon-export-type]');
+    if (radio) setReconExportDataType(radio.value);
+  });
+  document.getElementById('recon-export-modal')?.addEventListener('click', e => {
+    const btn = e.target.closest('.recon-export-fmt-btn[data-format]');
+    if (btn) setReconExportFormat(btn.dataset.format);
+  });
+
+  // ── Export button from dup-list (rendered dynamically) ────────
+  document.getElementById('dup-list')?.addEventListener('click', e => {
+    if (e.target.closest('[data-action="open-export"]')) openExportModal();
+  });
+
+  // ── Sticky bar scroll observer ─────────────────────────────────
   const stickyBar   = document.getElementById('info-sticky-bar');
   const fileInfoBar = document.querySelector('.file-info-bar-v2');
   if (stickyBar && fileInfoBar) {
@@ -320,51 +348,3 @@ document.addEventListener('DOMContentLoaded', () => {
     observer.observe(fileInfoBar);
   }
 });
-
-// renderReconDashboard, renderReconPieChart, renderReconBarChart, renderReconStats,
-// renderReconTable, applyReconFilters, clearReconFilters, toggleReconExpand,
-// setReconFilterType, toggleReconCharts + recon export functions → modules/reconciliation.js
-
-
-/* ============================================================
-   SHIMS GLOBAIS — Expõe funções ao HTML via onclick/onchange
-   Temporário durante migração para ES6 modules.
-   Removidos na Fase 7 (substituídos por event listeners).
-   ============================================================ */
-window.Logger                 = Logger;
-window.toggleLog              = toggleLog;
-window.exportLog              = exportLog;
-window.clearLog               = clearLog;
-window.selectOp               = selectOp;
-window.runAnalysis            = runAnalysis;
-window.resetAll               = resetAll;
-window.clearAllFields         = clearAllFields;
-window.selectAllFields        = selectAllFields;
-window.toggleField            = toggleField;
-window.clearFilters           = clearFilters;
-window.toggleSearchFieldPanel = toggleSearchFieldPanel;
-window.onSearchFieldChange    = onSearchFieldChange;
-window.setFilterTypeFromCard  = setFilterTypeFromCard;
-window.setSortField           = setSortField;
-window.confirmMapping         = confirmMapping;
-window.onMapInputChange       = onMapInputChange;
-window.toggleIgnore           = toggleIgnore;
-window.addMoreFiles           = addMoreFiles;
-window.removeFileFromQueue    = removeFileFromQueue;
-window.startAnalysis          = startAnalysis;
-window.startProcessing        = startProcessing;
-window.processSingleFile      = processSingleFile;
-window.applyReconFilters      = applyReconFilters;
-window.clearReconFilters      = clearReconFilters;
-window.toggleReconCharts      = toggleReconCharts;
-window.toggleReconExpand      = toggleReconExpand;
-window.openExportModal        = openExportModal;
-window.closeExportModal       = closeExportModal;
-window.setExportDataType      = setExportDataType;
-window.setExportFormat        = setExportFormat;
-window.executeExport          = executeExport;
-window.openReconExportModal   = openReconExportModal;
-window.closeReconExportModal  = closeReconExportModal;
-window.setReconExportDataType = setReconExportDataType;
-window.setReconExportFormat   = setReconExportFormat;
-window.executeReconExport     = executeReconExport;

@@ -1,14 +1,12 @@
 /* ============================================================
    G-FinanceSuite — Módulo Export (Op1 + Op2)
    Exportação CSV/JSON/XML/XLSX/PDF para duplicados e reconciliação.
-   Depende de: AppState, PDF_MAX_RECORDS (state.js), ui.js
-   Logger acedido via window.Logger (shim temporário até Phase 7)
+   Depende de: AppState, PDF_MAX_RECORDS (state.js), ui.js, logger.js
    ============================================================ */
 
 import { AppState, PDF_MAX_RECORDS } from '../state.js';
 import { fmt, fmtN } from './ui.js';
-
-const L = () => window.Logger || console;
+import { Logger } from './logger.js';
 
 // ── IDs DOM necessários ────────────────────────────────────────
 export const REQUIRED_IDS = [
@@ -139,7 +137,7 @@ export function executeExport() {
   else if (format === 'pdf')  exportToPDF(data, columns, filename);
 
   closeExportModal();
-  L().info(`✅ Exportação em ${format.toUpperCase()} concluída: ${data.length} registos`);
+  Logger.info(`✅ Exportação em ${format.toUpperCase()} concluída: ${data.length} registos`);
 }
 
 // ── Formatos de exportação ─────────────────────────────────────
@@ -190,7 +188,7 @@ export function exportToXML(data, columns, filename) {
 export function exportToXLSX(data, columns, filename) {
   try {
     if (typeof window.XLSX === 'undefined') {
-      L().error('Biblioteca XLSX não carregou');
+      Logger.error('Biblioteca XLSX não carregou');
       alert('⚠️ Biblioteca XLSX ainda a carregar. Tenta novamente em alguns segundos.');
       return;
     }
@@ -202,9 +200,9 @@ export function exportToXLSX(data, columns, filename) {
     XLSX.utils.book_append_sheet(wb, ws, 'Dados');
     wb.Props = { Title: 'G-FinanceSuite - Exportação de Dados', Author: 'G-FinanceSuite', CreatedDate: new Date() };
     XLSX.writeFile(wb, `${filename}.xlsx`);
-    L().info(`✅ XLSX exportado com sucesso: ${data.length} registos`);
+    Logger.info(`✅ XLSX exportado com sucesso: ${data.length} registos`);
   } catch (err) {
-    L().error(`Erro na exportação XLSX: ${err instanceof Error ? err.message : String(err)}`);
+    Logger.error(`Erro na exportação XLSX: ${err instanceof Error ? err.message : String(err)}`);
     alert('Erro ao exportar XLSX:\n' + (err instanceof Error ? err.message : String(err)));
   }
 }

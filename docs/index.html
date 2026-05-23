@@ -35,7 +35,7 @@
 <header>
   <div class="logo">G-FinanceSuite</div>
   <h1>Análise de Duplicados e Reconciliação</h1>
-  <button class="header-btn" id="log-btn" onclick="toggleLog()" title="Abrir/Fechar Log">📋 Log</button>
+  <button class="header-btn" id="log-btn" title="Abrir/Fechar Log">📋 Log</button>
 </header>
 
 <!-- Barra de info sticky (aparece ao fazer scroll) -->
@@ -48,10 +48,10 @@
     <div class="is-sep"></div>
     <span class="is-stat">🔑 <strong id="is-campos">—</strong> <span class="is-label">campos</span></span>
     <div class="is-sep"></div>
-    <button class="is-op-btn" id="is-op1" onclick="selectOp(1)">Identificar duplicados</button>
-    <button class="is-op-btn is-op-blue" id="is-op2" onclick="selectOp(2)">Reconciliação</button>
+    <button class="is-op-btn" id="is-op1">Identificar duplicados</button>
+    <button class="is-op-btn is-op-blue" id="is-op2">Reconciliação</button>
     <div class="is-spacer"></div>
-    <button class="is-btn" onclick="resetAll()">↩ Nova Análise</button>
+    <button class="is-btn" id="btn-sticky-reset">↩ Nova Análise</button>
   </div>
 </div>
 
@@ -93,7 +93,7 @@
             Revê e ajusta antes de continuar — usa <em>"— Ignorar —"</em> para excluir uma coluna.
           </p>
         </div>
-        <button class="btn-new" onclick="resetAll()">↩ Cancelar</button>
+        <button class="btn-new" id="btn-cancel-mapping">↩ Cancelar</button>
       </div>
 
       <div class="map-table-wrap" id="map-table-wrap">
@@ -102,7 +102,7 @@
 
       <div class="map-footer">
         <span class="map-summary" id="map-summary"></span>
-        <button class="btn-run" onclick="confirmMapping()">✓ Confirmar e analisar</button>
+        <button class="btn-run" id="btn-confirm-mapping">✓ Confirmar e analisar</button>
       </div>
     </div>
   </div>
@@ -136,17 +136,17 @@
       <div class="ctb-vsep"></div>
 
       <div class="ctb-seg">
-        <div class="ctb-seg-btn active" id="op1-card" onclick="selectOp(1)">
+        <div class="ctb-seg-btn active" id="op1-card">
           🔍 Duplicados
         </div>
-        <div class="ctb-seg-btn" id="op2-card" onclick="selectOp(2)">
+        <div class="ctb-seg-btn" id="op2-card">
           ⚖️ Reconciliação
         </div>
       </div>
 
       <div class="ctb-spacer"></div>
 
-      <button class="ctb-reset" onclick="resetAll()">↩ Nova Análise</button>
+      <button class="ctb-reset" id="btn-ctb-reset">↩ Nova Análise</button>
     </div>
 
     <!-- Op 1 — seletor de campos dinâmico -->
@@ -157,8 +157,8 @@
           <p class="fs-desc">Assinala os campos que devem ser <strong>iguais</strong> para considerar dois registos duplicados.</p>
         </div>
         <div class="fs-header-actions">
-          <button class="btn-sm" onclick="selectAllFields()">Selecionar todos</button>
-          <button class="btn-sm" onclick="clearAllFields()">Limpar todos</button>
+          <button class="btn-sm" id="btn-select-all-fields">Selecionar todos</button>
+          <button class="btn-sm" id="btn-clear-all-fields">Limpar todos</button>
         </div>
       </div>
       <div class="fields-grid" id="fields-grid"></div>
@@ -169,7 +169,7 @@
             <option value="">— Nenhum —</option>
           </select>
         </div>
-        <button class="btn-run" id="btn-run" onclick="runAnalysis()">▶ Executar análise</button>
+        <button class="btn-run" id="btn-run">▶ Executar análise</button>
       </div>
     </div>
 
@@ -188,7 +188,7 @@
           <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">✓ Tolerância (€)</label>
           <input type="number" id="tolerance-input" value="1.00" min="0" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:white;font-weight:500;text-align:center">
         </div>
-        <button class="btn-run" onclick="runAnalysis()" style="padding:8px 20px;background:var(--green);color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-size:13px;height:36px;display:flex;align-items:center;gap:6px">▶ Executar</button>
+        <button class="btn-run" id="btn-run-recon" style="padding:8px 20px;background:var(--green);color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-size:13px;height:36px;display:flex;align-items:center;gap:6px">▶ Executar</button>
       </div>
     </div>
 
@@ -196,9 +196,9 @@
     <div id="results-section" style="display:none">
       <div class="divider"></div>
       <div class="dup-summary" id="summary-cards">
-        <div class="sum-card total selected" id="card-all" onclick="setFilterTypeFromCard('all')" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="s-total">—</div><div class="sl">Total registos</div></div>
-        <div class="sum-card clean" id="card-unique" onclick="setFilterTypeFromCard('unique')" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="s-unique">—</div><div class="sl" id="sl-unique">—</div></div>
-        <div class="sum-card dups" id="card-dups" onclick="setFilterTypeFromCard('duplicates')" style="cursor:pointer;transition:all 0.2s"> <div class="sv" id="s-dups">—</div> <div class="sl" id="sl-dups">—</div></div>
+        <div class="sum-card total selected" id="card-all" data-filter="all" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="s-total">—</div><div class="sl">Total registos</div></div>
+        <div class="sum-card clean" id="card-unique" data-filter="unique" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="s-unique">—</div><div class="sl" id="sl-unique">—</div></div>
+        <div class="sum-card dups" id="card-dups" data-filter="duplicates" style="cursor:pointer;transition:all 0.2s"> <div class="sv" id="s-dups">—</div> <div class="sl" id="sl-dups">—</div></div>
         <div class="sum-card info" id="card-groups"> <div class="sv" id="s-groups">—</div><div class="sl" id="sl-groups">—</div></div>
       </div>
       <div id="filters-section" style="background:linear-gradient(135deg,#f8f9fa 0%,#f0f1f3 100%);border:1px solid var(--gray-border);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:none"></div>
@@ -209,9 +209,9 @@
     <div id="recon-results-section" style="display:none">
       <div class="divider"></div>
       <div class="dup-summary" id="recon-summary-cards">
-        <div class="sum-card total selected" id="recon-card-all" onclick="setFilterTypeFromCard('all')" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="recon-s-total">—</div><div class="sl">Total grupos</div></div>
-        <div class="sum-card dups" id="recon-card-nok" onclick="setFilterTypeFromCard('por_reconciliar')" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="recon-s-nok">—</div><div class="sl">Por reconciliar</div></div>
-        <div class="sum-card clean" id="recon-card-ok" onclick="setFilterTypeFromCard('reconciliados')" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="recon-s-ok">—</div><div class="sl">Reconciliados</div></div>
+        <div class="sum-card total selected" id="recon-card-all" data-filter="all" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="recon-s-total">—</div><div class="sl">Total grupos</div></div>
+        <div class="sum-card dups" id="recon-card-nok" data-filter="por_reconciliar" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="recon-s-nok">—</div><div class="sl">Por reconciliar</div></div>
+        <div class="sum-card clean" id="recon-card-ok" data-filter="reconciliados" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="recon-s-ok">—</div><div class="sl">Reconciliados</div></div>
         <div class="sum-card info" id="recon-card-tol"> <div class="sv" id="recon-s-tol">—</div><div class="sl">Tolerância</div></div>
       </div>
       <!-- FILTROS DE RECONCILIAÇÃO -->
@@ -224,14 +224,14 @@
           <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Saldo máx (€)</label>
           <input type="number" id="recon-max-saldo" placeholder="Max" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
         </div>
-        <button onclick="applyReconFilters()" style="padding:8px 14px;background:#4a9d83;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">✓ Aplicar Filtro</button>
-        <button onclick="clearReconFilters()" style="padding:8px 14px;background:#e8e9eb;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">🗑 Limpar</button>
+        <button id="btn-apply-recon-filters" style="padding:8px 14px;background:#4a9d83;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">✓ Aplicar Filtro</button>
+        <button id="btn-clear-recon-filters" style="padding:8px 14px;background:#e8e9eb;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">🗑 Limpar</button>
         <div style="flex:1;min-width:20px"></div>
         <div style="display:flex;flex-direction:column;gap:2px;text-align:right">
           <div style="font-weight:600;color:#1e40af;font-size:12px">📤 Exportar</div>
           <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, XLSX, PDF</div>
         </div>
-        <button onclick="openReconExportModal()" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇ Exportar</button>
+        <button id="btn-open-recon-export" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇ Exportar</button>
       </div>
 
       <!-- TABELA ESTRUTURADA COM PAGINAÇÃO -->
@@ -284,15 +284,15 @@
             <label style="font-weight:600;font-size:13px;color:#6b7280;text-transform:uppercase;margin-bottom:10px;display:block">📊 Selecione os dados:</label>
             <div style="display:flex;flex-direction:column;gap:10px">
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1.5px solid #ddd;border-radius:8px;background:#fafafa;transition:all 0.2s">
-                <input type="radio" name="export-type" value="all" checked onchange="setExportDataType('all')" style="cursor:pointer;width:18px;height:18px">
+                <input type="radio" name="export-type" value="all" checked style="cursor:pointer;width:18px;height:18px">
                 <span style="flex:1"><strong>📋 Todos os registos</strong><br><span style="font-size:11px;color:#999" id="count-all">—</span></span>
               </label>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1.5px solid #ddd;border-radius:8px;background:#fff3cd;transition:all 0.2s">
-                <input type="radio" name="export-type" value="duplicates" onchange="setExportDataType('duplicates')" style="cursor:pointer;width:18px;height:18px">
+                <input type="radio" name="export-type" value="duplicates" style="cursor:pointer;width:18px;height:18px">
                 <span style="flex:1"><strong>🔴 Apenas duplicados</strong><br><span style="font-size:11px;color:#999" id="count-dups">—</span></span>
               </label>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1.5px solid #ddd;border-radius:8px;background:#e8f5e9;transition:all 0.2s">
-                <input type="radio" name="export-type" value="unique" onchange="setExportDataType('unique')" style="cursor:pointer;width:18px;height:18px">
+                <input type="radio" name="export-type" value="unique" style="cursor:pointer;width:18px;height:18px">
                 <span style="flex:1"><strong>🟢 Apenas únicos</strong><br><span style="font-size:11px;color:#999" id="count-unique">—</span></span>
               </label>
             </div>
@@ -302,11 +302,11 @@
           <div style="margin-bottom:24px">
             <label style="font-weight:600;font-size:13px;color:#6b7280;text-transform:uppercase;margin-bottom:10px;display:block">📁 Formato:</label>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-              <button class="export-fmt-btn" data-format="csv" onclick="setExportFormat('csv')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📊 CSV</button>
-              <button class="export-fmt-btn" data-format="json" onclick="setExportFormat('json')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">{ } JSON</button>
-              <button class="export-fmt-btn" data-format="xml" onclick="setExportFormat('xml')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">&lt;/&gt; XML</button>
-              <button class="export-fmt-btn" data-format="xlsx" onclick="setExportFormat('xlsx')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📈 XLSX</button>
-              <button class="export-fmt-btn" id="export-fmt-pdf" data-format="pdf" onclick="setExportFormat('pdf')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📄 PDF</button>
+              <button class="export-fmt-btn" data-format="csv" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📊 CSV</button>
+              <button class="export-fmt-btn" data-format="json" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">{ } JSON</button>
+              <button class="export-fmt-btn" data-format="xml" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">&lt;/&gt; XML</button>
+              <button class="export-fmt-btn" data-format="xlsx" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📈 XLSX</button>
+              <button class="export-fmt-btn" id="export-fmt-pdf" data-format="pdf" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📄 PDF</button>
             </div>
           </div>
 
@@ -317,8 +317,8 @@
 
           <!-- Botões de Ação -->
           <div style="display:flex;gap:10px;justify-content:flex-end">
-            <button onclick="closeExportModal()" style="padding:10px 20px;border:1px solid #ddd;background:white;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">✕ Cancelar</button>
-            <button onclick="executeExport()" style="padding:10px 24px;background:#8ec73d;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">⬇ Exportar</button>
+            <button id="btn-close-export-modal" style="padding:10px 20px;border:1px solid #ddd;background:white;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">✕ Cancelar</button>
+            <button id="btn-execute-export" style="padding:10px 24px;background:#8ec73d;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">⬇ Exportar</button>
           </div>
         </div>
       </div>
@@ -333,15 +333,15 @@
             <label style="font-weight:600;font-size:13px;color:#6b7280;text-transform:uppercase;margin-bottom:10px;display:block">📊 Selecione os dados:</label>
             <div style="display:flex;flex-direction:column;gap:10px">
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1.5px solid #ddd;border-radius:8px;background:#fafafa;transition:all 0.2s">
-                <input type="radio" name="recon-export-type" value="all" checked onchange="setReconExportDataType('all')" style="cursor:pointer;width:18px;height:18px">
+                <input type="radio" name="recon-export-type" value="all" checked style="cursor:pointer;width:18px;height:18px">
                 <span style="flex:1"><strong>📋 Todos os grupos</strong><br><span style="font-size:11px;color:#999" id="recon-count-all">—</span></span>
               </label>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1.5px solid #ddd;border-radius:8px;background:#e8f5e9;transition:all 0.2s">
-                <input type="radio" name="recon-export-type" value="reconciliados" onchange="setReconExportDataType('reconciliados')" style="cursor:pointer;width:18px;height:18px">
+                <input type="radio" name="recon-export-type" value="reconciliados" style="cursor:pointer;width:18px;height:18px">
                 <span style="flex:1"><strong>🟢 Apenas reconciliados</strong><br><span style="font-size:11px;color:#999" id="recon-count-reconciliados">—</span></span>
               </label>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1.5px solid #ddd;border-radius:8px;background:#ffebee;transition:all 0.2s">
-                <input type="radio" name="recon-export-type" value="por_reconciliar" onchange="setReconExportDataType('por_reconciliar')" style="cursor:pointer;width:18px;height:18px">
+                <input type="radio" name="recon-export-type" value="por_reconciliar" style="cursor:pointer;width:18px;height:18px">
                 <span style="flex:1"><strong>🔴 Por reconciliar</strong><br><span style="font-size:11px;color:#999" id="recon-count-por-reconciliar">—</span></span>
               </label>
             </div>
@@ -351,11 +351,11 @@
           <div style="margin-bottom:24px">
             <label style="font-weight:600;font-size:13px;color:#6b7280;text-transform:uppercase;margin-bottom:10px;display:block">📁 Formato:</label>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-              <button class="recon-export-fmt-btn" data-format="csv" onclick="setReconExportFormat('csv')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📊 CSV</button>
-              <button class="recon-export-fmt-btn" data-format="json" onclick="setReconExportFormat('json')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">{ } JSON</button>
-              <button class="recon-export-fmt-btn" data-format="xml" onclick="setReconExportFormat('xml')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">&lt;/&gt; XML</button>
-              <button class="recon-export-fmt-btn" data-format="xlsx" onclick="setReconExportFormat('xlsx')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📈 XLSX</button>
-              <button class="recon-export-fmt-btn" id="recon-export-fmt-pdf" data-format="pdf" onclick="setReconExportFormat('pdf')" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📄 PDF</button>
+              <button class="recon-export-fmt-btn" data-format="csv" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📊 CSV</button>
+              <button class="recon-export-fmt-btn" data-format="json" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">{ } JSON</button>
+              <button class="recon-export-fmt-btn" data-format="xml" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">&lt;/&gt; XML</button>
+              <button class="recon-export-fmt-btn" data-format="xlsx" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📈 XLSX</button>
+              <button class="recon-export-fmt-btn" id="recon-export-fmt-pdf" data-format="pdf" style="padding:12px;border:2px solid #ddd;background:white;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;color:#999">📄 PDF</button>
             </div>
           </div>
 
@@ -366,8 +366,8 @@
 
           <!-- Botões de Ação -->
           <div style="display:flex;gap:10px;justify-content:flex-end">
-            <button onclick="closeReconExportModal()" style="padding:10px 20px;border:1px solid #ddd;background:white;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">✕ Cancelar</button>
-            <button onclick="executeReconExport()" style="padding:10px 24px;background:#8ec73d;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">⬇ Exportar</button>
+            <button id="btn-close-recon-export-modal" style="padding:10px 20px;border:1px solid #ddd;background:white;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">✕ Cancelar</button>
+            <button id="btn-execute-recon-export" style="padding:10px 24px;background:#8ec73d;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">⬇ Exportar</button>
           </div>
         </div>
       </div>
@@ -382,7 +382,7 @@
             <div style="display:flex;gap:6px;align-items:stretch">
               <input type="text" id="filter-search" placeholder="Escreva para procurar..." style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
               <div style="position:relative;flex-shrink:0" id="search-field-wrapper">
-                <button id="search-field-btn" onclick="toggleSearchFieldPanel()" style="height:100%;padding:0 10px;border:1px solid var(--gray-border);border-radius:6px;background:white;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:4px">
+                <button id="search-field-btn" style="height:100%;padding:0 10px;border:1px solid var(--gray-border);border-radius:6px;background:white;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:4px">
                   <span id="search-field-label">Todos os campos</span> <span style="font-size:9px">▾</span>
                 </button>
                 <div id="search-field-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:210px;background:white;border:1px solid var(--gray-border);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.13);z-index:200;padding:4px 0;max-height:280px;overflow-y:auto">
@@ -411,7 +411,7 @@
           </div>
 
           <!-- Botão Limpar -->
-          <button onclick="clearFilters()" style="padding:8px 14px;background:#e8e9eb;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">🗑 Limpar</button>
+          <button id="btn-clear-filters" style="padding:8px 14px;background:#e8e9eb;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">🗑 Limpar</button>
         </div>
       </div>
 
@@ -445,7 +445,7 @@
 
 <!-- ── MODAL DE LOG ── -->
 <div id="log-modal" class="log-modal" style="display:none">
-  <div class="log-modal-backdrop" onclick="toggleLog()"></div>
+  <div class="log-modal-backdrop" id="log-modal-backdrop"></div>
   <div class="log-modal-dialog">
     <div class="log-modal-header">
       <div style="display:flex;align-items:center;gap:8px;flex:1">
@@ -453,12 +453,12 @@
         <span id="log-title">Log do sistema</span>
         <span id="log-count" style="color:var(--green);font-size:11px;margin-left:auto">(0 entradas)</span>
       </div>
-      <button class="log-modal-close" onclick="toggleLog()">✕</button>
+      <button class="log-modal-close" id="log-modal-close">✕</button>
     </div>
     <div id="log-body" class="log-modal-body"></div>
     <div class="log-modal-footer">
-      <button class="log-btn primary" onclick="exportLog()">📥 Exportar .txt</button>
-      <button class="log-btn" onclick="clearLog()">🗑 Limpar</button>
+      <button class="log-btn primary" id="btn-export-log">📥 Exportar .txt</button>
+      <button class="log-btn" id="btn-clear-log">🗑 Limpar</button>
     </div>
   </div>
 </div>

@@ -1,17 +1,14 @@
 /* ============================================================
    G-FinanceSuite — Módulo Reconciliação (Op2)
    Execução, dashboard, filtros e exportação de reconciliação.
-   Depende de: AppState, PAGE_SIZE (state.js), ui.js, pagination.js
-   Logger acedido via window.Logger (shim temporário até Phase 7)
+   Depende de: AppState, PAGE_SIZE (state.js), ui.js, pagination.js, logger.js
    ============================================================ */
 
 import { AppState, PAGE_SIZE } from '../state.js';
 import { show, hide, fmt, fmtN, escHtml, setSummaryCards } from './ui.js';
 import { setPagination, renderPagination } from './pagination.js';
 import { exportToCSV, exportToJSON, exportToXML, exportToXLSX, exportToPDF } from './export.js';
-
-// Acesso ao Logger via shim global (temporário)
-const L = () => window.Logger || console;
+import { Logger } from './logger.js';
 
 // ── IDs DOM necessários ────────────────────────────────────────
 export const REQUIRED_IDS = [
@@ -26,6 +23,15 @@ export const REQUIRED_IDS = [
   'recon-collapsible-content', 'recon-toggle-btn', 'recon-toggle-icon', 'recon-toggle-text',
 ];
 
+// ── Inicialização de eventos ───────────────────────────────────
+export function initReconEvents() {
+  const tbody = document.getElementById('recon-table-body');
+  if (tbody) tbody.addEventListener('click', e => {
+    const tr = e.target.closest('[data-expand]');
+    if (tr) toggleReconExpand(tr.dataset.expand);
+  });
+}
+
 // ── Executar reconciliação ─────────────────────────────────────
 export function runReconciliation() {
   const groupField = document.getElementById('group-field-select').value;
@@ -35,8 +41,8 @@ export function runReconciliation() {
   if (!groupField) { alert('Escolhe o campo de agrupamento.'); return; }
   if (!valField)   { alert('Escolhe o campo de valor.'); return; }
 
-  L().separator('Reconciliação');
-  L().info(`Agrupar por: ${groupField} — Valor: ${valField} — Tolerância: €${tolerance.toFixed(2)}`);
+  Logger.separator('Reconciliação');
+  Logger.info(`Agrupar por: ${groupField} — Valor: ${valField} — Tolerância: €${tolerance.toFixed(2)}`);
 
   const groupMap = new Map();
   AppState.rawData.forEach(r => {
@@ -55,8 +61,8 @@ export function runReconciliation() {
   reconOk.sort((a, b) => Math.abs(a.saldo) - Math.abs(b.saldo));
   AppState.dupGroups = [...reconNok.map(e => ({ ...e, _recon: 'nok' })), ...reconOk.map(e => ({ ...e, _recon: 'ok' }))];
 
-  L().info(`Reconciliados: ${reconOk.length} — Por reconciliar: ${reconNok.length}`);
-  if (reconNok.length) L().warn(`${reconNok.length} grupo(s) com saldo acima da tolerância.`);
+  Logger.info(`Reconciliados: ${reconOk.length} — Por reconciliar: ${reconNok.length}`);
+  if (reconNok.length) Logger.warn(`${reconNok.length} grupo(s) com saldo acima da tolerância.`);
 
   setSummaryCards([
     { id:'s-total',  val:fmtN(groupMap.size),   label:`Grupos (${groupField})`, cls:'total' },
@@ -90,17 +96,10 @@ export function renderReconDashboard(reconOk, reconNok, tolerance, groupField, v
   AppState.reconDashboardState.valField   = valField;
   AppState.reconDashboardState.filterType = 'all';
 
-  L().info(`renderReconDashboard: ${reconOk.length} reconciliados + ${reconNok.length} por reconciliar = ${AppState.reconDashboardState.allGroups.length} total`);
+  Logger.info(`renderReconDashboard: ${reconOk.length} reconciliados + ${reconNok.length} por reconciliar = ${AppState.reconDashboardState.allGroups.length} total`);
 
   show('reconciliation-dashboard');
   show('results-header-section');
-
-  const cardAll    = document.getElementById('card-all');
-  const cardDups   = document.getElementById('card-dups');
-  const cardUnique = document.getElementById('card-unique');
-  if (cardAll)    cardAll.onclick    = () => window.setFilterTypeFromCard('all');
-  if (cardDups)   cardDups.onclick   = () => window.setFilterTypeFromCard('por_reconciliar');
-  if (cardUnique) cardUnique.onclick = () => window.setFilterTypeFromCard('reconciliados');
 
   const slDups   = document.querySelector('#card-dups .sl');
   const slUnique = document.querySelector('#card-unique .sl');
@@ -164,7 +163,7 @@ export function renderReconBarChart(reconNok, valField) {
 
 export function renderReconStats(groups) {
   if (!groups || groups.length === 0) {
-    L().warn('renderReconStats: nenhum grupo recebido');
+    Logger.warn('renderReconStats: nenhum grupo recebido');
     ['stat-total-balance', 'stat-avg-balance', 'stat-median-balance', 'stat-max-balance'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = '—';
@@ -181,7 +180,7 @@ export function renderReconStats(groups) {
     : sortedSaldos[Math.floor(sortedSaldos.length / 2)];
   const maxBalance    = saldos.reduce((max, s) => Math.max(max, Math.abs(s)), 0);
 
-  L().info(`renderReconStats: iniciando com ${groups.length} grupos`);
+  Logger.info(`renderReconStats: iniciando com ${groups.length} grupos`);
   [
     ['stat-total-balance',  totalBalance],
     ['stat-avg-balance',    avgBalance],
@@ -190,19 +189,19 @@ export function renderReconStats(groups) {
   ].forEach(([id, val]) => {
     const el = document.getElementById(id);
     if (el) el.textContent = fmt(val);
-    else L().warn(`renderReconStats: elemento ${id} não encontrado`);
+    else Logger.warn(`renderReconStats: elemento ${id} não encontrado`);
   });
-  L().info('renderReconStats: completado');
+  Logger.info('renderReconStats: completado');
 }
 
 export function renderReconTable(groups, groupField, valField, tolerance) {
   const tbody = document.getElementById('recon-table-body');
-  if (!tbody) { L().warn('renderReconTable: recon-table-body não encontrado'); return; }
+  if (!tbody) { Logger.warn('renderReconTable: recon-table-body não encontrado'); return; }
 
   if (!groups || groups.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:#999">Nenhum grupo encontrado</td></tr>';
     setPagination('none', undefined, true);
-    L().warn('renderReconTable: nenhum grupo recebido');
+    Logger.warn('renderReconTable: nenhum grupo recebido');
     return;
   }
 
@@ -217,7 +216,7 @@ export function renderReconTable(groups, groupField, valField, tolerance) {
     const docNumbers  = g.records.map(r => r.numero_documento).filter(n => n).join(', ');
 
     return `
-      <tr style="border-bottom:1px solid #f0f0f0;transition:all 0.2s;cursor:pointer" onclick="toggleReconExpand('${expandId}')" title="Clique para ver documentos">
+      <tr style="border-bottom:1px solid #f0f0f0;transition:all 0.2s;cursor:pointer" data-expand="${expandId}" title="Clique para ver documentos">
         <td style="padding:10px 12px;color:#333"><span style="margin-right:8px;color:#999;font-weight:bold">▼</span>${escHtml(String(g.grp))}</td>
         <td style="padding:10px 12px;text-align:center;color:#666">${g.records.length}</td>
         <td style="padding:10px 12px;text-align:right;font-weight:bold;color:${Math.abs(g.saldo) > 10000 ? '#ef4444' : '#333'}">${fmt(g.saldo)}</td>
@@ -242,7 +241,7 @@ export function renderReconTable(groups, groupField, valField, tolerance) {
 
   setPagination(groups.length > PAGE_SIZE ? 'flex' : 'none', `Grupos ${start+1}–${Math.min(start+PAGE_SIZE, groups.length)} de ${fmtN(groups.length)}`, true);
   renderPagination(totalPages, () => renderReconTable(AppState.reconDashboardState.filteredGroups, groupField, valField, tolerance), true);
-  L().info(`renderReconTable: ${slice.length}/${groups.length} grupos renderizados (página ${AppState.currentPage}/${totalPages})`);
+  Logger.info(`renderReconTable: ${slice.length}/${groups.length} grupos renderizados (página ${AppState.currentPage}/${totalPages})`);
 }
 
 // ── Filtros ────────────────────────────────────────────────────
@@ -303,7 +302,7 @@ export function setReconFilterType(type) {
   });
 
   renderReconTable(AppState.reconDashboardState.filteredGroups, AppState.reconDashboardState.groupField, AppState.reconDashboardState.valField, AppState.reconDashboardState.tolerance);
-  L().info(`Filtro: ${type} | ${AppState.reconDashboardState.filteredGroups.length} grupos mostrados`);
+  Logger.info(`Filtro: ${type} | ${AppState.reconDashboardState.filteredGroups.length} grupos mostrados`);
 }
 
 export function toggleReconCharts() {
@@ -318,7 +317,7 @@ export function toggleReconCharts() {
     icon.textContent = isVisible ? '▶' : '▼';
     text.textContent = isVisible ? 'Expandir' : 'Colapsar';
     btn.style.background = isVisible ? '#f3f4f6' : 'white';
-    L().info(`Dashboard ${isVisible ? 'colapsado' : 'expandido'}`);
+    Logger.info(`Dashboard ${isVisible ? 'colapsado' : 'expandido'}`);
   }
 }
 
@@ -328,7 +327,7 @@ export function openReconExportModal() {
   if (!modal) return;
   modal.style.display = 'flex';
   updateReconExportCounts();
-  L().info('Modal de exportação de reconciliação aberto');
+  Logger.info('Modal de exportação de reconciliação aberto');
 }
 
 export function closeReconExportModal() {
@@ -339,7 +338,7 @@ export function closeReconExportModal() {
 export function setReconExportDataType(type) {
   AppState.reconExportState.dataType = type;
   updateReconExportCounts();
-  L().info(`Tipo de exportação: ${type}`);
+  Logger.info(`Tipo de exportação: ${type}`);
 }
 
 export function setReconExportFormat(format) {
@@ -424,10 +423,10 @@ export function executeReconExport() {
       }
       exportToPDF(data, columns, filename);
     }
-    L().info(`✅ Reconciliação exportada em ${format.toUpperCase()}: ${filename}`);
+    Logger.info(`✅ Reconciliação exportada em ${format.toUpperCase()}: ${filename}`);
     closeReconExportModal();
   } catch (err) {
-    L().error(`Erro ao exportar reconciliação: ${err.message}`);
+    Logger.error(`Erro ao exportar reconciliação: ${err.message}`);
     alert('Erro ao exportar:\n' + err.message);
   }
 }
