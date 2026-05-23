@@ -3100,20 +3100,24 @@ function renderReconStats(groups) {
 
   const update = (id, val) => {
     const el = document.getElementById(id);
+    Logger.info(`update(${id}, ${val}) - elemento ${el ? 'encontrado' : 'NÃO ENCONTRADO'}`);
     if (el) {
       const formattedVal = fmt(val);
+      Logger.info(`  → fmt(${val}) = "${formattedVal}"`);
       el.textContent = formattedVal;
-      Logger.debug(`stat ${id} = ${formattedVal}`);
+      Logger.info(`  → textContent atualizado com sucesso`);
     } else {
       Logger.warn(`renderReconStats: elemento ${id} não encontrado`);
     }
   };
 
-  Logger.info(`renderReconStats: ${groups.length} grupos processados | total: ${fmt(totalBalance)}`);
+  Logger.info(`renderReconStats: iniciando com ${groups.length} grupos`);
+  Logger.info(`  totalBalance=${totalBalance}, avgBalance=${avgBalance}, medianBalance=${medianBalance}, maxBalance=${maxBalance}`);
   update('stat-total-balance', totalBalance);
   update('stat-avg-balance', avgBalance);
   update('stat-median-balance', medianBalance);
   update('stat-max-balance', maxBalance);
+  Logger.info(`renderReconStats: completado`);
 }
 
 function renderReconTable(groups, groupField, valField, tolerance) {
