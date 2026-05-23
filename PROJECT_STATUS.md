@@ -15,7 +15,6 @@ G-FinanceSuite/
 │   ├── js/
 │   │   ├── app.js              — Orquestrador: imports, event listeners, init
 │   │   ├── state.js            — AppState centralizado + constantes
-│   │   ├── utils.js            — Utilitários partilhados (parseCSV, etc.)
 │   │   ├── modules/
 │   │   │   ├── logger.js       — Logger partilhado (ES module)
 │   │   │   ├── ui.js           — show/hide, fmt, setSummaryCards, guessFieldType
@@ -29,7 +28,7 @@ G-FinanceSuite/
 │   └── css/
 │       └── style.css           — Estilos
 ├── server.js                   — Express estático (porta 3000)
-├── verify-phase7.mjs           — Script de verificação Playwright
+├── verify.mjs                  — Script de verificação Playwright (12 fluxos)
 ├── PROJECT_STATUS.md
 ├── CLAUDE.md
 ├── package.json
@@ -144,7 +143,7 @@ node server.js
 
 **Verificação automatizada:**
 ```bash
-node verify-phase7.mjs
+node verify.mjs   # ou: npm run verify
 # Abre Chromium headless, testa 12 fluxos, guarda screenshots em verify-shots/
 ```
 

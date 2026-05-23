@@ -1,11 +1,11 @@
 {
   "name": "G-FinanceSuite-portal",
-  "version": "2.2.0",
+  "version": "2.4.0",
   "description": "Application for duplicate detection and data reconciliation analysis",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "verify": "node verify.mjs"
   },
   "author": "G-FinanceSuite",
   "license": "ISC",

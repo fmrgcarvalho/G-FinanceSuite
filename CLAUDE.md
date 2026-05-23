@@ -48,8 +48,8 @@ Rule 12 - Fail loud
 
 ### Running the app
 ```bash
-node server.js          # http://localhost:3000
-node verify-phase7.mjs  # Playwright headless — 12 flows, screenshots in verify-shots/
+node server.js      # http://localhost:3000  (ou: npm start)
+node verify.mjs     # Playwright headless — 12 fluxos, screenshots em verify-shots/
 ```
 The app uses `type="module"` — must be served over HTTP, not `file://`.
 
@@ -63,18 +63,22 @@ app.js (orchestrator)
         logger.js       — shared Logger (IIFE singleton, not a class)
         ui.js           — show/hide/fmt/setSummaryCards/guessFieldType
         pagination.js   — setPagination / renderPagination (isRecon flag)
-        import.js       — file queue, loaders, mapping
-        duplicates.js   — Op1 logic + initDuplicatesEvents()
-        reconciliation.js — Op2 logic + initReconEvents()
-        export.js       — CSV/JSON/XML/XLSX/PDF for both ops
+        import.js       — file queue, loaders, mapping        (~773 lines, near limit)
+        duplicates.js   — Op1 logic + initDuplicatesEvents()  (~519 lines)
+        reconciliation.js — Op2 logic + initReconEvents()     (~510 lines)
+        export.js       — CSV/JSON/XML/XLSX/PDF for both ops  (~322 lines)
   └── workers/excel.worker.js  — uses importScripts, NOT an ES module
 ```
+
+**Module size limit: 800 lines.** If a module exceeds this, split it before adding features.
+`import.js` is near the limit — if it needs a new major feature, split `loaders.js` out first.
 
 ### Conventions locked in
 - **No inline handlers**: zero `onclick`/`onchange`/`oninput` in index.html. All wiring in `app.js` DOMContentLoaded via `addEventListener`.
 - **Event delegation for dynamic HTML**: templates use `data-action="x"` or `data-field="y"` attributes; parent containers delegate. Set up in `initDuplicatesEvents()`, `initReconEvents()`, and `_setupQueueDelegation()` inside `initImport()`.
 - **No `window.X` globals**: everything flows through ES module imports. CDN libraries (XLSX, jspdf, Chart) remain on `window` — that's intentional.
 - **AppState is the only state**: never reach for module-level variables for shared data. Read/write `AppState.*` instead.
+- **onmouseenter/onmouseleave on buttons**: the only inline handlers allowed — used exclusively on dynamically generated `<button>` elements for hover effects in reconciliation templates, where CSS classes can't reach.
 
 ### DOM layout — critical IDs
 - Op1 results live entirely inside `#results-section` (summary-cards → filters-section → pagination-top → dup-list → pagination)
@@ -84,7 +88,62 @@ app.js (orchestrator)
 - Op2 summary card IDs: `recon-s-total`, `recon-s-ok`, `recon-s-nok`, `recon-s-tol`
 - Never mix Op1 and Op2 IDs across modules (was a bug, now fixed)
 
+### Key data shapes
+
+**Raw record** (after import, stored in `AppState.rawData[]`):
+```javascript
+{
+  numero_documento: "DOC-001",   // string — varies by source file
+  atribuicao:       "FORN-001",  // string — grouping key for reconciliation
+  montante:         1500.00,     // number — value field
+  data:             "2026-01-10",// string (date as-is from source)
+  tipo:             "FV",        // string — type code
+  ficheiro_origem:  "file.xlsx", // string — added by import.js, always present
+}
+```
+
+**Duplicate group** (stored in `AppState.dupGroups[]`):
+```javascript
+{
+  key:     "DOC-001",           // string — composite key from checked fields
+  count:   3,                   // number — total records in group
+  records: [ ...rawRecord ],    // array of raw records
+  sum:     4500.00,             // number — sum of selectedSumField (or 0)
+}
+```
+
+**Reconciliation group** (stored in `AppState.reconDashboardState.allGroups[]`):
+```javascript
+{
+  key:     "FORN-001",          // string — value of groupField
+  records: [ ...rawRecord ],    // array of raw records in this group
+  saldo:   0.00,                // number — sum of valField (positive = debits, negative = credits)
+  debito:  1500.00,             // number — sum of positive values
+  credito: 1500.00,             // number — sum of absolute negative values
+  reconciliado: true,           // boolean — |saldo| <= tolerance
+}
+```
+
+### Before adding a new feature — checklist
+1. **Read the target module** from top to bottom. Note its exports and the last ~50 lines.
+2. **Check module size**: `wc -l docs/js/modules/<module>.js`. Over 800? Split first.
+3. **Identify the DOM IDs** the feature needs. Are they inside Op1 or Op2 section? Don't cross-wire.
+4. **Check AppState** — does the feature need new state? Add it to `state.js` AND to `reset()`.
+5. **Wire events in app.js or the module's `init*Events()`** — never add inline handlers to HTML.
+6. **Verify**: `node verify.mjs` must pass zero JS errors after the change.
+7. **Commit** with a message that says WHY, not just what.
+
 ### Known limitations (not bugs, by design)
 - PDF export capped at PDF_MAX_RECORDS (2000) — enforced in export.js
 - Excel parsing runs in a Web Worker; main thread falls back to synchronous if Worker fails
 - Chart.js, SheetJS, jsPDF load from CDN — app shows warnings if offline
+- Reconciliation sort applied before pagination slice — intentional, ensures consistent order across pages
+
+### Test fixtures
+`docs/test-fixtures/sample.json` — 30 records with known expected results:
+- **Op1** (group by `numero_documento`): 5 duplicate groups (sizes 3,2,3,2,2), 18 unique records
+- **Op2** (group by `atribuicao`, value `montante`, tolerance 1):
+  - RECON-OK (2 records, saldo=0) → reconciliado
+  - RECON-TOL (2 records, saldo=0.50) → reconciliado com tolerância
+  - RECON-NOK (2 records, saldo=700) → por reconciliar
+  - DUP-A through DUP-E → grupos com duplicados internos
