@@ -2625,8 +2625,8 @@ function setExportDataType(type: ExportState['dataType']): void {
  */
 function setExportFormat(format: ExportState['format']): void {
   // Validar formato (Priority 1)
-  const VALID_FORMATS: ReadonlyArray<ExportState['format']> = ['csv', 'json', 'xml', 'xlsx', 'pdf'];
-  if (!VALID_FORMATS.includes(format)) {
+  const validFormats = ['csv', 'json', 'xml', 'xlsx', 'pdf'] as const;
+  if (!(validFormats as readonly string[]).includes(format)) {
     Logger.error(`Formato de export inválido: ${format}. Usando CSV como padrão.`);
     exportState.format = 'csv';
     return;
