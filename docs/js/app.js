@@ -202,18 +202,18 @@ let sortState = {
   direction: 'asc'    // 'asc' ou 'desc'
 };
 
-// Estado temporï¿½rio durante mapeamento Excel
+// Estado temporário durante mapeamento Excel
 let _excelRows    = [];
 let _excelHeaders = [];
 let _excelFile    = null;
 
-// Fila de processamento ï¿½ mï¿½ltiplos ficheiros
+// Fila de processamento — múltiplos ficheiros
 let fileQueue     = [];      // [{file, data:null, status:'pending'}]
 let processingQueue = false;
 let isSequentialProcessing = false;  // flag para distinguir processamento sequencial vs individual
 let consolidatedFiles = [];  // lista de ficheiros processados com sucesso
 let mappings      = {};      // {filename: {colIdx: fieldKey}}
-let fileDataMap   = {};      // {filename: {records, mapping}} ï¿½ para evitar stack overflow com arrays grandes
+let fileDataMap   = {};      // {filename: {records, mapping}} — para evitar stack overflow com arrays grandes
 
 /* --------------------------------------------------------------
    DRAG & DROP / IMPORTAÇÃO (MÚLTIPLOS FICHEIROS)
@@ -277,7 +277,7 @@ function addFilesToQueue(files) {
     }
   }
 
-  console.log(`Total de ficheiros vï¿½lidos: ${validCount}/${files.length}`);
+  console.log(`Total de ficheiros válidos: ${validCount}/${files.length}`);
   updateQueueUI();
 
   if (validCount === 0) {
@@ -398,7 +398,7 @@ function updateQueueUI() {
       return html;
     }).join('');
 
-    // Mostrar botï¿½o "Analisar e Consolidar" se hï¿½ PELO MENOS 1 ficheiro pronto
+    // Mostrar botão "Analisar e Consolidar" se há PELO MENOS 1 ficheiro pronto
     const successCount = getSuccessCount();
 
     if (successCount > 0) {
@@ -444,18 +444,18 @@ function clearQueue() {
   document.getElementById('file-input').value = '';
 }
 
-/** Processa um ficheiro individual (extrai dados, sem ir para anï¿½lise) */
+/** Processa um ficheiro individual (extrai dados, sem ir para análise) */
 function processSingleFile(queueIndex) {
   const item = fileQueue[queueIndex];
   if (!item) return;
 
   if (item.status === 'success') {
-    alert('Este ficheiro jï¿½ foi processado.');
+    alert('Este ficheiro já foi processado.');
     return;
   }
 
   // Processar apenas este ficheiro
-  // REMOVER progress-section ï¿½ usar log panel em vez disso
+  // REMOVER progress-section — usar log panel em vez disso
   // Abrir log panel automaticamente
   const logPanel = document.getElementById('log-panel');
   if (logPanel) {
@@ -832,7 +832,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
   try {
     const data = new Uint8Array(buffer);
     const strategies = [
-      { label: 'ultra-leve (sem fï¿½rmulas)', opts: { type: 'array', raw: true, cellDates: false, cellFormula: false, cellStyles: false, cellNF: false, sheetStubs: false } },
+      { label: 'ultra-leve (sem fórmulas)', opts: { type: 'array', raw: true, cellDates: false, cellFormula: false, cellStyles: false, cellNF: false, sheetStubs: false } },
       { label: 'leve (sem valores)', opts: { type: 'array', raw: true, cellDates: false, cellFormula: false, cellStyles: false } },
       { label: 'sheetStubs', opts: { type: 'array', raw: true, cellDates: false, cellFormula: false, sheetStubs: true } },
       { label: 'raw:false', opts: { type: 'array', raw: false, cellDates: false, cellFormula: false, cellStyles: false } },
@@ -862,7 +862,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
         rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
         Logger.info(`Estratégia ${strat.label}: ${rows.length} linhas`);
 
-        // IMPORTANTE: Nï¿½o usar readCellsDirect para ficheiros com >100k linhas
+        // IMPORTANTE: Não usar readCellsDirect para ficheiros com >100k linhas
         if (rows.length < 2 && ws['!ref']) {
           try {
             const range = XLSX.utils.decode_range(ws['!ref']);
@@ -894,7 +894,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
       throw new Error(`Ficheiro Excel sem dados legíveis. Última estratégia erro: ${lastError?.message || 'desconhecido'}`);
     }
 
-    // Avisar se ficheiro ï¿½ muito grande
+    // Avisar se ficheiro é muito grande
     if (rows.length > 100000) {
       Logger.warn(`⚠️ Ficheiro grande (${rows.length.toLocaleString('pt-PT')} linhas) — pode ser lento`);
     }
@@ -923,7 +923,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
     // Aumentar chunk size para ficheiros muito grandes
     const chunkSize = rows.length > 500000 ? 5000 : rows.length > 100000 ? 2000 : 1000;
     const t0 = performance.now();
-    const maxTime = 120000; // 2 minutos mï¿½ximo
+    const maxTime = 120000; // 2 minutos máximo
 
     Logger.info(`Iniciando conversão de registos (chunk size: ${chunkSize})…`);
 
@@ -1002,7 +1002,7 @@ async function processExcelFromQueueMainThread(buffer, queueItem) {
   }
 }
 
-/** Finalizar consolidaï¿½ï¿½o ï¿½ mesclar todos os dados e avanï¿½ar */
+/** Finalizar consolidação — mesclar todos os dados e avançar */
 function finalizeConsolidation() {
   // Contar sucessos e falhas
   const successCount = fileQueue.filter(f => f.status === 'success').length;
@@ -1024,11 +1024,11 @@ function finalizeConsolidation() {
     }
   });
 
-  // Verificar se hï¿½ dados anteriores (modo "Adicionar ficheiros")
+  // Verificar se há dados anteriores (modo "Adicionar ficheiros")
   const hasPreviousData = window._previousConsolidatedData && window._previousConsolidatedData.length > 0;
   const previousCount = hasPreviousData ? window._previousConsolidatedData.length : 0;
 
-  // Relatï¿½rio de processamento
+  // Relatório de processamento
   Logger.separator('RESUMO DO PROCESSAMENTO');
   Logger.info(`Ficheiros novos: ${totalCount}`);
   Logger.info(`? Sucesso: ${successCount}`);
@@ -1041,7 +1041,7 @@ function finalizeConsolidation() {
     Logger.info(`? Dados novos: ${totalRecordsNew.toLocaleString('pt-PT')} registos`);
   }
 
-  // Se nï¿½o hï¿½ dados novos, verificar se hï¿½ dados anteriores
+  // Se não há dados novos, verificar se há dados anteriores
   if (newData.length === 0) {
     if (hasPreviousData) {
       Logger.warn('Nenhum registo encontrado nos ficheiros novos.');
@@ -1056,7 +1056,7 @@ function finalizeConsolidation() {
         alert('? Erro Fatal: Nenhum ficheiro conseguiu ser processado.\n\nVerifica os ficheiros e tenta novamente.');
       } else {
         Logger.error('Nenhum registo encontrado nos ficheiros processados.');
-        alert('?? Aviso: Os ficheiros foram lidos mas sem registos.');
+        alert('⚠️ Aviso: Os ficheiros foram lidos mas sem registos.');
       }
       resetAll();
       return;
@@ -1075,7 +1075,7 @@ function finalizeConsolidation() {
     rawData = newData;
   }
 
-  // Normalizar dados ï¿½ garantir que todos tï¿½m os mesmos campos
+  // Normalizar dados — garantir que todos têm os mesmos campos
   const allKeys = [...new Set(rawData.flatMap(r => Object.keys(r)))];
   rawData.forEach(r => {
     allKeys.forEach(k => {
@@ -1089,15 +1089,15 @@ function finalizeConsolidation() {
     ? consolidatedFiles[0]
     : `${consolidatedFiles.length} ficheiros consolidados`;
 
-  Logger.separator('CONSOLIDAï¿½ï¿½O CONCLUï¿½DA COM SUCESSO');
+  Logger.separator('CONSOLIDAÇÃO CONCLUÍDA COM SUCESSO');
   Logger.info(`Ficheiros com dados: ${consolidatedFiles.join(', ')}`);
   Logger.info(`Total de registos: ${rawData.length.toLocaleString('pt-PT')}`);
-  Logger.info(`Campos ï¿½nicos: ${allKeys.length}`);
+  Logger.info(`Campos únicos: ${allKeys.length}`);
   if (failCount > 0) {
-    Logger.info(`?? ${failCount} ficheiro(s) falharam mas continuou com os ${successCount} vï¿½lidos`);
+    Logger.info(`⚠️ ${failCount} ficheiro(s) falharam mas continuou com os ${successCount} válidos`);
   }
 
-  // Limpar referï¿½ncia aos dados anteriores
+  // Limpar referência aos dados anteriores
   window._previousConsolidatedData = null;
   window._previousConsolidatedCount = 0;
 
@@ -1110,7 +1110,7 @@ function finalizeConsolidation() {
 }
 
 /* --------------------------------------------------------------
-   CARREGAR JSON (LEGACY ï¿½ um ficheiro)
+   CARREGAR JSON (LEGACY — um ficheiro)
    -------------------------------------------------------------- */
 function loadJSON(file) {
   Logger.separator('Importação JSON');
@@ -1220,7 +1220,7 @@ function loadExcel(file) {
   reader.readAsArrayBuffer(file);
 }
 
-/* Fallback: processar no thread principal se Worker nï¿½o estiver disponï¿½vel */
+/* Fallback: processar no thread principal se Worker não estiver disponível */
 function processExcelMainThread(buffer, file) {
   // SheetJS pode estar ainda a carregar (injeção dinâmica) — aguardar até 10s
   if (typeof XLSX === 'undefined') {
@@ -1258,7 +1258,7 @@ function processExcelMainThread(buffer, file) {
       for (const strat of strategies) {
         try {
           Logger.info(`A tentar estratégia: ${strat.label}…`);
-          setProgress(50, `A ler workbookï¿½`, strat.label);
+          setProgress(50, `A ler workbook…`, strat.label);
           const wb = XLSX.read(data, strat.opts);
           Logger.info(`SheetNames: [${wb.SheetNames.join(', ')}] — Sheets keys: [${Object.keys(wb.Sheets).join(', ')}]`);
 
@@ -1355,7 +1355,7 @@ function readCellsDirect(ws) {
     }
   } catch (err) {
     Logger.warn(`  Erro em readCellsDirect (${err.message}) — retornando ${rows.length} linhas já lidas`);
-    if (rows.length === 0) throw err; // Se nï¿½o conseguiu nada, propagar erro
+    if (rows.length === 0) throw err; // Se não conseguiu nada, propagar erro
   }
 
   return rows;
@@ -1369,7 +1369,7 @@ function showMappingStep(headers, rows, hIdx) {
 
   const previewRow = rows[hIdx+1] || [];
 
-  // Datalist com sugestï¿½es conhecidas (aliases ï¿½nicos)
+  // Datalist com sugestões conhecidas (aliases únicos)
   const knownSuggestions = [...new Set(Object.values(COLUMN_ALIASES))].sort();
   const datalist = `<datalist id="field-suggestions">
     ${knownSuggestions.map(s=>`<option value="${s}">`).join('')}
@@ -1412,7 +1412,7 @@ function showMappingStep(headers, rows, hIdx) {
         <th>Coluna no ficheiro</th>
         <th>Exemplo — tipo detectado</th>
         <th></th>
-        <th>Nome do campo (editï¿½vel)</th>
+        <th>Nome do campo (editável)</th>
       </tr></thead>
       <tbody>${rowsHtml}</tbody>
     </table>`;
@@ -1475,8 +1475,8 @@ function updateMapSummary() {
   const mapped  = inputs.filter(i=>!i.disabled && i.value.trim()).length;
   const ignored = inputs.filter(i=>i.disabled || !i.value.trim()).length;
   const hasDups = checkDuplicateMappings();
-  let html = `<strong>${mapped}</strong> campo(s) ï¿½ <span style="color:var(--muted)">${ignored} ignorados</span>`;
-  if (hasDups) html += ` ï¿½ <span style="color:var(--red)">? nomes duplicados</span>`;
+  let html = `<strong>${mapped}</strong> campo(s) — <span style="color:var(--muted)">${ignored} ignorados</span>`;
+  if (hasDups) html += ` — <span style="color:var(--red)">⚠️ nomes duplicados</span>`;
   document.getElementById('map-summary').innerHTML = html;
 }
 
@@ -1504,7 +1504,7 @@ function confirmMapping() {
 
   hide('mapping-section');
   show('progress-section');
-  setProgress(10,'A converter registosï¿½','');
+  setProgress(10,'A converter registos…','');
 
   setTimeout(() => {
     try {
@@ -1529,7 +1529,7 @@ function confirmMapping() {
       if (!records.length) throw new Error('Nenhum registo encontrado após o cabeçalho.');
       Logger.info(`${records.length.toLocaleString('pt-PT')} registos convertidos em ${(performance.now()-t0).toFixed(0)} ms`);
 
-      // Estatï¿½sticas rï¿½pidas
+      // Estatísticas rápidas
       const mappedFields = [...new Set(Object.values(mapping))];
       const numField = mappedFields.find(f=>f==='montante');
       if (numField) {
@@ -1538,11 +1538,11 @@ function confirmMapping() {
       }
 
       rawData = records;
-      setProgress(100,'Concluï¿½do!',`${fmtN(records.length)} registos`);
+      setProgress(100,'Concluído!',`${fmtN(records.length)} registos`);
       setTimeout(() => showContent(), 300);
 
     } catch(err) {
-      Logger.error(`Erro na conversï¿½o: ${err.message}`);
+      Logger.error(`Erro na conversão: ${err.message}`);
       alert('Erro na conversï¿½o:\n'+err.message);
       resetAll();
     }
@@ -1622,7 +1622,7 @@ function parseExcelDate(val) {
    SHOW CONTENT — constrói UI de análise a partir dos dados reais
    -------------------------------------------------------------- */
 function showContent() {
-  hide('import-section');    // Esconder secï¿½ï¿½o de upload
+  hide('import-section');    // Esconder secção de upload
   hide('progress-section');
   hide('mapping-section');
   show('content');
@@ -1858,7 +1858,7 @@ function runReconciliation() {
   dupGroups=[...reconNok.map(e=>({...e,_recon:'nok'})),...reconOk.map(e=>({...e,_recon:'ok'}))];
 
   Logger.info(`Reconciliados: ${reconOk.length} — Por reconciliar: ${reconNok.length}`);
-  if (reconNok.length) Logger.warn(`${reconNok.length} grupo(s) com saldo acima da tolerï¿½ncia.`);
+  if (reconNok.length) Logger.warn(`${reconNok.length} grupo(s) com saldo acima da tolerância.`);
 
   setSummaryCards([
     {id:'s-total',  val:fmtN(groupMap.size),  label:`Grupos (${groupField})`,  cls:'total'},
@@ -1928,7 +1928,7 @@ function renderDuplicates(fields) {
       `<th style="cursor:pointer;user-select:none;padding:8px;background:#f5f5f5;border-bottom:2px solid #ddd;" onclick="setSortField('${f}')">${f.replace(/_/g,' ')}${getSortIndicator(f)}</th>`
     ).join('');
 
-    // Calcular somatï¿½rio total de todos os registos
+    // Calcular somatório total de todos os registos
     const totalAll = selectedSumField
       ? sortedRecords.reduce((s,r)=>s+(typeof r[selectedSumField]==='number'?r[selectedSumField]:0),0)
       : 0;
@@ -2003,7 +2003,7 @@ function renderDuplicates(fields) {
   const start      = (currentPage-1)*PAGE_SIZE;
   const slice      = filteredGroups.slice(start,start+PAGE_SIZE);
 
-  // Colunas de contexto: campos selecionados + campos ï¿½teis disponï¿½veis
+  // Colunas de contexto: campos selecionados + campos úteis disponíveis
   const ctxKeys  = availableFields.map(f=>f.key);
   const showCols = [...new Set([...fields,...ctxKeys])].filter(k=>k in (rawData[0]||{}));
 
@@ -2050,7 +2050,7 @@ function renderDuplicates(fields) {
         <tbody>${rows}</tbody>
       </table></div>`;
 
-    setPagination(filteredGroups.length > PAGE_SIZE ? 'flex' : 'none', `Registos ${start+1}ï¿½${Math.min(start+PAGE_SIZE,filteredGroups.length)} de ${fmtN(filteredGroups.length)}`);
+    setPagination(filteredGroups.length > PAGE_SIZE ? 'flex' : 'none', `Registos ${start+1}–${Math.min(start+PAGE_SIZE,filteredGroups.length)} de ${fmtN(filteredGroups.length)}`);
     renderPagination(totalPages,()=>renderDuplicates(fields));
     setupFilters(() => renderDuplicates(fields));
     return;
@@ -2559,13 +2559,13 @@ function updateExportPreview() {
   let previewText = '';
 
   if (format === 'csv') {
-    previewText = '?? CSV ï¿½ Abrir em Excel ou Google Sheets';
+    previewText = '📊 CSV — Abrir em Excel ou Google Sheets';
   } else if (format === 'json') {
-    previewText = '{ } JSON ï¿½ Para integraï¿½ï¿½o com outras ferramentas';
+    previewText = '📋 JSON — Para integração com outras ferramentas';
   } else if (format === 'xml') {
-    previewText = '< > XML ï¿½ Formato estruturado para sistemas';
+    previewText = '📁 XML — Formato estruturado para sistemas';
   } else if (format === 'pdf') {
-    previewText = `?? PDF ï¿½ Relatï¿½rio formatado (mï¿½x. ${fmtN(PDF_MAX_RECORDS)} registos)`;
+    previewText = `📄 PDF — Relatório formatado (máx. ${fmtN(PDF_MAX_RECORDS)} registos)`;
   }
 
   preview.textContent = previewText;
@@ -2609,7 +2609,7 @@ function executeExport() {
   }
 
   closeExportModal();
-  Logger.info(`? Exportaï¿½ï¿½o em ${format.toUpperCase()} concluï¿½da: ${data.length} registos`);
+  Logger.info(`✅ Exportação em ${format.toUpperCase()} concluída: ${data.length} registos`);
 }
 
 function exportToCSV(data, columns, filename) {

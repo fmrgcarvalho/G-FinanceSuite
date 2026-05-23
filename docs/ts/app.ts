@@ -295,7 +295,7 @@ let sortState: SortState = {
   direction: 'asc'
 };
 
-// Estado temporï¿½rio durante mapeamento Excel
+// Estado temporário durante mapeamento Excel
 let _excelRows: unknown[][] = [];
 let _excelHeaders: string[] = [];
 let _excelFile: File | null = null;
@@ -2558,7 +2558,7 @@ function renderReconciliation(reconOk, reconNok, tolerance, groupField, valField
 
 
 /* ---------------------------------------------------------------
-   EXPORTAï¿½ï¿½O DE DADOS
+   EXPORTAÇÃO DE DADOS
    -------------------------------------------------------------- */
 
 let exportState: ExportState = {
@@ -2627,7 +2627,7 @@ function setExportFormat(format: ExportState['format']): void {
   // Validar formato (Priority 1)
   const VALID_FORMATS: ReadonlyArray<ExportState['format']> = ['csv', 'json', 'xml', 'pdf'];
   if (!VALID_FORMATS.includes(format)) {
-    Logger.error(`Formato de export invï¿½lido: ${format}. Usando CSV como padrï¿½o.`);
+    Logger.error(`Formato de export inválido: ${format}. Usando CSV como padrão.`);
     exportState.format = 'csv';
     return;
   }
@@ -2674,7 +2674,7 @@ function updateExportCounts(): void {
 }
 
 /**
- * Atualiza a preview de exportaï¿½ï¿½o com descriï¿½ï¿½o do formato
+ * Atualiza a preview de exportação com descrição do formato
  */
 function updateExportPreview(): void {
   const preview = document.getElementById('export-preview') as HTMLElement | null;
@@ -2684,20 +2684,20 @@ function updateExportPreview(): void {
   let previewText: string = '';
 
   if (format === 'csv') {
-    previewText = '?? CSV ï¿½ Abrir em Excel ou Google Sheets';
+    previewText = '📊 CSV — Abrir em Excel ou Google Sheets';
   } else if (format === 'json') {
-    previewText = '{ } JSON ï¿½ Para integraï¿½ï¿½o com outras ferramentas';
+    previewText = '📋 JSON — Para integração com outras ferramentas';
   } else if (format === 'xml') {
-    previewText = '< > XML ï¿½ Formato estruturado para sistemas';
+    previewText = '📁 XML — Formato estruturado para sistemas';
   } else if (format === 'pdf') {
-    previewText = '?? PDF ï¿½ Relatï¿½rio formatado e imprimï¿½vel';
+    previewText = '📄 PDF — Relatório formatado e imprimível';
   }
 
   preview.textContent = previewText;
 }
 
 /**
- * Obtï¿½m as colunas visï¿½veis para exportaï¿½ï¿½o
+ * Obtém as colunas visï¿½veis para exportaï¿½ï¿½o
  * @returns {string[]} Array de nomes de colunas
  */
 function getVisibleColumns(): string[] {
@@ -2707,7 +2707,7 @@ function getVisibleColumns(): string[] {
 }
 
 /**
- * Obtï¿½m dados para exportaï¿½ï¿½o baseado no tipo selecionado
+ * Obtém dados para exportação baseado no tipo selecionado
  * Priority 2: Melhorar performance de O(n*m) para O(n)
  * @returns {ExportData} Objeto com dados e colunas
  */
@@ -2720,7 +2720,7 @@ function getDataToExport(): ExportData {
   if (exportState.dataType === 'all') {
     dataToExport = rawData;
   } else if (exportState.dataType === 'duplicates') {
-    // Criar Set de ï¿½ndices duplicados ï¿½ O(n) em vez de O(n*m)
+    // Criar Set de índices duplicados — O(n) em vez de O(n*m)
     const duplicateRecords = new Set<DataRecord>();
     dupGroups.forEach(group => {
       group.forEach(record => {
@@ -2728,16 +2728,16 @@ function getDataToExport(): ExportData {
       });
     });
 
-    // Filtrar registos que estï¿½o no Set ï¿½ O(n)
+    // Filtrar registos que estão no Set — O(n)
     dataToExport = rawData.filter(r => duplicateRecords.has(r));
 
     if (dataToExport.length === 0) {
-      Logger.warn('Nenhum registo duplicado encontrado para exportaï¿½ï¿½o');
+      Logger.warn('Nenhum registo duplicado encontrado para exportação');
     }
   } else if (exportState.dataType === 'unique') {
     dataToExport = uniqueRecords;
   } else {
-    Logger.error(`Tipo de export invï¿½lido: ${exportState.dataType}`);
+    Logger.error(`Tipo de export inválido: ${exportState.dataType}`);
     return { data: [], columns: [] };
   }
 
@@ -2745,7 +2745,7 @@ function getDataToExport(): ExportData {
 }
 
 /**
- * Executa a exportaï¿½ï¿½o de dados no formato selecionado
+ * Executa a exportação de dados no formato selecionado
  */
 function executeExport(): void {
   const { data, columns } = getDataToExport();
@@ -2764,14 +2764,14 @@ function executeExport(): void {
   }
 
   closeExportModal();
-  Logger.info(`? Exportaï¿½ï¿½o em ${format.toUpperCase()} concluï¿½da: ${data.length} registos`);
+  Logger.info(`✅ Exportação em ${format.toUpperCase()} concluída: ${data.length} registos`);
 }
 
 /**
  * Exporta dados para CSV
  * @param {DataRecord[]} data - Array de registos
  * @param {string[]} columns - Nomes das colunas
- * @param {string} filename - Nome do ficheiro (sem extensï¿½o)
+ * @param {string} filename - Nome do ficheiro (sem extensão)
  */
 function exportToCSV(data: DataRecord[], columns: string[], filename: string): void {
   const header = columns.map(col => `"${col.replace(/"/g, '""')}"`).join(',');
@@ -2806,7 +2806,7 @@ function exportToCSV(data: DataRecord[], columns: string[], filename: string): v
  * Exporta dados para JSON
  * @param {DataRecord[]} data - Array de registos
  * @param {string[]} columns - Nomes das colunas
- * @param {string} filename - Nome do ficheiro (sem extensï¿½o)
+ * @param {string} filename - Nome do ficheiro (sem extensão)
  */
 function exportToJSON(data: DataRecord[], columns: string[], filename: string): void {
   const jsonData = data.map(record => {
@@ -2856,7 +2856,7 @@ function exportToXML(data, columns, filename) {
  * Exporta dados para PDF com relatï¿½rio formatado
  * @param {DataRecord[]} data - Array de registos
  * @param {string[]} columns - Nomes das colunas
- * @param {string} filename - Nome do ficheiro (sem extensï¿½o)
+ * @param {string} filename - Nome do ficheiro (sem extensão)
  */
 function exportToPDF(data: DataRecord[], columns: string[], filename: string): void {
   // Priority 1: Validar biblioteca jsPDF antes de comeï¿½ar
