@@ -201,8 +201,53 @@
         <div class="sum-card dups" id="card-dups" data-filter="duplicates" style="cursor:pointer;transition:all 0.2s"> <div class="sv" id="s-dups">—</div> <div class="sl" id="sl-dups">—</div></div>
         <div class="sum-card info" id="card-groups"> <div class="sv" id="s-groups">—</div><div class="sl" id="sl-groups">—</div></div>
       </div>
-      <div id="filters-section" style="background:linear-gradient(135deg,#f8f9fa 0%,#f0f1f3 100%);border:1px solid var(--gray-border);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:none"></div>
+      <!-- BARRA DE FILTROS DINÂMICA -->
+      <div id="filters-section" style="background:linear-gradient(135deg,#f8f9fa 0%,#f0f1f3 100%);border:1px solid var(--gray-border);border-radius:10px;padding:12px 16px;margin-bottom:18px;display:none">
+        <!-- Filtros: Procura, Nº duplicados, Montante -->
+        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+          <!-- Procura por texto -->
+          <div style="flex:1;min-width:220px">
+            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">🔍 Procurar</label>
+            <div style="display:flex;gap:6px;align-items:stretch">
+              <input type="text" id="filter-search" placeholder="Escreva para procurar..." style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+              <div style="position:relative;flex-shrink:0" id="search-field-wrapper">
+                <button id="search-field-btn" style="height:100%;padding:0 10px;border:1px solid var(--gray-border);border-radius:6px;background:white;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:4px">
+                  <span id="search-field-label">Todos os campos</span> <span style="font-size:9px">▾</span>
+                </button>
+                <div id="search-field-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:210px;background:white;border:1px solid var(--gray-border);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.13);z-index:200;padding:4px 0;max-height:280px;overflow-y:auto">
+                  <!-- preenchido por JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Filtro por número de duplicados (exato) — SÓ PARA VISTA DUPLICADOS -->
+          <div id="filter-exactcount-wrapper" style="min-width:120px;display:none">
+            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Nº duplicados</label>
+            <input type="number" id="filter-exactcount" min="1" placeholder="Exato" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+          </div>
+          <!-- Filtro por montante mín -->
+          <div style="min-width:130px">
+            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Montante mín (€)</label>
+            <input type="number" id="filter-minamt" step="0.01" placeholder="Min" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+          </div>
+          <!-- Filtro por montante máx -->
+          <div style="min-width:130px">
+            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Montante máx (€)</label>
+            <input type="number" id="filter-maxamt" step="0.01" placeholder="Max" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+          </div>
+          <!-- Botão Limpar -->
+          <button id="btn-clear-filters" style="padding:8px 14px;background:#e8e9eb;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">🗑 Limpar</button>
+        </div>
+      </div>
+      <div class="pagination" id="pagination-top" style="display:none;margin-bottom:12px">
+        <span class="pag-info" id="pag-info-top"></span>
+        <div class="pag-btns" id="pag-btns-top"></div>
+      </div>
       <div id="dup-list" style="margin-bottom:20px"></div>
+      <div class="pagination" id="pagination" style="display:none">
+        <span class="pag-info" id="pag-info"></span>
+        <div class="pag-btns" id="pag-btns"></div>
+      </div>
     </div>
 
     <!-- Seção de Resultados da Reconciliação (SEPARADA) -->
@@ -372,58 +417,6 @@
         </div>
       </div>
 
-      <!-- BARRA DE FILTROS DINÂMICA -->
-      <div id="filters-section" style="background:linear-gradient(135deg,#f8f9fa 0%,#f0f1f3 100%);border:1px solid var(--gray-border);border-radius:10px;padding:12px 16px;margin-bottom:18px;display:none">
-        <!-- Filtros: Procura, Nº duplicados, Montante -->
-        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
-          <!-- Procura por texto -->
-          <div style="flex:1;min-width:220px">
-            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">🔍 Procurar</label>
-            <div style="display:flex;gap:6px;align-items:stretch">
-              <input type="text" id="filter-search" placeholder="Escreva para procurar..." style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
-              <div style="position:relative;flex-shrink:0" id="search-field-wrapper">
-                <button id="search-field-btn" style="height:100%;padding:0 10px;border:1px solid var(--gray-border);border-radius:6px;background:white;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:4px">
-                  <span id="search-field-label">Todos os campos</span> <span style="font-size:9px">▾</span>
-                </button>
-                <div id="search-field-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:210px;background:white;border:1px solid var(--gray-border);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.13);z-index:200;padding:4px 0;max-height:280px;overflow-y:auto">
-                  <!-- preenchido por JS -->
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Filtro por número de duplicados (exato) — SÓ PARA VISTA DUPLICADOS -->
-          <div id="filter-exactcount-wrapper" style="min-width:120px;display:none">
-            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Nº duplicados</label>
-            <input type="number" id="filter-exactcount" min="1" placeholder="Exato" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
-          </div>
-
-          <!-- Filtro por montante mín -->
-          <div style="min-width:130px">
-            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Montante mín (€)</label>
-            <input type="number" id="filter-minamt" step="0.01" placeholder="Min" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
-          </div>
-
-          <!-- Filtro por montante máx -->
-          <div style="min-width:130px">
-            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Montante máx (€)</label>
-            <input type="number" id="filter-maxamt" step="0.01" placeholder="Max" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
-          </div>
-
-          <!-- Botão Limpar -->
-          <button id="btn-clear-filters" style="padding:8px 14px;background:#e8e9eb;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">🗑 Limpar</button>
-        </div>
-      </div>
-
-      <div class="pagination" id="pagination-top" style="display:none;margin-bottom:12px">
-        <span class="pag-info" id="pag-info-top"></span>
-        <div class="pag-btns" id="pag-btns-top"></div>
-      </div>
-
-      <div class="pagination" id="pagination" style="display:none">
-        <span class="pag-info" id="pag-info"></span>
-        <div class="pag-btns" id="pag-btns"></div>
-      </div>
     </div>
 
   </div>
