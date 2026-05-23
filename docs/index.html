@@ -293,9 +293,11 @@
           <table id="recon-table" style="width:100%;border-collapse:collapse;font-size:12px">
             <thead style="background:#f8f9fa;border-bottom:2px solid var(--gray-border)">
               <tr>
-                <th style="padding:10px 12px;text-align:left;font-weight:600;color:#333">Grupo</th>
-                <th style="padding:10px 12px;text-align:center;font-weight:600;color:#333">Registos</th>
-                <th style="padding:10px 12px;text-align:right;font-weight:600;color:#333">Saldo</th>
+                <th data-recon-sort="grp" style="padding:10px 12px;text-align:left;font-weight:600;color:#333;cursor:pointer;user-select:none;white-space:nowrap">Grupo <span class="recon-sort-ind" style="color:#bbb;font-size:10px">⇅</span></th>
+                <th data-recon-sort="registos" style="padding:10px 12px;text-align:center;font-weight:600;color:#333;cursor:pointer;user-select:none;white-space:nowrap">Registos <span class="recon-sort-ind" style="color:#bbb;font-size:10px">⇅</span></th>
+                <th style="padding:10px 12px;text-align:right;font-weight:600;color:#4ade80;font-size:11px">Débito</th>
+                <th style="padding:10px 12px;text-align:right;font-weight:600;color:#f87171;font-size:11px">Crédito</th>
+                <th data-recon-sort="saldo" style="padding:10px 12px;text-align:right;font-weight:600;color:#333;cursor:pointer;user-select:none;white-space:nowrap">Saldo <span class="recon-sort-ind" style="color:#bbb;font-size:10px">⇅</span></th>
                 <th style="padding:10px 12px;text-align:center;font-weight:600;color:#333">Status</th>
                 <th style="padding:10px 12px;text-align:left;font-weight:600;color:#333;font-size:11px">Documentos</th>
               </tr>

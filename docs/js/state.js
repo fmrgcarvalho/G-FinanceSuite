@@ -50,6 +50,7 @@ export const AppState = {
     tolerance:     1,
     groupField:    '',
     valField:      '',
+    reconSortState: { field: null, direction: 'asc' },
   },
 
   // ── Importação / Fila ──────────────────────────────────────
@@ -96,7 +97,7 @@ export const AppState = {
     this.filterDebounceTimer = null;
     this.sortState        = { field: null, direction: 'asc' };
 
-    this.reconDashboardState = { allGroups: [], filteredGroups: [], minSaldo: null, maxSaldo: null, charts: {}, filterType: 'all', tolerance: 1, groupField: '', valField: '' };
+    this.reconDashboardState = { allGroups: [], filteredGroups: [], minSaldo: null, maxSaldo: null, charts: {}, filterType: 'all', tolerance: 1, groupField: '', valField: '', reconSortState: { field: null, direction: 'asc' } };
 
     this.fileQueue             = [];
     this.processingQueue       = false;

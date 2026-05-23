@@ -30,6 +30,55 @@ export function initReconEvents() {
     const tr = e.target.closest('[data-expand]');
     if (tr) toggleReconExpand(tr.dataset.expand);
   });
+
+  const thead = document.querySelector('#recon-table thead');
+  if (thead) thead.addEventListener('click', e => {
+    const th = e.target.closest('[data-recon-sort]');
+    if (th) setReconSortField(th.dataset.reconSort);
+  });
+}
+
+// ── Ordenação da tabela Op2 ────────────────────────────────────
+export function setReconSortField(field) {
+  const s = AppState.reconDashboardState.reconSortState;
+  if (s.field === field) {
+    s.direction = s.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    s.field = field;
+    s.direction = field === 'saldo' ? 'desc' : 'asc';
+  }
+  AppState.currentPage = 1;
+  _updateReconSortHeaders();
+  renderReconTable(
+    AppState.reconDashboardState.filteredGroups,
+    AppState.reconDashboardState.groupField,
+    AppState.reconDashboardState.valField,
+    AppState.reconDashboardState.tolerance,
+  );
+  Logger.info(`Sort Op2: ${field} ${s.direction}`);
+}
+
+function _sortReconGroups(groups) {
+  const { field, direction } = AppState.reconDashboardState.reconSortState;
+  if (!field) return groups;
+  return [...groups].sort((a, b) => {
+    let av, bv;
+    if (field === 'grp')      { av = String(a.grp); bv = String(b.grp); }
+    else if (field === 'registos') { av = a.records.length; bv = b.records.length; }
+    else if (field === 'saldo')    { av = Math.abs(a.saldo); bv = Math.abs(b.saldo); }
+    const cmp = typeof av === 'number' ? av - bv : av.localeCompare(bv, 'pt', { sensitivity: 'base' });
+    return direction === 'asc' ? cmp : -cmp;
+  });
+}
+
+function _updateReconSortHeaders() {
+  const { field, direction } = AppState.reconDashboardState.reconSortState;
+  document.querySelectorAll('#recon-table thead [data-recon-sort] .recon-sort-ind').forEach(span => {
+    const f = span.closest('[data-recon-sort]').dataset.reconSort;
+    const active = f === field;
+    span.textContent = active ? (direction === 'asc' ? '▲' : '▼') : '⇅';
+    span.style.color = active ? '#2563eb' : '#bbb';
+  });
 }
 
 // ── Executar reconciliação ─────────────────────────────────────
@@ -198,32 +247,38 @@ export function renderReconTable(groups, groupField, valField, tolerance) {
   if (!tbody) { Logger.warn('renderReconTable: recon-table-body não encontrado'); return; }
 
   if (!groups || groups.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:#999">Nenhum grupo encontrado</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:#999">Nenhum grupo encontrado</td></tr>';
     setPagination('none', undefined, true);
     Logger.warn('renderReconTable: nenhum grupo recebido');
     return;
   }
 
-  const totalPages = Math.ceil(groups.length / PAGE_SIZE);
+  _updateReconSortHeaders();
+  const sorted = _sortReconGroups(groups);
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
   const start = (AppState.currentPage - 1) * PAGE_SIZE;
-  const slice = groups.slice(start, start + PAGE_SIZE);
+  const slice = sorted.slice(start, start + PAGE_SIZE);
 
   tbody.innerHTML = slice.map((g, idx) => {
     const status      = Math.abs(g.saldo) <= tolerance ? '✅ Reconciliado' : '❌ Por reconciliar';
     const statusColor = Math.abs(g.saldo) <= tolerance ? '#22c55e' : '#ef4444';
     const expandId    = `recon-expand-${start + idx}`;
     const docNumbers  = g.records.map(r => r.numero_documento).filter(n => n).join(', ');
+    const debito  = g.records.reduce((s, r) => { const v = r[valField]; return s + (typeof v === 'number' && v > 0 ? v : 0); }, 0);
+    const credito = Math.abs(g.records.reduce((s, r) => { const v = r[valField]; return s + (typeof v === 'number' && v < 0 ? v : 0); }, 0));
 
     return `
       <tr style="border-bottom:1px solid #f0f0f0;transition:all 0.2s;cursor:pointer" data-expand="${expandId}" title="Clique para ver documentos">
         <td style="padding:10px 12px;color:#333"><span style="margin-right:8px;color:#999;font-weight:bold">▼</span>${escHtml(String(g.grp))}</td>
         <td style="padding:10px 12px;text-align:center;color:#666">${g.records.length}</td>
+        <td style="padding:10px 12px;text-align:right;color:#16a34a;font-size:11px">${debito > 0 ? fmt(debito) : '—'}</td>
+        <td style="padding:10px 12px;text-align:right;color:#dc2626;font-size:11px">${credito > 0 ? fmt(credito) : '—'}</td>
         <td style="padding:10px 12px;text-align:right;font-weight:bold;color:${Math.abs(g.saldo) > 10000 ? '#ef4444' : '#333'}">${fmt(g.saldo)}</td>
         <td style="padding:10px 12px;text-align:center;color:${statusColor};font-weight:600">${status}</td>
         <td style="padding:10px 12px;font-size:11px;color:#6b7280">${docNumbers.substring(0, 30)}${docNumbers.length > 30 ? '...' : ''}</td>
       </tr>
       <tr id="${expandId}" style="display:none;background:#f8f9fa">
-        <td colspan="5" style="padding:12px 16px">
+        <td colspan="7" style="padding:12px 16px">
           <div style="background:white;border:1px solid #e5e7eb;border-radius:6px;padding:12px">
             <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:8px;text-transform:uppercase">Documentos neste grupo:</div>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;font-size:12px">

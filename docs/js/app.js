@@ -25,7 +25,7 @@ import {
   applyReconFilters, clearReconFilters, toggleReconExpand, setReconFilterType, toggleReconCharts,
   openReconExportModal, closeReconExportModal, setReconExportDataType, setReconExportFormat,
   updateReconExportCounts, updateReconExportPreview, getReconDataToExport, executeReconExport,
-  initReconEvents,
+  setReconSortField, initReconEvents,
 } from './modules/reconciliation.js';
 import {
   openExportModal, closeExportModal, setExportDataType, setExportFormat,
