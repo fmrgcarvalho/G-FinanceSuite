@@ -2391,7 +2391,7 @@ function setSortField(field) {
 
 function getSortIndicator(field) {
   if (sortState.field !== field) return '';
-  return sortState.direction === 'asc' ? ' ?' : ' ?';
+  return sortState.direction === 'asc' ? ' 🔼' : ' 🔽';
 }
 
 /* --------------------------------------------------------------
