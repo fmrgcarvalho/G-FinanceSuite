@@ -2285,14 +2285,14 @@ function renderDuplicates(fields) {
     <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;padding:12px;background:#ffe8e8;border-radius:8px;border:1px solid #ffb3b3;">
       <div style="display:flex;align-items:center;gap:16px">
         <span style="display:inline-block;background:#d32f2f;color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">Registos duplicados</span>
-        <span style="font-size:14px;color:#555;font-weight:500;">S montante: ${fmt(totalDuplicates)}</span>
+        <span style="font-size:14px;color:#555;font-weight:500;">💰 Montante: ${fmt(totalDuplicates)}</span>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         <div style="display:flex;flex-direction:column;gap:2px;text-align:right">
-          <div style="font-weight:600;color:#1e40af;font-size:12px">?? Exportar dados</div>
-          <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, PDF</div>
+          <div style="font-weight:600;color:#1e40af;font-size:12px">📤 Exportar dados</div>
+          <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, XLSX, PDF</div>
         </div>
-        <button onclick="openExportModal()" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">? Exportar</button>
+        <button onclick="openExportModal()" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇ Exportar</button>
       </div>
     </div>
     ${groupsHtml}`;
