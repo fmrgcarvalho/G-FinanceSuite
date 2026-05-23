@@ -328,7 +328,7 @@ function updateQueueUI() {
     const processoBtn = fileQueue.length > 1 && hasPending ? `
       <div style="margin-bottom:16px;display:flex;gap:10px;">
         <button class="btn-run" onclick="startProcessing()" style="flex:1;padding:12px;font-size:13px">
-          ? Processar todos (${fileQueue.length} ficheiro${fileQueue.length !== 1 ? 's' : ''})
+          ▶️ Processar todos (${fileQueue.length} ficheiro${fileQueue.length !== 1 ? 's' : ''})
         </button>
       </div>
     ` : '';
@@ -338,11 +338,11 @@ function updateQueueUI() {
       const isSuccess = item.status === 'success';
       const isError = item.status === 'error';
 
-      const statusIcon = item.status === 'pending' ? '?' :
-                        item.status === 'processing' ? '??' :
-                        item.status === 'mapping' ? '??' :
-                        item.status === 'success' ? '?' :
-                        '?';
+      const statusIcon = item.status === 'pending' ? '⏳' :
+                        item.status === 'processing' ? '⚙️' :
+                        item.status === 'mapping' ? '🔄' :
+                        item.status === 'success' ? '✅' :
+                        '❌';
 
       const itemData = fileDataMap[item.file.name];
       const statusText = item.status === 'pending' ? 'Pendente' :
@@ -381,7 +381,7 @@ function updateQueueUI() {
               ${btnDisabled || isError ? 'disabled' : ''}
               title="${isSuccess ? 'Ficheiro processado' : isError ? 'Ficheiro com erro' : 'Processar este ficheiro'}"
               style="display:flex;align-items:center;justify-content:center;gap:6px;min-height:36px">
-              ${isProcessing ? `<div class="queue-item-spinner" style="width:14px;height:14px;border-width:1.5px"></div><span>Processando</span>` : isSuccess ? '? Pronto' : isError ? '? Erro' : '? Processar'}
+              ${isProcessing ? `<div class="queue-item-spinner" style="width:14px;height:14px;border-width:1.5px"></div><span>Processando</span>` : isSuccess ? '✅ Pronto' : isError ? '❌ Erro' : '▶️ Processar'}
             </button>
             <button
               class="queue-item-remove-btn"
@@ -389,7 +389,7 @@ function updateQueueUI() {
               ${isProcessing ? 'disabled' : ''}
               title="Remover ficheiro"
               style="padding:8px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;cursor:pointer;font-weight:600;color:#856404;font-size:14px;min-height:36px;transition:all 0.2s">
-              ? Remover
+              🗑️ Remover
             </button>
           </div>
         </div>
@@ -405,7 +405,7 @@ function updateQueueUI() {
       listEl.innerHTML += `
         <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;">
           <button class="btn-run" onclick="startAnalysis()" style="flex:1;max-width:600px">
-            ? Analisar e Consolidar (${successCount} ficheiro${successCount !== 1 ? 's' : ''} pronto${successCount !== 1 ? 's' : ''})
+            ✓ Analisar e Consolidar (${successCount} ficheiro${successCount !== 1 ? 's' : ''} pronto${successCount !== 1 ? 's' : ''})
           </button>
         </div>
       `;
