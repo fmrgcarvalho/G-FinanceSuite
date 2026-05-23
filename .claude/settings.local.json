@@ -1,11 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add *)",
-      "Bash(git commit -m 'fix: corrigir codificação de caracteres acentuados em app.ts *)",
-      "Bash(git commit -m 'fix: extrair emojis do tipo de campo para exibição nas colunas *)",
-      "Bash(git commit -m 'fix: substituir ícones de sort por emojis *)",
-      "Bash(git commit -m ' *)",
+      "Bash(*)",
+      "PowerShell(*)",
       "Bash(cd && grep -n \"format.*csv.*json.*xml\" docs/ts/app.ts | head -5)",
       "Read(//c/Users/FábioCarvalho/**)",
       "PowerShell(node C:\\\\temp\\\\test_recon_logic.js)"
