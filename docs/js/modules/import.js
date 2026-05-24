@@ -1,12 +1,20 @@
 /* ============================================================
    G-FinanceSuite — Módulo Importação
    Drag&drop, fila de ficheiros, carregamento, mapeamento Excel.
-   Depende de: AppState, ui.js
+   Utilitários de parsing em loaders.js.
    ============================================================ */
 
 import { AppState } from '../state.js';
 import { show, hide, setProgress, fmtN, escHtml } from './ui.js';
 import { Logger } from './logger.js';
+import {
+  YIELD, parseCsv, loadFileAsync,
+  isLikelyNumeric, isLikelyDate, parseExcelDate,
+  buildRecord, COLUMN_ALIASES, normalizeHeader, suggestField, guessFieldTypeLocal,
+} from './loaders.js';
+
+// Re-exportar para app.js (que importa isLikelyNumeric daqui)
+export { isLikelyNumeric } from './loaders.js';
 
 // ── IDs DOM necessários ────────────────────────────────────────
 export const REQUIRED_IDS = [
@@ -16,7 +24,6 @@ export const REQUIRED_IDS = [
   'progress-section', 'prog-fill', 'prog-label', 'prog-sub',
 ];
 
-// ── Callback para quando a consolidação termina ────────────────
 let _onConsolidationComplete = null;
 
 export function initImport(callbacks = {}) {
@@ -56,7 +63,7 @@ function _setupMappingDelegation() {
   });
 }
 
-// ── Validação de tipos de ficheiro ─────────────────────────────
+// ── Validação de tipos ─────────────────────────────────────────
 export function isExcel(name) { return /\.(xlsx|xls)$/i.test(name); }
 export function isCSV(name)   { return /\.csv$/i.test(name); }
 export function isJSON(name)  { return /\.json$/i.test(name); }
@@ -68,7 +75,7 @@ export function isValidFile(file) {
   }
   const maxSize = 500 * 1024 * 1024;
   if (file.size > maxSize) {
-    Logger.warn(`Ficheiro ${file.name} é muito grande (${(file.size/1024/1024).toFixed(0)}MB) — limite: 500MB — ignorado.`);
+    Logger.warn(`Ficheiro ${file.name} é muito grande (${(file.size/1024/1024).toFixed(0)}MB) — ignorado.`);
     return false;
   }
   return true;
@@ -85,9 +92,8 @@ export function addFilesToQueue(files) {
     }
   }
   updateQueueUI();
-  if (validCount === 0) {
-    alert('⚠️ Nenhum ficheiro válido foi seleccionado.\n\nFormatos suportados: .xlsx, .xls, .csv, .json\nTamanho máximo: 500MB');
-  }
+  if (validCount === 0)
+    alert('⚠️ Nenhum ficheiro válido.\n\nFormatos: .xlsx, .xls, .csv, .json\nTamanho máximo: 500MB');
 }
 
 export function removeFileFromQueue(index) {
@@ -111,18 +117,27 @@ export function clearQueue() {
   if (fi) fi.value = '';
 }
 
-// ── UI da fila ─────────────────────────────────────────────────
+// ── UI da fila — throttled com requestAnimationFrame ──────────
+
+let _queueRafPending = false;
+
 export function updateQueueUI() {
+  if (_queueRafPending) return;
+  _queueRafPending = true;
+  requestAnimationFrame(() => { _queueRafPending = false; _renderQueueUI(); });
+}
+
+function _renderQueueUI() {
   const queueEl = document.getElementById('files-queue');
   const listEl  = document.getElementById('files-queue-list');
-  if (!queueEl || !listEl) { console.warn('⚠️ Elementos de fila não encontrados no DOM'); return; }
+  if (!queueEl || !listEl) { console.warn('⚠️ Elementos de fila não encontrados'); return; }
 
   if (AppState.fileQueue.length === 0) { queueEl.style.display = 'none'; return; }
   queueEl.style.display = 'block';
 
   try {
-    const hasPending   = AppState.fileQueue.some(f => f.status === 'pending');
-    const processoBtn  = AppState.fileQueue.length > 1 && hasPending ? `
+    const hasPending  = AppState.fileQueue.some(f => f.status === 'pending');
+    const processoBtn = AppState.fileQueue.length > 1 && hasPending ? `
       <div style="margin-bottom:16px;display:flex;gap:10px;">
         <button class="btn-run" data-action="start-processing" style="flex:1;padding:12px;font-size:13px">
           ▶️ Processar todos (${AppState.fileQueue.length} ficheiro${AppState.fileQueue.length !== 1 ? 's' : ''})
@@ -198,7 +213,8 @@ function setFileError(queueItem, errorMsg) {
   updateQueueUI();
 }
 
-// ── Processamento ──────────────────────────────────────────────
+// ── Processamento — ficheiro único (botão "Processar" individual) ─
+
 export function processSingleFile(queueIndex) {
   const item = AppState.fileQueue[queueIndex];
   if (!item) return;
@@ -217,16 +233,42 @@ export function processSingleFile(queueIndex) {
   }, 100);
 }
 
-export function startProcessing() {
+// ── Processamento — "Processar todos" (paralelo CSV/JSON + série Excel) ─
+
+export async function startProcessing() {
   if (AppState.fileQueue.length === 0) { alert('Adiciona pelo menos um ficheiro.'); return; }
   AppState.processingQueue        = true;
   AppState.isSequentialProcessing = true;
   AppState.consolidatedFiles      = [];
   AppState.rawData                = [];
   Logger.separator(`Processamento de ${AppState.fileQueue.length} ficheiro(s)`);
-  processNextFile();
+  show('progress-section');
+
+  const textItems  = AppState.fileQueue.filter(i => isCSV(i.file.name) || isJSON(i.file.name));
+  const excelItems = AppState.fileQueue.filter(i => isExcel(i.file.name));
+
+  // Paralelo: CSV + JSON em simultâneo
+  if (textItems.length) {
+    setProgress(5, `A processar ${textItems.length} ficheiro(s) CSV/JSON em paralelo…`, '');
+    await Promise.all(textItems.map(item => loadFileAsync(item)));
+    updateQueueUI();
+    Logger.info(`CSV/JSON concluídos: ${textItems.filter(i => i.status === 'success').length}/${textItems.length}`);
+  }
+
+  // Série: Excel (seguro em memória — um de cada vez)
+  for (let idx = 0; idx < excelItems.length; idx++) {
+    const item = excelItems[idx];
+    const base = textItems.length ? 40 : 5;
+    setProgress(base + Math.round((idx / excelItems.length) * (90 - base)),
+      `Excel ${idx + 1}/${excelItems.length}: ${item.file.name}`, '');
+    await _loadExcelAsync(item);
+    updateQueueUI();
+  }
+
+  await finalizeConsolidation();
 }
 
+// Mantido para compatibilidade com loadCSVFromQueue / loadJSONFromQueue (processSingleFile)
 export function processNextFile() {
   const pending = AppState.fileQueue.find(f => f.status === 'pending');
   if (!pending) { finalizeConsolidation(); return; }
@@ -243,6 +285,20 @@ export function processNextFile() {
     else if (isJSON(pending.file.name)) loadJSONFromQueue(pending);
   }, 50);
 }
+
+// Helper interno: carrega um Excel como Promise (para startProcessing)
+async function _loadExcelAsync(item) {
+  item.status = 'processing'; item.progress = 5;
+  updateQueueUI();
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload  = async e => { await processExcelFromQueueMainThread(e.target.result, item); resolve(); };
+    reader.onerror = () => { item.status = 'error'; item.error = 'Erro ao ler ficheiro'; updateQueueUI(); resolve(); };
+    reader.readAsArrayBuffer(item.file);
+  });
+}
+
+// ── Análise e consolidação ─────────────────────────────────────
 
 export function startAnalysis() {
   const successFiles = AppState.fileQueue.filter(f => f.status === 'success');
@@ -262,16 +318,13 @@ export function startAnalysis() {
         Logger.info(`✓ ${file.file.name}: ${itemData.records.length} registos consolidados`);
       }
     }
-
     if (AppState.rawData.length === 0) { alert('Nenhum dado para consolidar.'); Logger.error('Consolidação: sem dados'); return; }
-
     Logger.info(`Consolidação completa: ${AppState.rawData.length} registos totais`);
     const allFields = new Set();
     AppState.consolidatedFiles.forEach(f => { if (f.fields) f.fields.forEach(k => allFields.add(k)); });
     AppState.modelFields = Array.from(allFields);
     AppState.fileName = `${successFiles.length} ficheiro${successFiles.length !== 1 ? 's' : ''} consolidado${successFiles.length !== 1 ? 's' : ''}`;
-
-    Logger.info('✓ Consolidação pronta! Os dados estão prontos para análise.');
+    Logger.info('✓ Consolidação pronta!');
     if (_onConsolidationComplete) _onConsolidationComplete();
   } catch (err) {
     Logger.error(`Consolidação falhou: ${err.message}`);
@@ -279,45 +332,52 @@ export function startAnalysis() {
   }
 }
 
-export function finalizeConsolidation() {
+export async function finalizeConsolidation() {
   const successCount = AppState.fileQueue.filter(f => f.status === 'success').length;
   const failCount    = AppState.fileQueue.filter(f => f.status === 'error').length;
   const totalCount   = AppState.fileQueue.length;
 
-  let newData = [];
+  // flat() em vez de concat() em loop — evita cópias O(n²)
+  const chunks = [];
   AppState.fileQueue.forEach(item => {
     if (item.status === 'success') {
       const itemData = AppState.fileDataMap[item.file.name];
-      if (itemData?.records) newData = newData.concat(itemData.records);
+      if (itemData?.records) chunks.push(itemData.records);
     }
   });
+  let newData = chunks.flat();
 
   const prevData  = window._previousConsolidatedData;
   const hasPrev   = Array.isArray(prevData) && prevData.length > 0;
   const prevCount = hasPrev ? prevData.length : 0;
 
   Logger.separator('RESUMO DO PROCESSAMENTO');
-  Logger.info(`Ficheiros novos: ${totalCount} | ✓ Sucesso: ${successCount}${failCount ? ` | ⚠️ Falha: ${failCount}` : ''}`);
-  if (hasPrev) Logger.info(`Dados anteriores: ${prevCount.toLocaleString('pt-PT')} registos | Novos: ${newData.length.toLocaleString('pt-PT')} registos`);
+  Logger.info(`Ficheiros: ${totalCount} | ✓ ${successCount}${failCount ? ` | ⚠️ ${failCount}` : ''}`);
+  if (hasPrev) Logger.info(`Anteriores: ${prevCount.toLocaleString('pt-PT')} | Novos: ${newData.length.toLocaleString('pt-PT')}`);
 
   if (newData.length === 0) {
     if (hasPrev) {
-      Logger.warn('Nenhum registo encontrado nos ficheiros novos. A manter dados anteriores.');
+      Logger.warn('Sem registos novos — a manter dados anteriores.');
       AppState.rawData = [...prevData];
       return;
     }
     Logger.error('Nenhum ficheiro foi processado com sucesso.');
     alert(failCount === totalCount
       ? '❌ Erro Fatal: Nenhum ficheiro conseguiu ser processado.'
-      : '⚠️ Aviso: Os ficheiros foram lidos mas sem registos.');
+      : '⚠️ Os ficheiros foram lidos mas sem registos.');
     return;
   }
 
   AppState.rawData = hasPrev ? [...prevData, ...newData] : newData;
+  newData = []; // libertar referência
 
-  // Normalizar campos — todos os registos ficam com os mesmos campos
+  // Normalização de campos — async com yield a cada 10k registos
   const allKeys = [...new Set(AppState.rawData.flatMap(r => Object.keys(r)))];
-  AppState.rawData.forEach(r => allKeys.forEach(k => { if (!(k in r)) r[k] = null; }));
+  for (let i = 0; i < AppState.rawData.length; i++) {
+    const r = AppState.rawData[i];
+    allKeys.forEach(k => { if (!(k in r)) r[k] = null; });
+    if (i > 0 && i % 10000 === 0) await YIELD();
+  }
 
   AppState.fileName = hasPrev
     ? `${AppState.rawData.length.toLocaleString('pt-PT')} registos mesclados`
@@ -335,7 +395,8 @@ export function finalizeConsolidation() {
   setTimeout(() => { hide('progress-section'); updateQueueUI(); }, 500);
 }
 
-// ── Loaders ────────────────────────────────────────────────────
+// ── Loaders legacy (processSingleFile) ────────────────────────
+
 export function loadJSONFromQueue(queueItem) {
   const reader = new FileReader();
   reader.onload = e => {
@@ -348,14 +409,12 @@ export function loadJSONFromQueue(queueItem) {
       queueItem.status = 'success';
       AppState.consolidatedFiles.push(queueItem.file.name);
       Logger.info(`✓ JSON: ${data.length.toLocaleString('pt-PT')} registos`);
-      updateQueueUI();
-      if (AppState.isSequentialProcessing) processNextFile(); else _scheduleLogClose();
     } catch (err) {
       queueItem.status = 'error';
       Logger.error(`JSON ${queueItem.file.name}: ${err.message}`);
-      updateQueueUI();
-      if (AppState.isSequentialProcessing) processNextFile(); else _scheduleLogClose();
     }
+    updateQueueUI();
+    if (AppState.isSequentialProcessing) processNextFile(); else _scheduleLogClose();
   };
   reader.onerror = () => {
     queueItem.status = 'error';
@@ -370,21 +429,18 @@ export function loadCSVFromQueue(queueItem) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const data = parseCSV(e.target.result);
+      const data = parseCsv(e.target.result, queueItem.file.name);
       if (!data.length) throw new Error('Nenhum registo encontrado.');
       data.forEach(row => { row.ficheiro_origem = queueItem.file.name; });
       AppState.fileDataMap[queueItem.file.name] = { records: data, mapping: {} };
       queueItem.status = 'success';
       AppState.consolidatedFiles.push(queueItem.file.name);
-      Logger.info(`✓ CSV: ${data.length.toLocaleString('pt-PT')} registos`);
-      updateQueueUI();
-      if (AppState.isSequentialProcessing) processNextFile(); else _scheduleLogClose();
     } catch (err) {
       queueItem.status = 'error';
       Logger.error(`CSV ${queueItem.file.name}: ${err.message}`);
-      updateQueueUI();
-      if (AppState.isSequentialProcessing) processNextFile(); else _scheduleLogClose();
     }
+    updateQueueUI();
+    if (AppState.isSequentialProcessing) processNextFile(); else _scheduleLogClose();
   };
   reader.onerror = () => {
     queueItem.status = 'error';
@@ -397,12 +453,15 @@ export function loadCSVFromQueue(queueItem) {
 
 export function loadExcelFromQueue(queueItem) {
   const reader = new FileReader();
-  reader.onload = e => processExcelFromQueueMainThread(e.target.result, queueItem);
+  reader.onload = async e => {
+    await processExcelFromQueueMainThread(e.target.result, queueItem);
+    if (AppState.isSequentialProcessing) processNextFile(); else _scheduleLogClose();
+  };
   reader.onerror = () => {
     queueItem.status = 'error';
     Logger.error(`Excel ${queueItem.file.name}: Erro ao ler ficheiro`);
     updateQueueUI();
-    processNextFile();
+    if (AppState.isSequentialProcessing) processNextFile();
   };
   reader.readAsArrayBuffer(queueItem.file);
 }
@@ -411,17 +470,19 @@ export async function processExcelFromQueueMainThread(buffer, queueItem) {
   if (typeof XLSX === 'undefined') {
     Logger.warn('SheetJS ainda não carregado — a aguardar…');
     let tries = 0;
-    const wait = setInterval(() => {
-      tries++;
-      if (typeof XLSX !== 'undefined') { clearInterval(wait); processExcelFromQueueMainThread(buffer, queueItem); }
-      else if (tries >= 100) {
-        clearInterval(wait);
-        setFileError(queueItem, 'SheetJS não carregou');
-        Logger.error(`Excel ${queueItem.file.name}: SheetJS não carregou`);
-        if (AppState.isSequentialProcessing) processNextFile(); else _scheduleLogClose();
-      }
-    }, 100);
-    return;
+    await new Promise(resolve => {
+      const wait = setInterval(() => {
+        tries++;
+        if (typeof XLSX !== 'undefined') { clearInterval(wait); resolve(); }
+        else if (tries >= 100) {
+          clearInterval(wait);
+          setFileError(queueItem, 'SheetJS não carregou');
+          Logger.error(`Excel ${queueItem.file.name}: SheetJS não carregou`);
+          resolve();
+        }
+      }, 100);
+    });
+    if (typeof XLSX === 'undefined') return;
   }
 
   try {
@@ -438,12 +499,13 @@ export async function processExcelFromQueueMainThread(buffer, queueItem) {
     for (const strat of strategies) {
       try {
         Logger.info(`  A tentar estratégia: ${strat.label}…`);
-        const wb = XLSX.read(data, strat.opts);
+        let wb = XLSX.read(data, strat.opts);
         ws = null;
         for (const name of [...new Set([...wb.SheetNames, ...Object.keys(wb.Sheets)])]) {
           const s = wb.Sheets[name];
           if (s) { ws = s; break; }
         }
+        wb = null; // libertar workbook — folha já extraída
         if (!ws) { Logger.warn(`Nenhuma folha com estratégia ${strat.label}`); continue; }
 
         rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
@@ -460,7 +522,7 @@ export async function processExcelFromQueueMainThread(buffer, queueItem) {
     }
 
     if (!ws || rows.length < 2) throw new Error(`Excel sem dados legíveis. Erro: ${lastError?.message || 'desconhecido'}`);
-    if (rows.length > 100000) Logger.warn(`⚠️ Ficheiro grande (${rows.length.toLocaleString('pt-PT')} linhas) — pode ser lento`);
+    if (rows.length > 100000) Logger.warn(`⚠️ Ficheiro grande (${rows.length.toLocaleString('pt-PT')} linhas)`);
 
     let hIdx = 0;
     for (let i = 0; i < Math.min(rows.length, 10); i++) {
@@ -484,30 +546,28 @@ export async function processExcelFromQueueMainThread(buffer, queueItem) {
         const elapsed = performance.now() - t0;
         if (elapsed > 120000) throw new Error('Processamento excedeu 120s.');
         Logger.info(`  ${records.length.toLocaleString('pt-PT')} registos em ${(elapsed/1000).toFixed(1)}s…`);
-        await new Promise(r => setTimeout(r, 0));
+        await YIELD();
       }
     }
 
     if (!records.length) throw new Error('Nenhum registo após o cabeçalho.');
 
-    Logger.info(`✓ Conversão: ${records.length.toLocaleString('pt-PT')} registos em ${((performance.now()-t0)/1000).toFixed(1)}s`);
+    Logger.info(`✓ Excel: ${records.length.toLocaleString('pt-PT')} registos em ${((performance.now()-t0)/1000).toFixed(1)}s`);
     AppState.fileDataMap[queueItem.file.name] = { records, mapping };
     queueItem.status   = 'success';
     queueItem.progress = 100;
     AppState.mappings[queueItem.file.name] = mapping;
     AppState.consolidatedFiles.push(queueItem.file.name);
-    Logger.info(`✓ Excel: ${records.length.toLocaleString('pt-PT')} registos processados`);
     updateQueueUI();
-    if (AppState.isSequentialProcessing) processNextFile(); else _scheduleLogClose();
   } catch (err) {
     const msg = err.message.includes('stack') ? 'Stack overflow (ficheiro corrompido)' : err.message.substring(0, 100);
     Logger.error(`Excel ${queueItem.file.name}: ${err.message}`);
     setFileError(queueItem, msg);
-    if (AppState.isSequentialProcessing) processNextFile(); else _scheduleLogClose();
   }
 }
 
 // ── Mapeamento Excel ───────────────────────────────────────────
+
 export function showMappingStep(headers, rows, hIdx) {
   show('mapping-section');
   const previewRow       = rows[hIdx + 1] || [];
@@ -518,7 +578,7 @@ export function showMappingStep(headers, rows, hIdx) {
     if (!h) return '';
     const suggested = suggestField(h) || '';
     const preview   = previewRow[i] != null ? String(previewRow[i]).substring(0, 50) : '—';
-    const typeHint  = _guessFieldTypeLocal(suggested, previewRow[i]);
+    const typeHint  = guessFieldTypeLocal(suggested, previewRow[i]);
     return `<tr id="map-row-${i}">
       <td><span class="map-col-name">${escHtml(h)}</span></td>
       <td>
@@ -548,7 +608,7 @@ export function showMappingStep(headers, rows, hIdx) {
   Logger.info('Mapeamento dinâmico apresentado.');
 }
 
-export function confirmMapping() {
+export async function confirmMapping() {
   const mapping = {};
   document.querySelectorAll('.map-input').forEach(inp => {
     if (inp.disabled) return;
@@ -564,30 +624,32 @@ export function confirmMapping() {
   show('progress-section');
   setProgress(10, 'A converter registos…', '');
 
-  setTimeout(() => {
-    try {
-      let hIdx = 0;
-      for (let i = 0; i < Math.min(AppState._excelRows.length, 10); i++) {
-        if (AppState._excelRows[i].some(v => v != null && String(v).trim() !== '')) { hIdx = i; break; }
-      }
-      const t0      = performance.now();
-      const records = [];
-      for (let i = hIdx + 1; i < AppState._excelRows.length; i++) {
-        const row = AppState._excelRows[i];
-        if (!row || !row.some(v => v != null && String(v).trim() !== '')) continue;
-        records.push(buildRecord(row, mapping, AppState.fileName));
-        if (i % 5000 === 0) setProgress(10 + Math.round((i / AppState._excelRows.length) * 80), 'A converter…', `${fmtN(i)} de ${fmtN(AppState._excelRows.length)} linhas`);
-      }
-      if (!records.length) throw new Error('Nenhum registo encontrado após o cabeçalho.');
-      Logger.info(`${records.length.toLocaleString('pt-PT')} registos convertidos em ${(performance.now()-t0).toFixed(0)} ms`);
-      AppState.rawData = records;
-      setProgress(100, 'Concluído!', `${fmtN(records.length)} registos`);
-      setTimeout(() => { if (_onConsolidationComplete) _onConsolidationComplete(); }, 300);
-    } catch (err) {
-      Logger.error(`Erro na conversão: ${err.message}`);
-      alert('Erro na conversão:\n' + err.message);
+  try {
+    let hIdx = 0;
+    for (let i = 0; i < Math.min(AppState._excelRows.length, 10); i++) {
+      if (AppState._excelRows[i].some(v => v != null && String(v).trim() !== '')) { hIdx = i; break; }
     }
-  }, 60);
+    const t0      = performance.now();
+    const records = [];
+    const total   = AppState._excelRows.length;
+    for (let i = hIdx + 1; i < total; i++) {
+      const row = AppState._excelRows[i];
+      if (!row || !row.some(v => v != null && String(v).trim() !== '')) continue;
+      records.push(buildRecord(row, mapping, AppState.fileName));
+      if (records.length % 5000 === 0) {
+        setProgress(10 + Math.round((i / total) * 80), 'A converter…', `${fmtN(records.length)} de ${fmtN(total)} linhas`);
+        await YIELD();
+      }
+    }
+    if (!records.length) throw new Error('Nenhum registo encontrado após o cabeçalho.');
+    Logger.info(`${records.length.toLocaleString('pt-PT')} registos em ${(performance.now()-t0).toFixed(0)} ms`);
+    AppState.rawData = records;
+    setProgress(100, 'Concluído!', `${fmtN(records.length)} registos`);
+    setTimeout(() => { if (_onConsolidationComplete) _onConsolidationComplete(); }, 300);
+  } catch (err) {
+    Logger.error(`Erro na conversão: ${err.message}`);
+    alert('Erro na conversão:\n' + err.message);
+  }
 }
 
 export function onMapInputChange(inp) {
@@ -634,114 +696,8 @@ export function updateMapSummary() {
   if (el) el.innerHTML = html;
 }
 
-// ── Conversão e tipos ──────────────────────────────────────────
-export function buildRecord(row, mapping, srcFile) {
-  const rec = {};
-  Object.values(mapping).forEach(f => { rec[f] = null; });
-  rec.ficheiro_origem = srcFile;
-  Object.entries(mapping).forEach(([colIdx, field]) => {
-    let val = row[parseInt(colIdx)];
-    if (val === null || val === undefined || val === '') { rec[field] = null; return; }
-    if (isLikelyDate(field, val))    rec[field] = parseExcelDate(val);
-    else if (isLikelyNumeric(field, val)) rec[field] = typeof val === 'number' ? val : parseFloat(String(val).replace(/\s/g,'').replace(',','.')) || null;
-    else rec[field] = String(val).trim() || null;
-  });
-  return rec;
-}
-
-export function isLikelyNumeric(fieldName, sampleVal) {
-  if (/montante|valor|amount|importe|saldo|price|preco|total|quantidade|qty|custo|cost/i.test(fieldName)) return true;
-  if (typeof sampleVal === 'number' && !isLikelyDate(fieldName, sampleVal)) return true;
-  return false;
-}
-
-export function isLikelyDate(fieldName, sampleVal) {
-  if (/data|date|datum|dt_/i.test(fieldName)) return true;
-  if (typeof sampleVal === 'number' && sampleVal > 32874 && sampleVal < 73051) return true;
-  if (typeof sampleVal === 'string') {
-    const s = sampleVal.trim();
-    if (/^\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{4}$/.test(s)) return true;
-    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return true;
-  }
-  return false;
-}
-
-export function parseExcelDate(val) {
-  if (val == null || val === '') return null;
-  if (val instanceof Date) return isNaN(val) ? null : val.toISOString().split('T')[0];
-  if (typeof val === 'number') {
-    if (val <= 0 || val > 200000) return null;
-    const d = new Date((val - 25569) * 86400000);
-    return isNaN(d) ? null : d.toISOString().split('T')[0];
-  }
-  const s = String(val).trim();
-  if (!s) return null;
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
-  const pt = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (pt) return `${pt[3]}-${pt[2].padStart(2,'0')}-${pt[1].padStart(2,'0')}`;
-  const dot = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-  if (dot) return `${dot[3]}-${dot[2].padStart(2,'0')}-${dot[1].padStart(2,'0')}`;
-  return s;
-}
-
-export function parseCSV(csvText) {
-  const lines   = csvText.split('\n');
-  const headers = lines[0].split(',').map(h => h.trim());
-  const data    = [];
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
-    const values = lines[i].split(',').map(v => v.trim());
-    const row    = {};
-    headers.forEach((h, j) => { row[h] = values[j] || ''; });
-    data.push(row);
-  }
-  return data;
-}
-
-// ── Aliases & Normalização (exportados para o app.js) ─────────
-export const COLUMN_ALIASES = {
-  'numero documento':'numero_documento', 'n documento':'numero_documento',
-  'nr documento':'numero_documento',     'no documento':'numero_documento',
-  'num documento':'numero_documento',    'documento':'numero_documento',
-  'ndoc':'numero_documento',             'nr doc':'numero_documento',
-  'no doc':'numero_documento',           'n doc':'numero_documento',
-  'num doc':'numero_documento',          'doc':'numero_documento',
-  'tipo documento':'tipo_documento',  'tipo de documento':'tipo_documento',
-  'tipo doc':'tipo_documento',        'tp':'tipo_documento', 'tipo':'tipo_documento',
-  'data documento':'data_documento',  'data do documento':'data_documento',
-  'data doc':'data_documento',        'dt documento':'data_documento', 'dt doc':'data_documento',
-  'montante':'montante', 'montante em moeda interna':'montante', 'montante em moeda intern':'montante',
-  'montante ml':'montante', 'montante em moeda do documento':'montante', 'montante moeda doc':'montante',
-  'montante doc':'montante', 'valor':'montante', 'importe':'montante', 'amount':'montante',
-  'moeda':'moeda', 'moeda do documento':'moeda', 'moeda do doc':'moeda', 'moeda doc':'moeda', 'currency':'moeda',
-  'texto':'texto', 'text':'texto', 'descricao':'texto', 'descricao movimento':'texto', 'descr':'texto',
-  'atribuicao':'atribuicao', 'atrib':'atribuicao', 'assignment':'atribuicao', 'zuordnung':'atribuicao',
-  'conta':'conta', 'conta do razao':'conta', 'conta razao':'conta', 'account':'conta', 'konto':'conta',
-  'referencia':'referencia', 'referencia do documento':'referencia', 'ref':'referencia', 'reference':'referencia', 'referenz':'referencia',
-  'data compensacao':'data_compensacao', 'data de compensacao':'data_compensacao',
-  'data comp':'data_compensacao', 'dt compensacao':'data_compensacao', 'clearing date':'data_compensacao',
-  'data pagamento':'data_pagamento', 'data de pagamento':'data_pagamento',
-  'data de vencimento':'data_pagamento', 'vencimento':'data_pagamento',
-  'data pag':'data_pagamento', 'dt vencimento':'data_pagamento', 'due date':'data_pagamento',
-  'data entrada':'data_entrada', 'data de entrada':'data_entrada',
-  'data de lancamento':'data_entrada', 'data lancamento':'data_entrada',
-  'data lanc':'data_entrada', 'dt entrada':'data_entrada', 'posting date':'data_entrada', 'entry date':'data_entrada',
-};
-
-export function normalizeHeader(h) {
-  if (h == null) return '';
-  return String(h).toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-export function suggestField(header) {
-  const norm = normalizeHeader(header);
-  if (COLUMN_ALIASES[norm]) return COLUMN_ALIASES[norm];
-  return norm.replace(/\s+/g, '_') || null;
-}
-
 // ── Helpers internos ───────────────────────────────────────────
+
 function _setupDropZone() {
   const dz   = document.getElementById('import-section');
   const card = dz?.querySelector('.import-card');
@@ -756,19 +712,12 @@ function _setupDropZone() {
 
 function _setupFileInput() {
   const fi = document.getElementById('file-input');
-  if (!fi) { console.warn('⚠️ Elemento #file-input não encontrado!'); return; }
+  if (!fi) { console.warn('⚠️ #file-input não encontrado!'); return; }
   fi.addEventListener('change', e => {
     if (e.target.files?.length > 0) addFilesToQueue(e.target.files);
   });
 }
 
 function _scheduleLogClose() {
-  // Nada a fazer — log permanece visível
-}
-
-function _guessFieldTypeLocal(fieldName, sampleVal) {
-  if (isLikelyDate(fieldName, sampleVal))    return '📅 data';
-  if (isLikelyNumeric(fieldName, sampleVal)) return '🔢 numérico';
-  if (sampleVal == null)                      return '— vazio';
-  return '📝 texto';
+  // Log permanece visível após processamento individual
 }
