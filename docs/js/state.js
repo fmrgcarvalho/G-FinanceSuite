@@ -81,6 +81,24 @@ export const AppState = {
     format:   'xlsx',
   },
 
+  // ── Op3 — Reconciliação SAP vs Rentway ─────────────────────
+  op3: {
+    files: {
+      sap:         [],   // File[] — múltiplos ficheiros SAP
+      mapeamento:  null, // File
+      rwFaturacao: null, // File
+      rwRmkt:      null, // File
+      rwPagosPor:  null, // File
+    },
+    results: {
+      faturacao: null,   // { somenteRw[], somenteSap[], matched[] }
+      rmkt:      null,
+      pagosPor:  null,
+    },
+    mappings:  {},      // { sap:{}, rwFaturacao:{}, ... } — set in mapping phase
+    activeTab: 'faturacao', // 'faturacao' | 'rmkt' | 'pagosPor'
+  },
+
   // ── Reset completo ─────────────────────────────────────────
   reset() {
     this.rawData        = [];
@@ -114,5 +132,12 @@ export const AppState = {
 
     this.exportState      = { dataType: 'all', format: 'xlsx' };
     this.reconExportState = { dataType: 'all', format: 'xlsx' };
+
+    this.op3 = {
+      files:   { sap: [], mapeamento: null, rwFaturacao: null, rwRmkt: null, rwPagosPor: null },
+      results: { faturacao: null, rmkt: null, pagosPor: null },
+      mappings: {},
+      activeTab: 'faturacao',
+    };
   },
 };

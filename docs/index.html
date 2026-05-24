@@ -57,8 +57,205 @@
 
 <main>
 
+  <!-- ── 0. SELECTOR DE MODO ── -->
+  <div id="mode-section" style="display:none;max-width:720px;margin:60px auto 0;padding:0 16px">
+    <div style="text-align:center;margin-bottom:36px">
+      <div style="font-size:36px;margin-bottom:12px">📊</div>
+      <h2 style="font-size:22px;font-weight:700;color:#1c2526;margin-bottom:8px">O que pretende fazer?</h2>
+      <p style="color:#6b7280;font-size:14px">Selecione o tipo de análise para continuar</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <!-- Modo A: Op1/Op2 -->
+      <div id="mode-ops-card" style="background:white;border:2px solid #e5e7eb;border-radius:14px;padding:28px 24px;cursor:pointer;transition:all 0.2s;text-align:center" onmouseenter="this.style.borderColor='#8ec73d';this.style.boxShadow='0 4px 20px rgba(142,199,61,.15)'" onmouseleave="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+        <div style="font-size:32px;margin-bottom:14px">🔍</div>
+        <h3 style="font-size:16px;font-weight:700;color:#1c2526;margin-bottom:8px">Análise de Dados</h3>
+        <p style="font-size:13px;color:#6b7280;line-height:1.5">Identificação de duplicados e reconciliação de partidas a partir de um conjunto de ficheiros.</p>
+        <div style="margin-top:16px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+          <span style="background:#f0f9e8;color:#3a7d10;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Op1 Duplicados</span>
+          <span style="background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Op2 Reconciliação</span>
+        </div>
+      </div>
+      <!-- Modo B: Op3 -->
+      <div id="mode-op3-card" style="background:white;border:2px solid #e5e7eb;border-radius:14px;padding:28px 24px;cursor:pointer;transition:all 0.2s;text-align:center" onmouseenter="this.style.borderColor='#2563eb';this.style.boxShadow='0 4px 20px rgba(37,99,235,.12)'" onmouseleave="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+        <div style="font-size:32px;margin-bottom:14px">⚖️</div>
+        <h3 style="font-size:16px;font-weight:700;color:#1c2526;margin-bottom:8px">Reconciliação SAP vs RW</h3>
+        <p style="font-size:13px;color:#6b7280;line-height:1.5">Comparação entre movimentos do SAP e do Rentway, com mapeamento de clientes e deteção de divergências.</p>
+        <div style="margin-top:16px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+          <span style="background:#fefce8;color:#a16207;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Faturação</span>
+          <span style="background:#fefce8;color:#a16207;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">RMKT</span>
+          <span style="background:#fefce8;color:#a16207;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Pagos Por</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── OP3 — RECONCILIAÇÃO SAP vs RW ── -->
+  <div id="op3-section" style="display:none">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #e5e7eb">
+      <button id="btn-op3-back" style="padding:7px 14px;background:white;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:#374151;transition:all 0.2s">← Voltar</button>
+      <div>
+        <h2 style="font-size:18px;font-weight:700;color:#1c2526;margin:0">Reconciliação SAP vs Rentway</h2>
+        <p style="font-size:12px;color:#6b7280;margin:2px 0 0">Carregue todos os ficheiros e execute a reconciliação</p>
+      </div>
+    </div>
+
+    <!-- Upload de ficheiros -->
+    <div id="op3-upload-card" style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:24px;margin-bottom:20px">
+      <h3 style="font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:20px">Ficheiros de entrada</h3>
+
+      <!-- Grid de uploads -->
+      <div style="display:grid;gap:12px">
+
+        <!-- SAP (múltiplos) -->
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px">
+          <div style="width:36px;height:36px;background:#dbeafe;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🏦</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:#1c2526">Ficheiros SAP</div>
+            <div id="op3-badge-sap" style="font-size:11px;color:#6b7280;background:#f3f4f6;display:inline-block;padding:2px 8px;border-radius:9999px;margin-top:3px">Nenhum ficheiro</div>
+          </div>
+          <label style="padding:7px 14px;background:#2563eb;color:white;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all 0.2s">
+            Selecionar
+            <input type="file" id="op3-input-sap" accept=".xlsx,.xls,.csv" multiple style="display:none">
+          </label>
+          <span style="font-size:10px;color:#9ca3af;white-space:nowrap">múltiplos</span>
+        </div>
+
+        <!-- Mapeamento -->
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px">
+          <div style="width:36px;height:36px;background:#fef9c3;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🗺️</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:#1c2526">Mapeamento RW → SAP</div>
+            <div id="op3-badge-mapeamento" style="font-size:11px;color:#6b7280;background:#f3f4f6;display:inline-block;padding:2px 8px;border-radius:9999px;margin-top:3px">Nenhum ficheiro</div>
+          </div>
+          <label style="padding:7px 14px;background:#2563eb;color:white;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all 0.2s">
+            Selecionar
+            <input type="file" id="op3-input-mapeamento" accept=".xlsx,.xls,.csv" style="display:none">
+          </label>
+        </div>
+
+        <div style="border-top:1px dashed #e5e7eb;margin:4px 0;padding-top:4px">
+          <p style="font-size:11px;color:#9ca3af;margin-bottom:8px">Ficheiros RW — selecione os que se aplicam (mínimo 1)</p>
+        </div>
+
+        <!-- RW Faturação -->
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px">
+          <div style="width:36px;height:36px;background:#dcfce7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🧾</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:#1c2526">RW Faturação</div>
+            <div id="op3-badge-faturacao" style="font-size:11px;color:#6b7280;background:#f3f4f6;display:inline-block;padding:2px 8px;border-radius:9999px;margin-top:3px">Nenhum ficheiro</div>
+          </div>
+          <label style="padding:7px 14px;background:#4b5563;color:white;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all 0.2s">
+            Selecionar
+            <input type="file" id="op3-input-faturacao" accept=".xlsx,.xls,.csv" style="display:none">
+          </label>
+          <span style="font-size:10px;color:#9ca3af;white-space:nowrap">opcional</span>
+        </div>
+
+        <!-- RW RMKT -->
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px">
+          <div style="width:36px;height:36px;background:#fce7f3;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🔄</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:#1c2526">RW RMKT</div>
+            <div id="op3-badge-rmkt" style="font-size:11px;color:#6b7280;background:#f3f4f6;display:inline-block;padding:2px 8px;border-radius:9999px;margin-top:3px">Nenhum ficheiro</div>
+          </div>
+          <label style="padding:7px 14px;background:#4b5563;color:white;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all 0.2s">
+            Selecionar
+            <input type="file" id="op3-input-rmkt" accept=".xlsx,.xls,.csv" style="display:none">
+          </label>
+          <span style="font-size:10px;color:#9ca3af;white-space:nowrap">opcional</span>
+        </div>
+
+        <!-- RW Pagos Por -->
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px">
+          <div style="width:36px;height:36px;background:#fee2e2;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">💸</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:#1c2526">RW Pagos Por</div>
+            <div id="op3-badge-pagospor" style="font-size:11px;color:#6b7280;background:#f3f4f6;display:inline-block;padding:2px 8px;border-radius:9999px;margin-top:3px">Nenhum ficheiro</div>
+          </div>
+          <label style="padding:7px 14px;background:#4b5563;color:white;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all 0.2s">
+            Selecionar
+            <input type="file" id="op3-input-pagospor" accept=".xlsx,.xls,.csv" style="display:none">
+          </label>
+          <span style="font-size:10px;color:#9ca3af;white-space:nowrap">opcional</span>
+        </div>
+
+      </div>
+
+      <!-- Botão executar -->
+      <div style="margin-top:20px;text-align:right">
+        <button id="btn-op3-run" disabled style="padding:11px 28px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:not-allowed;opacity:0.5;transition:all 0.2s">▶ Executar Reconciliação</button>
+      </div>
+    </div>
+
+    <!-- Mapeamento de campos Op3 -->
+    <div id="op3-mapping-section" style="display:none"></div>
+
+    <!-- Resultados Op3 -->
+    <div id="op3-results-section" style="display:none">
+
+      <!-- Cards de resumo -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">
+        <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:#1c2526" id="op3-s-div">—</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:600">Divergências</div>
+        </div>
+        <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:#e24b4a" id="op3-s-rw">—</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:600">Só em RW</div>
+        </div>
+        <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:#f59e0b" id="op3-s-sap">—</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:600">Só em SAP</div>
+        </div>
+        <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:#16a34a" id="op3-s-matched">—</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:600">Reconciliados</div>
+        </div>
+      </div>
+
+      <!-- Tabs de análise -->
+      <div style="background:white;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+        <div style="display:flex;border-bottom:1px solid #e5e7eb;background:#f9fafb">
+          <button id="op3-tab-faturacao" class="op3-tab-active" style="flex:1;padding:12px 16px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:#1c2526;border-bottom:2px solid transparent;transition:all 0.2s">🧾 Faturação</button>
+          <button id="op3-tab-rmkt" style="flex:1;padding:12px 16px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:#6b7280;border-bottom:2px solid transparent;transition:all 0.2s;opacity:0.4" disabled>🔄 RMKT</button>
+          <button id="op3-tab-pagosPor" style="flex:1;padding:12px 16px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:#6b7280;border-bottom:2px solid transparent;transition:all 0.2s;opacity:0.4" disabled>💸 Pagos Por</button>
+        </div>
+
+        <div style="padding:20px">
+
+          <!-- Sub-tabs de lista (Em RW / Em SAP / Reconciliados) -->
+          <div id="op3-list-tabs" style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:16px;gap:0">
+            <!-- preenchido por JS -->
+          </div>
+
+          <!-- Botão exportar lista activa -->
+          <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+            <button id="btn-op3-export-active" style="padding:5px 14px;background:white;border:1px solid #d1d5db;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;color:#374151;transition:all 0.15s">⬇ CSV</button>
+          </div>
+
+          <!-- Tabela activa (única — muda com a sub-tab) -->
+          <div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px">
+            <table id="op3-active-table" style="width:100%;border-collapse:collapse;font-size:12px"></table>
+          </div>
+          <div id="op3-active-table-pag"></div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ── 1. IMPORTAÇÃO (MÚLTIPLOS FICHEIROS) ── -->
   <div id="import-section">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #e5e7eb">
+      <button id="btn-import-back" style="padding:7px 14px;background:white;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:#374151;transition:all 0.2s">← Voltar</button>
+      <div>
+        <h2 style="font-size:18px;font-weight:700;color:#1c2526;margin:0">Análise de Dados</h2>
+        <p style="font-size:12px;color:#6b7280;margin:2px 0 0">Carregue os ficheiros para identificar duplicados ou reconciliar</p>
+      </div>
+    </div>
     <div class="import-icon">📂</div>
     <h2>Importar ficheiros</h2>
     <p>Suporta <strong>Excel (.xlsx, .xls)</strong>, <strong>CSV</strong> e <strong>JSON</strong> com dados contabilísticos.</p>

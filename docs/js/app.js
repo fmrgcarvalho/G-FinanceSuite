@@ -27,6 +27,7 @@ import {
   updateReconExportCounts, updateReconExportPreview, getReconDataToExport, executeReconExport,
   setReconSortField, initReconEvents,
 } from './modules/reconciliation.js';
+import { initOp3Events } from './modules/op3.js';
 import {
   openExportModal, closeExportModal, setExportDataType, setExportFormat,
   updateExportCounts, updatePdfBtnState, updateExportPreview,
@@ -200,8 +201,10 @@ function resetAll() {
   AppState.reset();
   window._previousConsolidatedData  = null;
   window._previousConsolidatedCount = 0;
-  show('import-section');
+  hide('import-section');
   hide('progress-section'); hide('mapping-section'); hide('content'); hide('results-section');
+  hide('op3-section');
+  show('mode-section');
   document.getElementById('file-input').value='';
   document.getElementById('info-sticky-bar')?.classList.remove('visible');
   updateQueueUI();
@@ -219,6 +222,11 @@ function renderReconciliation(reconOk, reconNok, tolerance, groupField, valField
    -------------------------------------------------------------- */
 function validateDOM() {
   const allIds = [
+    'mode-section', 'mode-ops-card', 'mode-op3-card',
+    'op3-section', 'btn-op3-back', 'btn-op3-run',
+    'op3-upload-card', 'op3-mapping-section',
+    'op3-input-sap', 'op3-input-mapeamento', 'op3-input-faturacao', 'op3-input-rmkt', 'op3-input-pagospor',
+    'op3-results-section', 'op3-tab-faturacao', 'op3-tab-rmkt', 'op3-tab-pagosPor',
     'import-section', 'file-input', 'files-queue', 'files-queue-list',
     'mapping-section', 'map-table-wrap', 'map-summary',
     'progress-section', 'prog-fill', 'prog-label', 'prog-sub',
@@ -244,13 +252,32 @@ document.addEventListener('DOMContentLoaded', () => {
   hide('mapping-section');
   hide('content');
   hide('results-section');
-  show('import-section');
+  hide('import-section');
+  hide('op3-section');
+  show('mode-section');
 
   validateDOM();
 
   initImport({ onConsolidationComplete: showContent });
   initDuplicatesEvents();
   initReconEvents();
+  initOp3Events();
+
+  // ── Mode selector ──────────────────────────────────────────────
+  document.getElementById('mode-ops-card')?.addEventListener('click', () => {
+    hide('mode-section');
+    show('import-section');
+  });
+  document.getElementById('mode-op3-card')?.addEventListener('click', () => {
+    hide('mode-section');
+    show('op3-section');
+  });
+
+  // ── Voltar ao selector de modo (Op1/Op2) ───────────────────────
+  document.getElementById('btn-import-back')?.addEventListener('click', () => {
+    hide('import-section');
+    show('mode-section');
+  });
 
   Logger.info('Portal inicializado');
 

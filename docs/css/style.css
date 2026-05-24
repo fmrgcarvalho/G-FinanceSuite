@@ -1049,3 +1049,14 @@ footer strong{color:var(--green)}
 #recon-toggle-btn:active {
   transform: translateY(0);
 }
+
+
+/* ── OP3 TABS ── */
+#op3-tab-faturacao, #op3-tab-rmkt, #op3-tab-pagosPor {
+  border-bottom: 2px solid transparent;
+}
+.op3-tab-active {
+  color: #2563eb !important;
+  border-bottom-color: #2563eb !important;
+  background: white !important;
+}
