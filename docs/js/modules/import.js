@@ -743,12 +743,13 @@ export function suggestField(header) {
 
 // ── Helpers internos ───────────────────────────────────────────
 function _setupDropZone() {
-  const dz = document.getElementById('import-section');
+  const dz   = document.getElementById('import-section');
+  const card = dz?.querySelector('.import-card');
   if (!dz) return;
-  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('dragover'); });
-  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('dragover',  e => { e.preventDefault(); card?.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => card?.classList.remove('dragover'));
   dz.addEventListener('drop', e => {
-    e.preventDefault(); dz.classList.remove('dragover');
+    e.preventDefault(); card?.classList.remove('dragover');
     addFilesToQueue(e.dataTransfer.files);
   });
 }
