@@ -76,13 +76,13 @@
 <main>
 
   <!-- ── 0. SELECTOR DE MODO ── -->
-  <div id="mode-section" style="display:none;max-width:720px;margin:60px auto 0;padding:0 16px">
+  <div id="mode-section" style="display:none;max-width:1020px;margin:60px auto 0;padding:0 16px">
     <div style="text-align:center;margin-bottom:36px">
       <div style="font-size:36px;margin-bottom:12px">📊</div>
       <h2 style="font-size:22px;font-weight:700;color:#1c2526;margin-bottom:8px">O que pretende fazer?</h2>
       <p style="color:#6b7280;font-size:14px">Selecione o tipo de análise para continuar</p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
       <!-- Modo A: Op1/Op2 -->
       <div id="mode-ops-card" style="background:white;border:2px solid #e5e7eb;border-radius:14px;padding:28px 24px;cursor:pointer;transition:all 0.2s;text-align:center" onmouseenter="this.style.borderColor='#8ec73d';this.style.boxShadow='0 4px 20px rgba(142,199,61,.15)'" onmouseleave="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
         <div style="font-size:32px;margin-bottom:14px">🔍</div>
@@ -104,7 +104,88 @@
           <span style="background:#fefce8;color:#a16207;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Pagos Por</span>
         </div>
       </div>
+      <!-- Modo C: Op4 -->
+      <div id="mode-op4-card" style="background:white;border:2px solid #e5e7eb;border-radius:14px;padding:28px 24px;cursor:pointer;transition:all 0.2s;text-align:center" onmouseenter="this.style.borderColor='#7c3aed';this.style.boxShadow='0 4px 20px rgba(124,58,237,.12)'" onmouseleave="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+        <div style="font-size:32px;margin-bottom:14px">🛠️</div>
+        <h3 style="font-size:16px;font-weight:700;color:#1c2526;margin-bottom:8px">Ferramentas de Documentos</h3>
+        <p style="font-size:13px;color:#6b7280;line-height:1.5">Converter ficheiros para outros formatos ou mesclar múltiplos documentos num único.</p>
+        <div style="margin-top:16px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+          <span style="background:#f5f3ff;color:#6d28d9;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Converter</span>
+          <span style="background:#f5f3ff;color:#6d28d9;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Mesclar</span>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- ── OP4 — FERRAMENTAS DE DOCUMENTOS ── -->
+  <div id="op4-section" style="display:none">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #e5e7eb">
+      <button id="btn-op4-back" style="padding:7px 14px;background:white;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:#374151;transition:all 0.2s">← Voltar</button>
+      <div>
+        <h2 style="font-size:18px;font-weight:700;color:#1c2526;margin:0">Ferramentas de Documentos</h2>
+        <p style="font-size:12px;color:#6b7280;margin:2px 0 0">Converter formatos ou mesclar múltiplos ficheiros num único documento</p>
+      </div>
+    </div>
+
+    <!-- Zona de upload -->
+    <div id="op4-dropzone" style="background:#f9fafb;border:2px dashed #d1d5db;border-radius:12px;padding:32px 24px;text-align:center;margin-bottom:16px;transition:all 0.2s;cursor:pointer">
+      <div style="font-size:36px;margin-bottom:10px">📂</div>
+      <p style="font-size:14px;color:#374151;font-weight:600;margin-bottom:6px">Arraste os ficheiros aqui</p>
+      <p style="font-size:12px;color:#9ca3af;margin-bottom:14px">CSV, JSON, XLSX, XLS</p>
+      <label style="padding:9px 20px;background:#2563eb;color:white;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;display:inline-block">
+        Selecionar Ficheiros
+        <input type="file" id="op4-file-input" accept=".csv,.json,.xlsx,.xls" multiple style="display:none">
+      </label>
+    </div>
+
+    <!-- Lista de ficheiros carregados -->
+    <div id="op4-file-list" style="margin-bottom:20px"></div>
+
+    <!-- Formato de saída (partilhado entre converter e mesclar) -->
+    <div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:18px 20px;margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px">Formato de saída</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="op4-fmt-btn" data-format="xlsx" style="padding:7px 16px;border:1.5px solid #2563eb;border-radius:7px;background:#eff6ff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.15s">XLSX</button>
+        <button class="op4-fmt-btn" data-format="csv"  style="padding:7px 16px;border:1.5px solid #ddd;border-radius:7px;background:white;color:#6b7280;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s">CSV</button>
+        <button class="op4-fmt-btn" data-format="json" style="padding:7px 16px;border:1.5px solid #ddd;border-radius:7px;background:white;color:#6b7280;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s">JSON</button>
+        <button class="op4-fmt-btn" data-format="xml"  style="padding:7px 16px;border:1.5px solid #ddd;border-radius:7px;background:white;color:#6b7280;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s">XML</button>
+        <button class="op4-fmt-btn" data-format="pdf"  style="padding:7px 16px;border:1.5px solid #ddd;border-radius:7px;background:white;color:#6b7280;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s">PDF</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:10px;margin-bottom:20px">
+      <button id="op4-tab-convert" style="padding:8px 22px;border:1.5px solid #2563eb;border-radius:7px;background:#2563eb;color:white;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s">Converter</button>
+      <button id="op4-tab-merge"   style="padding:8px 22px;border:1.5px solid #d1d5db;border-radius:7px;background:white;color:#374151;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s">Mesclar</button>
+    </div>
+
+    <!-- Painel: Converter -->
+    <div id="op4-convert-panel" style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:24px">
+      <h3 style="font-size:14px;font-weight:700;color:#1c2526;margin-bottom:6px">Conversão de Formato</h3>
+      <p style="font-size:13px;color:#6b7280;margin-bottom:20px">Cada ficheiro carregado será descarregado individualmente no formato selecionado acima.</p>
+      <button id="btn-op4-convert" style="padding:10px 24px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s" onmouseenter="this.style.background='#1d4ed8'" onmouseleave="this.style.background='#2563eb'">▶ Converter e Transferir</button>
+    </div>
+
+    <!-- Painel: Mesclar -->
+    <div id="op4-merge-panel" style="display:none;background:white;border:1px solid #e5e7eb;border-radius:12px;padding:24px">
+      <h3 style="font-size:14px;font-weight:700;color:#1c2526;margin-bottom:14px">Mesclagem de Ficheiros</h3>
+      <div id="op4-merge-status">
+        <span style="color:#9ca3af;font-size:13px">Adicione pelo menos 2 ficheiros para mesclar.</span>
+      </div>
+      <!-- Tabela de mapeamento (mostrada só quando campos divergem) -->
+      <div id="op4-field-map-wrap" style="display:none;margin-top:20px">
+        <div style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Mapeamento de campos</div>
+        <div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px">
+          <div id="op4-field-map-table"></div>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <button id="btn-op4-merge" disabled style="padding:10px 24px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:not-allowed;opacity:0.5;transition:all 0.2s" onmouseenter="if(!this.disabled)this.style.background='#1d4ed8'" onmouseleave="this.style.background='#2563eb'">▶ Mesclar e Transferir</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- ── OP3 — RECONCILIAÇÃO SAP vs RW ── -->

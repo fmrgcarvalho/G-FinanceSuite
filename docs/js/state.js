@@ -106,6 +106,14 @@ export const AppState = {
     activeTab: 'faturacao', // 'faturacao' | 'rmkt' | 'pagosPor'
   },
 
+  // ── Op4 — Ferramentas de Documentos ────────────────────────
+  op4: {
+    files:    [],         // [{name, records, columns, size}]
+    mode:     'convert',  // 'convert' | 'merge'
+    format:   'xlsx',     // formato de saída
+    fieldMap: {},         // {filename: {canonical: sourceCol}}
+  },
+
   // ── Reset completo ─────────────────────────────────────────
   reset() {
     this.rawData        = [];
@@ -147,5 +155,7 @@ export const AppState = {
       mappings: {},
       activeTab: 'faturacao',
     };
+
+    this.op4 = { files: [], mode: 'convert', format: 'xlsx', fieldMap: {} };
   },
 };

@@ -29,6 +29,7 @@ import {
   setReconSortField, initReconEvents,
 } from './modules/reconciliation.js';
 import { initOp3Events, openOp3LibPicker, confirmOp3LibPicker, closeOp3LibPicker, clearOp3Slot } from './modules/op3.js';
+import { initOp4Events, clearOp4 } from './modules/op4.js';
 import { initAuth, isSessionValid, login, getCurrentUser, logout } from './modules/auth.js';
 import {
   initFileStore, listStoredFiles, loadStoredFile,
@@ -211,6 +212,7 @@ function resetAll() {
   hide('import-section');
   hide('progress-section'); hide('mapping-section'); hide('content'); hide('results-section');
   hide('op3-section');
+  hide('op4-section');
   show('mode-section');
   document.getElementById('file-input').value='';
   document.getElementById('info-sticky-bar')?.classList.remove('visible');
@@ -288,7 +290,10 @@ function validateDOM() {
   const allIds = [
     'login-section', 'login-token-input', 'btn-login', 'login-error',
     'session-indicator', 'session-username', 'btn-logout',
-    'mode-section', 'mode-ops-card', 'mode-op3-card',
+    'mode-section', 'mode-ops-card', 'mode-op3-card', 'mode-op4-card',
+    'op4-section', 'btn-op4-back', 'op4-file-input', 'op4-dropzone',
+    'op4-file-list', 'op4-convert-panel', 'op4-merge-panel',
+    'op4-field-map-table', 'btn-op4-convert', 'btn-op4-merge',
     'op3-section', 'btn-op3-back', 'btn-op3-run',
     'op3-upload-card', 'op3-mapping-section',
     'op3-input-sap', 'op3-input-mapeamento', 'op3-input-faturacao', 'op3-input-rmkt', 'op3-input-pagospor',
@@ -322,6 +327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   hide('results-section');
   hide('import-section');
   hide('op3-section');
+  hide('op4-section');
   hide('mode-section');
 
   // ── Autenticação ───────────────────────────────────────────────
@@ -342,6 +348,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initDuplicatesEvents();
   initReconEvents();
   initOp3Events();
+  initOp4Events();
 
   // ── Biblioteca de ficheiros ────────────────────────────────────
   await initFileStore();
@@ -397,10 +404,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     hide('mode-section');
     show('op3-section');
   });
+  document.getElementById('mode-op4-card')?.addEventListener('click', () => {
+    hide('mode-section');
+    show('op4-section');
+  });
 
   // ── Voltar ao selector de modo (Op1/Op2) ───────────────────────
   document.getElementById('btn-import-back')?.addEventListener('click', () => {
     hide('import-section');
+    show('mode-section');
+  });
+
+  // ── Voltar ao selector de modo (Op4) ──────────────────────────
+  document.getElementById('btn-op4-back')?.addEventListener('click', () => {
+    clearOp4();
+    hide('op4-section');
     show('mode-section');
   });
 
@@ -511,7 +529,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     hideSessionIndicator();
     AppState.reset();
     hide('mode-section'); hide('import-section'); hide('content');
-    hide('op3-section'); hide('results-section'); hide('progress-section'); hide('mapping-section');
+    hide('op3-section'); hide('op4-section'); hide('results-section'); hide('progress-section'); hide('mapping-section');
     document.getElementById('login-token-input').value = '';
     document.getElementById('login-section').style.display = 'flex';
     Logger.info('Sessão terminada.');

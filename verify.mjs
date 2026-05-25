@@ -40,6 +40,22 @@ async function jsClick(page, selector) {
   console.log(`  import-section visível: ${await page.isVisible('#import-section')}`);
   console.log(`  Erros JS ao carregar: ${errors.length === 0 ? '✅ nenhum' : errors.join(' | ')}`);
 
+  // ── 1b. Login ─────────────────────────────────────────────────
+  console.log('\n=== 1b. Login ===');
+  const loginVisible = await page.isVisible('#login-section');
+  console.log(`  login-section visível: ${loginVisible}`);
+  if (loginVisible) {
+    await page.fill('#login-token-input', '123456');
+    await page.click('#btn-login');
+    await page.waitForTimeout(600);
+    console.log(`  mode-section visível após login: ${await page.isVisible('#mode-section')}`);
+    await shot(page, '01b-after-login');
+    // Navegar para import-section (Op1/Op2)
+    await jsClick(page, '#mode-ops-card');
+    await page.waitForTimeout(300);
+    console.log(`  import-section visível: ${await page.isVisible('#import-section')}`);
+  }
+
   // ── 2. Log modal abre/fecha ────────────────────────────────────
   console.log('\n=== 2. Log modal ===');
   await page.click('#log-btn');
