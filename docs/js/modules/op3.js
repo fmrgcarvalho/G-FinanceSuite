@@ -787,6 +787,7 @@ export async function confirmOp3LibPicker() {
   }
 
   updateBadge(badgeId, `📂 ${entry.name} (${(entry.recordCount || 0).toLocaleString('pt-PT')} reg.)`);
+  _showClearBtn(_pickerSlot, true);
   updateRunBtn();
   if (modal) modal.style.display = 'none';
   Logger.info(`Op3 biblioteca: ${_pickerSlot} → ${entry.name}`);
@@ -797,6 +798,32 @@ export function closeOp3LibPicker() {
   if (modal) modal.style.display = 'none';
 }
 
+function _showClearBtn(slot, visible) {
+  const btn = document.querySelector(`.btn-op3-clear[data-slot="${slot}"]`);
+  if (btn) btn.style.display = visible ? '' : 'none';
+}
+
+export function clearOp3Slot(slot) {
+  const inputId = {
+    sap: 'op3-input-sap', mapeamento: 'op3-input-mapeamento',
+    rwFaturacao: 'op3-input-faturacao', rwRmkt: 'op3-input-rmkt', rwPagosPor: 'op3-input-pagospor',
+  }[slot];
+  const badgeId = {
+    sap: 'op3-badge-sap', mapeamento: 'op3-badge-mapeamento',
+    rwFaturacao: 'op3-badge-faturacao', rwRmkt: 'op3-badge-rmkt', rwPagosPor: 'op3-badge-pagospor',
+  }[slot];
+
+  if (slot === 'sap') { AppState.op3.files.sap = []; AppState.op3.libFiles.sap = []; }
+  else                { AppState.op3.files[slot] = null; AppState.op3.libFiles[slot] = null; }
+
+  const inp = document.getElementById(inputId);
+  if (inp) inp.value = '';
+
+  updateBadge(badgeId, 'Nenhum ficheiro');
+  _showClearBtn(slot, false);
+  updateRunBtn();
+}
+
 // ── Inicialização de eventos ────────────────────────────────────
 
 export function initOp3Events() {
@@ -805,26 +832,31 @@ export function initOp3Events() {
     AppState.op3.files.sap = Array.from(e.target.files);
     const n = AppState.op3.files.sap.length;
     updateBadge('op3-badge-sap', n ? `${n} ficheiro${n > 1 ? 's' : ''} selecionado${n > 1 ? 's' : ''}` : 'Nenhum ficheiro');
+    _showClearBtn('sap', n > 0);
     updateRunBtn();
   });
   document.getElementById('op3-input-mapeamento')?.addEventListener('change', e => {
     AppState.op3.files.mapeamento = e.target.files[0] || null;
     updateBadge('op3-badge-mapeamento', AppState.op3.files.mapeamento?.name || 'Nenhum ficheiro');
+    _showClearBtn('mapeamento', !!AppState.op3.files.mapeamento);
     updateRunBtn();
   });
   document.getElementById('op3-input-faturacao')?.addEventListener('change', e => {
     AppState.op3.files.rwFaturacao = e.target.files[0] || null;
     updateBadge('op3-badge-faturacao', AppState.op3.files.rwFaturacao?.name || 'Nenhum ficheiro');
+    _showClearBtn('rwFaturacao', !!AppState.op3.files.rwFaturacao);
     updateRunBtn();
   });
   document.getElementById('op3-input-rmkt')?.addEventListener('change', e => {
     AppState.op3.files.rwRmkt = e.target.files[0] || null;
     updateBadge('op3-badge-rmkt', AppState.op3.files.rwRmkt?.name || 'Nenhum ficheiro');
+    _showClearBtn('rwRmkt', !!AppState.op3.files.rwRmkt);
     updateRunBtn();
   });
   document.getElementById('op3-input-pagospor')?.addEventListener('change', e => {
     AppState.op3.files.rwPagosPor = e.target.files[0] || null;
     updateBadge('op3-badge-pagospor', AppState.op3.files.rwPagosPor?.name || 'Nenhum ficheiro');
+    _showClearBtn('rwPagosPor', !!AppState.op3.files.rwPagosPor);
     updateRunBtn();
   });
 

@@ -28,7 +28,7 @@ import {
   updateReconExportCounts, updateReconExportPreview, getReconDataToExport, executeReconExport,
   setReconSortField, initReconEvents,
 } from './modules/reconciliation.js';
-import { initOp3Events, openOp3LibPicker, confirmOp3LibPicker, closeOp3LibPicker } from './modules/op3.js';
+import { initOp3Events, openOp3LibPicker, confirmOp3LibPicker, closeOp3LibPicker, clearOp3Slot } from './modules/op3.js';
 import { initAuth, isSessionValid, login, getCurrentUser, logout } from './modules/auth.js';
 import {
   initFileStore, listStoredFiles, loadStoredFile,
@@ -377,8 +377,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── Op3 picker da biblioteca ───────────────────────────────────
   document.getElementById('op3-upload-card')?.addEventListener('click', e => {
-    const btn = e.target.closest('.btn-op3-lib');
-    if (btn) openOp3LibPicker(btn.dataset.slot);
+    const libBtn   = e.target.closest('.btn-op3-lib');
+    if (libBtn) openOp3LibPicker(libBtn.dataset.slot);
+    const clearBtn = e.target.closest('.btn-op3-clear');
+    if (clearBtn) clearOp3Slot(clearBtn.dataset.slot);
   });
   document.getElementById('op3-lib-confirm')?.addEventListener('click', confirmOp3LibPicker);
   document.getElementById('op3-lib-cancel')?.addEventListener('click',  closeOp3LibPicker);
