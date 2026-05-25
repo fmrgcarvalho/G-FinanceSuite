@@ -10,6 +10,7 @@ import {
   initImport, isLikelyNumeric,
   addFilesToQueue, removeFileFromQueue, startProcessing, processSingleFile,
   startAnalysis, confirmMapping, onMapInputChange, toggleIgnore, updateQueueUI,
+  loadSavedFilesAndAnalyse,
 } from './modules/import.js';
 import {
   buildFieldSelector, buildSumFieldSelector, toggleField, selectAllFields, clearAllFields,
@@ -28,6 +29,10 @@ import {
   setReconSortField, initReconEvents,
 } from './modules/reconciliation.js';
 import { initOp3Events } from './modules/op3.js';
+import {
+  initFileStore, listStoredFiles, loadStoredFile,
+  deleteStoredFile, clearAllStoredFiles, fmtBytes,
+} from './modules/filestore.js';
 import {
   openExportModal, closeExportModal, setExportDataType, setExportFormat,
   updateExportCounts, updatePdfBtnState, updateExportPreview,
@@ -218,6 +223,48 @@ function renderReconciliation(reconOk, reconNok, tolerance, groupField, valField
 }
 
 /* --------------------------------------------------------------
+   BIBLIOTECA DE FICHEIROS
+   -------------------------------------------------------------- */
+async function renderFilestorePanel() {
+  const panel = document.getElementById('filestore-panel');
+  const list  = document.getElementById('fs-list');
+  if (!panel || !list) return;
+
+  const files = await listStoredFiles();
+  if (!files.length) { panel.style.display = 'none'; return; }
+
+  const totalSize = files.reduce((s, f) => s + (f.size || 0), 0);
+  const info = document.getElementById('fs-storage-info');
+  if (info) info.textContent = `${files.length} ficheiro${files.length !== 1 ? 's' : ''} · ${fmtBytes(totalSize)}`;
+
+  list.innerHTML = files.map(f => {
+    const date = new Date(f.savedAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: '2-digit' });
+    return `<div class="fs-item">
+      <input type="checkbox" class="fs-check" data-name="${escHtml(f.name)}" style="width:16px;height:16px;cursor:pointer;accent-color:#8ec73d;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div class="fs-item-name" title="${escHtml(f.name)}">${escHtml(f.name)}</div>
+        <div class="fs-item-meta">${fmtN(f.recordCount)} registos · ${date} · ${fmtBytes(f.size)}</div>
+      </div>
+      <button class="fs-delete-btn" data-action="fs-delete" data-name="${escHtml(f.name)}">🗑</button>
+    </div>`;
+  }).join('');
+
+  panel.style.display = '';
+  _updateFsLoadBtn();
+}
+
+function _updateFsLoadBtn() {
+  const btn     = document.getElementById('btn-fs-load');
+  const checked = document.querySelectorAll('#fs-list .fs-check:checked');
+  if (!btn) return;
+  const n = checked.length;
+  btn.disabled          = n === 0;
+  btn.style.opacity     = n > 0 ? '1' : '0.5';
+  btn.style.cursor      = n > 0 ? 'pointer' : 'not-allowed';
+  btn.textContent       = n > 0 ? `↑ Carregar (${n})` : '↑ Carregar';
+}
+
+/* --------------------------------------------------------------
    VALIDAÇÃO DE DOM
    -------------------------------------------------------------- */
 function validateDOM() {
@@ -227,6 +274,7 @@ function validateDOM() {
     'op3-upload-card', 'op3-mapping-section',
     'op3-input-sap', 'op3-input-mapeamento', 'op3-input-faturacao', 'op3-input-rmkt', 'op3-input-pagospor',
     'op3-results-section', 'op3-tab-faturacao', 'op3-tab-rmkt', 'op3-tab-pagosPor',
+    'filestore-panel', 'fs-list', 'fs-storage-info', 'btn-fs-load', 'btn-fs-clear-all',
     'import-section', 'file-input', 'files-queue', 'files-queue-list',
     'mapping-section', 'map-table-wrap', 'map-summary',
     'progress-section', 'prog-fill', 'prog-label', 'prog-sub',
@@ -244,7 +292,7 @@ function validateDOM() {
 /* --------------------------------------------------------------
    INICIALIZAÇÃO DA PÁGINA
    -------------------------------------------------------------- */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const versionBadge = document.getElementById('version-badge');
   if (versionBadge) versionBadge.textContent = `v${APP_VERSION}`;
 
@@ -262,6 +310,39 @@ document.addEventListener('DOMContentLoaded', () => {
   initDuplicatesEvents();
   initReconEvents();
   initOp3Events();
+
+  // ── Biblioteca de ficheiros ────────────────────────────────────
+  await initFileStore();
+  renderFilestorePanel();
+
+  document.addEventListener('filestore:saved', renderFilestorePanel);
+
+  document.getElementById('btn-fs-clear-all')?.addEventListener('click', async () => {
+    if (!confirm('Limpar todos os ficheiros guardados da biblioteca?')) return;
+    await clearAllStoredFiles();
+    renderFilestorePanel();
+    Logger.info('Biblioteca de ficheiros limpa.');
+  });
+
+  document.getElementById('btn-fs-load')?.addEventListener('click', async () => {
+    const checked = [...document.querySelectorAll('#fs-list .fs-check:checked')];
+    if (!checked.length) return;
+    const entries = (await Promise.all(checked.map(c => loadStoredFile(c.dataset.name)))).filter(Boolean);
+    if (!entries.length) return;
+    await loadSavedFilesAndAnalyse(entries);
+  });
+
+  document.getElementById('fs-list')?.addEventListener('change', e => {
+    if (e.target.classList.contains('fs-check')) _updateFsLoadBtn();
+  });
+
+  document.getElementById('fs-list')?.addEventListener('click', async e => {
+    const btn = e.target.closest('[data-action="fs-delete"]');
+    if (!btn) return;
+    await deleteStoredFile(btn.dataset.name);
+    renderFilestorePanel();
+    Logger.info(`Removido da biblioteca: ${btn.dataset.name}`);
+  });
 
   // ── Mode selector ──────────────────────────────────────────────
   document.getElementById('mode-ops-card')?.addEventListener('click', () => {

@@ -12,6 +12,7 @@ import {
   isLikelyNumeric, isLikelyDate, parseExcelDate,
   buildRecord, COLUMN_ALIASES, normalizeHeader, suggestField, guessFieldTypeLocal,
 } from './loaders.js';
+import { saveFileToStore } from './filestore.js';
 
 // Re-exportar para app.js (que importa isLikelyNumeric daqui)
 export { isLikelyNumeric } from './loaders.js';
@@ -391,6 +392,21 @@ export async function finalizeConsolidation() {
   window._previousConsolidatedData  = null;
   window._previousConsolidatedCount = 0;
 
+  // Auto-save para IndexedDB — upsert por nome de ficheiro
+  for (const item of AppState.fileQueue) {
+    if (item.status !== 'success') continue;
+    const fd = AppState.fileDataMap[item.file.name];
+    if (!fd?.records?.length) continue;
+    const cols = Object.keys(fd.records[0] || {}).filter(k => k !== 'ficheiro_origem');
+    try {
+      await saveFileToStore(item.file.name, fd.records, cols, item.file.size || 0, fd.mapping || {});
+      Logger.info(`💾 Guardado: ${item.file.name}`);
+    } catch (e) {
+      Logger.warn(`Biblioteca: não foi possível guardar ${item.file.name} — ${e.message}`);
+    }
+  }
+  document.dispatchEvent(new CustomEvent('filestore:saved'));
+
   setProgress(100, 'Pronto!', `${AppState.rawData.length.toLocaleString('pt-PT')} registos consolidados`);
   setTimeout(() => { hide('progress-section'); updateQueueUI(); }, 500);
 }
@@ -694,6 +710,23 @@ export function updateMapSummary() {
   if (hasDups) html += ` — <span style="color:var(--red)">⚠️ nomes duplicados</span>`;
   const el = document.getElementById('map-summary');
   if (el) el.innerHTML = html;
+}
+
+// ── Biblioteca de ficheiros — carregar da memória persistente ──
+
+export async function loadSavedFilesAndAnalyse(entries) {
+  AppState.reset();
+  for (const entry of entries) {
+    AppState.fileDataMap[entry.name]    = { records: entry.records, mapping: entry.mapping || {} };
+    AppState.consolidatedFiles.push(entry.name);
+  }
+  AppState.rawData  = entries.flatMap(e => e.records);
+  AppState.fileName = entries.length === 1
+    ? entries[0].name
+    : `${entries.length} ficheiros (biblioteca)`;
+  Logger.separator('BIBLIOTECA DE FICHEIROS');
+  Logger.info(`${AppState.rawData.length.toLocaleString('pt-PT')} registos carregados (${entries.length} ficheiro${entries.length !== 1 ? 's' : ''})`);
+  if (_onConsolidationComplete) _onConsolidationComplete();
 }
 
 // ── Helpers internos ───────────────────────────────────────────

@@ -1052,6 +1052,15 @@ footer strong{color:var(--green)}
 }
 
 
+/* ── BIBLIOTECA DE FICHEIROS (filestore) ── */
+.fs-item{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid #f9fafb;transition:background 0.15s}
+.fs-item:last-child{border-bottom:none}
+.fs-item:hover{background:#f9fafb}
+.fs-item-name{font-size:13px;font-weight:600;color:#1c2526;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px}
+.fs-item-meta{font-size:11px;color:#9ca3af;margin-top:2px}
+.fs-delete-btn{padding:4px 8px;background:none;border:1px solid #fca5a5;color:#dc2626;border-radius:5px;font-size:11px;cursor:pointer;flex-shrink:0;transition:all 0.15s}
+.fs-delete-btn:hover{background:#fee2e2;border-color:#f87171}
+
 /* ── OP3 TABS ── */
 #op3-tab-faturacao, #op3-tab-rmkt, #op3-tab-pagosPor {
   border-bottom: 2px solid transparent;
