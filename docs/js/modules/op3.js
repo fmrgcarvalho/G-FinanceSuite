@@ -5,7 +5,7 @@
 
 import { AppState } from '../state.js';
 import { Logger } from './logger.js';
-import { listStoredFiles, loadStoredFile } from './filestore.js';
+import { listStoredFiles, loadStoredFile, deleteStoredFile } from './filestore.js';
 
 // ── Constantes ─────────────────────────────────────────────────
 
@@ -740,26 +740,46 @@ export async function openOp3LibPicker(slot) {
     return;
   }
 
-  list.innerHTML = files.map(f => {
-    const date = new Date(f.savedAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: '2-digit' });
-    return `<label class="fs-item" style="cursor:pointer">
-      <input type="checkbox" class="op3-lib-pick" value="${escHtml(f.name)}" style="width:15px;height:15px;accent-color:#2563eb;flex-shrink:0">
-      <div style="flex:1;min-width:0">
-        <div class="fs-item-name" title="${escHtml(f.name)}">${escHtml(f.name)}</div>
-        <div class="fs-item-meta">${(f.recordCount || 0).toLocaleString('pt-PT')} registos · ${date}</div>
-      </div>
-    </label>`;
-  }).join('');
-
-  list.addEventListener('change', () => {
+  const _renderPickerList = (fileList) => {
+    list.innerHTML = fileList.map((f, i) => {
+      const date = new Date(f.savedAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: '2-digit' });
+      const id   = `op3-pick-${i}`;
+      return `<div class="fs-item" style="align-items:center">
+        <input type="checkbox" class="op3-lib-pick" id="${id}" value="${escHtml(f.name)}" style="width:15px;height:15px;accent-color:#2563eb;flex-shrink:0;cursor:pointer">
+        <label for="${id}" style="flex:1;min-width:0;cursor:pointer;margin:0">
+          <div class="fs-item-name" title="${escHtml(f.name)}">${escHtml(f.name)}</div>
+          <div class="fs-item-meta">${(f.recordCount || 0).toLocaleString('pt-PT')} registos · ${date}</div>
+        </label>
+        <button class="op3-lib-del" data-name="${escHtml(f.name)}" style="padding:4px 8px;background:none;border:none;cursor:pointer;font-size:14px;color:#9ca3af;flex-shrink:0" title="Remover da biblioteca">🗑</button>
+      </div>`;
+    }).join('');
     const hasChecked      = list.querySelectorAll('.op3-lib-pick:checked').length > 0;
     confirm.disabled      = !hasChecked;
     confirm.style.opacity = hasChecked ? '1' : '0.5';
     confirm.style.cursor  = hasChecked ? 'pointer' : 'not-allowed';
-  });
-  confirm.disabled      = true;
-  confirm.style.opacity = '0.5';
-  confirm.style.cursor  = 'not-allowed';
+  };
+
+  _renderPickerList(files);
+
+  list.onchange = () => {
+    const hasChecked      = list.querySelectorAll('.op3-lib-pick:checked').length > 0;
+    confirm.disabled      = !hasChecked;
+    confirm.style.opacity = hasChecked ? '1' : '0.5';
+    confirm.style.cursor  = hasChecked ? 'pointer' : 'not-allowed';
+  };
+
+  list.onclick = async e => {
+    const btn = e.target.closest('.op3-lib-del');
+    if (!btn) return;
+    await deleteStoredFile(btn.dataset.name);
+    document.dispatchEvent(new CustomEvent('filestore:saved'));
+    const updated = await listStoredFiles();
+    if (!updated.length) {
+      closeOp3LibPicker();
+    } else {
+      _renderPickerList(updated);
+    }
+  };
 
   const modal = document.getElementById('op3-lib-modal');
   if (modal) modal.style.display = 'flex';
