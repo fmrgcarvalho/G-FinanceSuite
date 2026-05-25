@@ -5,7 +5,7 @@
 
 import { AppState } from '../state.js';
 import { Logger } from './logger.js';
-import { listStoredFiles, loadStoredFile, deleteStoredFile } from './filestore.js';
+import { listStoredFiles, loadStoredFile, deleteStoredFile, saveFileToStore } from './filestore.js';
 
 // ── Constantes ─────────────────────────────────────────────────
 
@@ -648,19 +648,32 @@ async function runOp3Phase2() {
       : await Promise.all(f.sap.map(async file => {
           const rows = await parseFile(file);
           const recs = normalizeSap(rows, file.name, mps.sap || {});
+          const cols = rows.length ? Object.keys(rows[0]) : [];
+          try { await saveFileToStore(file.name, rows, cols, file.size || 0); Logger.info(`💾 Guardado: ${file.name}`); }
+          catch (e) { Logger.warn(`Biblioteca: não foi possível guardar ${file.name} — ${e.message}`); }
           rows.length = 0;
           return recs;
         }));
     const sapRecs = sapParsed.flat();
     Logger.info(`Op3: SAP total → ${sapRecs.length} registos`);
 
-    const mapRows    = await getRows(f.mapeamento, lib.mapeamento);
+    const mapRows = await getRows(f.mapeamento, lib.mapeamento);
+    if (!lib.mapeamento && f.mapeamento) {
+      const cols = mapRows.length ? Object.keys(mapRows[0]) : [];
+      try { await saveFileToStore(f.mapeamento.name, mapRows, cols, f.mapeamento.size || 0); Logger.info(`💾 Guardado: ${f.mapeamento.name}`); }
+      catch (e) { Logger.warn(`Biblioteca: não foi possível guardar ${f.mapeamento.name} — ${e.message}`); }
+    }
     const mapeamento = normalizeMapeamento(mapRows, mps.mapeamento || {});
 
     const results = { faturacao: null, rmkt: null, pagosPor: null };
 
     if (f.rwFaturacao || lib.rwFaturacao) {
       const rows = await getRows(f.rwFaturacao, lib.rwFaturacao);
+      if (!lib.rwFaturacao && f.rwFaturacao) {
+        const cols = rows.length ? Object.keys(rows[0]) : [];
+        try { await saveFileToStore(f.rwFaturacao.name, rows, cols, f.rwFaturacao.size || 0); Logger.info(`💾 Guardado: ${f.rwFaturacao.name}`); }
+        catch (e) { Logger.warn(`Biblioteca: não foi possível guardar ${f.rwFaturacao.name} — ${e.message}`); }
+      }
       const name = lib.rwFaturacao ? lib.rwFaturacao.name : f.rwFaturacao.name;
       const recs = normalizeRw(rows, name, mps.rwFaturacao || {});
       results.faturacao = await reconcile(recs, sapRecs, mapeamento);
@@ -668,6 +681,11 @@ async function runOp3Phase2() {
     }
     if (f.rwRmkt || lib.rwRmkt) {
       const rows = await getRows(f.rwRmkt, lib.rwRmkt);
+      if (!lib.rwRmkt && f.rwRmkt) {
+        const cols = rows.length ? Object.keys(rows[0]) : [];
+        try { await saveFileToStore(f.rwRmkt.name, rows, cols, f.rwRmkt.size || 0); Logger.info(`💾 Guardado: ${f.rwRmkt.name}`); }
+        catch (e) { Logger.warn(`Biblioteca: não foi possível guardar ${f.rwRmkt.name} — ${e.message}`); }
+      }
       const name = lib.rwRmkt ? lib.rwRmkt.name : f.rwRmkt.name;
       const recs = normalizeRw(rows, name, mps.rwRmkt || {});
       results.rmkt = await reconcile(recs, sapRecs, mapeamento);
@@ -675,11 +693,18 @@ async function runOp3Phase2() {
     }
     if (f.rwPagosPor || lib.rwPagosPor) {
       const rows = await getRows(f.rwPagosPor, lib.rwPagosPor);
+      if (!lib.rwPagosPor && f.rwPagosPor) {
+        const cols = rows.length ? Object.keys(rows[0]) : [];
+        try { await saveFileToStore(f.rwPagosPor.name, rows, cols, f.rwPagosPor.size || 0); Logger.info(`💾 Guardado: ${f.rwPagosPor.name}`); }
+        catch (e) { Logger.warn(`Biblioteca: não foi possível guardar ${f.rwPagosPor.name} — ${e.message}`); }
+      }
       const name = lib.rwPagosPor ? lib.rwPagosPor.name : f.rwPagosPor.name;
       const recs = normalizePagosPor(rows, name, mps.rwPagosPor || {});
       results.pagosPor = await reconcile(recs, sapRecs, mapeamento, true);
       Logger.info(`Op3 PagosPor → RW-only:${results.pagosPor.somenteRw.length} SAP-only:${results.pagosPor.somenteSap.length} matched:${results.pagosPor.matched.length}`);
     }
+
+    document.dispatchEvent(new CustomEvent('filestore:saved'));
 
     AppState.op3.results = results;
     if (results.faturacao)     AppState.op3.activeTab = 'faturacao';
