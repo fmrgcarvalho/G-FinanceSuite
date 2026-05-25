@@ -1,11 +1,7 @@
 /* ============================================================
-   G-FinanceSuite — Configuração de Autenticação
-   Adicione entradas em USERS para gerir acessos.
+   Credenciais movidas para config/users.json (fora de docs/).
+   Validação feita server-side via POST /api/login.
+   Este ficheiro existe apenas por compatibilidade de path.
    ============================================================ */
-
-export const USERS = [
-  { token: '123456', name: 'ADMIN'  },
-  { token: 'guerin', name: 'GUERIN' },
-];
-
+export const USERS        = [];
 export const SESSION_HOURS = 8;

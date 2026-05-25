@@ -5,7 +5,7 @@
    ============================================================ */
 
 import { AppState, PDF_MAX_RECORDS } from '../state.js';
-import { fmt, fmtN } from './ui.js';
+import { fmt, fmtN, trapFocus, releaseFocus } from './ui.js';
 import { Logger } from './logger.js';
 
 // ── IDs DOM necessários ────────────────────────────────────────
@@ -19,6 +19,7 @@ export function openExportModal() {
   const modal = document.getElementById('export-modal');
   if (!modal) return;
   modal.style.display = 'flex';
+  trapFocus(modal);
   AppState.exportState.dataType = 'all';
   AppState.exportState.format   = 'csv';
   updateExportCounts();
@@ -27,7 +28,9 @@ export function openExportModal() {
 
 export function closeExportModal() {
   const modal = document.getElementById('export-modal');
-  if (modal) modal.style.display = 'none';
+  if (!modal) return;
+  modal.style.display = 'none';
+  releaseFocus(modal);
 }
 
 export function setExportDataType(type) {

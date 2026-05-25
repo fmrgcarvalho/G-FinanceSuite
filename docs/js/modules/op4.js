@@ -217,7 +217,7 @@ function _updateMergeStatus() {
   if (files.length < 2) {
     statusEl.innerHTML = '<span style="color:#9ca3af;font-size:13px">Adicione pelo menos 2 ficheiros para mesclar.</span>';
     if (mapWrap)  mapWrap.style.display = 'none';
-    if (btnMerge) { btnMerge.disabled = true; btnMerge.style.opacity = '0.5'; btnMerge.style.cursor = 'not-allowed'; }
+    if (btnMerge) { btnMerge.disabled = true; }
     return;
   }
 
@@ -225,12 +225,12 @@ function _updateMergeStatus() {
   if (compatible) {
     statusEl.innerHTML = `<span style="color:#16a34a;font-size:13px;font-weight:600">✓ Campos compatíveis (${all.length} campos)</span>`;
     if (mapWrap)  mapWrap.style.display = 'none';
-    if (btnMerge) { btnMerge.disabled = false; btnMerge.style.opacity = '1'; btnMerge.style.cursor = 'pointer'; btnMerge.dataset.mode = 'direct'; }
+    if (btnMerge) { btnMerge.disabled = false; btnMerge.dataset.mode = 'direct'; }
   } else {
     const divergent = all.length - common.length;
     statusEl.innerHTML = `<span style="color:#d97706;font-size:13px;font-weight:600">⚠ ${divergent} campo(s) divergente(s) — defina o mapeamento abaixo</span>`;
     if (mapWrap)  { mapWrap.style.display = ''; renderOp4FieldMap(); }
-    if (btnMerge) { btnMerge.disabled = false; btnMerge.style.opacity = '1'; btnMerge.style.cursor = 'pointer'; btnMerge.dataset.mode = 'mapped'; }
+    if (btnMerge) { btnMerge.disabled = false; btnMerge.dataset.mode = 'mapped'; }
   }
 }
 
@@ -245,10 +245,7 @@ function _setOp4Tab(tab) {
   ['convert', 'merge'].forEach(t => {
     const btn = document.getElementById(`op4-tab-${t}`);
     if (!btn) return;
-    const active = t === tab;
-    btn.style.background  = active ? '#2563eb' : 'white';
-    btn.style.color       = active ? 'white'   : '#374151';
-    btn.style.borderColor = active ? '#2563eb' : '#d1d5db';
+    btn.classList.toggle('active', t === tab);
   });
 }
 
@@ -257,11 +254,7 @@ function _setOp4Tab(tab) {
 function _setOp4Format(format) {
   AppState.op4.format = format;
   document.querySelectorAll('.op4-fmt-btn').forEach(btn => {
-    const sel = btn.dataset.format === format;
-    btn.style.borderColor = sel ? '#2563eb' : '#ddd';
-    btn.style.background  = sel ? '#eff6ff' : 'white';
-    btn.style.color       = sel ? '#2563eb' : '#6b7280';
-    btn.style.fontWeight  = sel ? '700' : '500';
+    btn.classList.toggle('active', btn.dataset.format === format);
   });
 }
 

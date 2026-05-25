@@ -1,6 +1,62 @@
 /* ============================================================
    G-FinanceSuite — Logger partilhado
+   Escreve cada entrada em IndexedDB (best-effort) para
+   persistência entre sessões.
    ============================================================ */
+
+const _DB_NAME  = 'GFinanceAudit';
+const _DB_STORE = 'log';
+let   _db       = null;
+
+function _openAudit() {
+  if (_db) return Promise.resolve(_db);
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(_DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(_DB_STORE))
+        db.createObjectStore(_DB_STORE, { keyPath: 'id', autoIncrement: true });
+    };
+    req.onsuccess = e => { _db = e.target.result; res(_db); };
+    req.onerror   = () => rej(req.error);
+  });
+}
+
+function _persist(entry) {
+  _openAudit()
+    .then(db => db.transaction(_DB_STORE, 'readwrite').objectStore(_DB_STORE).add(entry))
+    .catch(() => {}); // audit log é best-effort
+}
+
+export async function loadAuditLog(limit = 500) {
+  try {
+    const db = await _openAudit();
+    return new Promise((res) => {
+      const all = [];
+      const req = db.transaction(_DB_STORE, 'readonly')
+                    .objectStore(_DB_STORE)
+                    .openCursor(null, 'prev'); // mais recente primeiro
+      req.onsuccess = e => {
+        const c = e.target.result;
+        if (c && all.length < limit) { all.push(c.value); c.continue(); }
+        else res(all.reverse()); // devolver em ordem cronológica
+      };
+      req.onerror = () => res([]);
+    });
+  } catch { return []; }
+}
+
+export async function clearAuditLog() {
+  try {
+    const db = await _openAudit();
+    await new Promise((res, rej) => {
+      const tx = db.transaction(_DB_STORE, 'readwrite');
+      tx.objectStore(_DB_STORE).clear();
+      tx.oncomplete = () => res();
+      tx.onerror    = () => rej(tx.error);
+    });
+  } catch {} // fail silently
+}
 
 export const Logger = (() => {
   const entries = [];
@@ -14,6 +70,7 @@ export const Logger = (() => {
   function push(level, msg) {
     const entry = { ts: ts(), level, msg };
     entries.push(entry);
+    _persist(entry);
     render(entry);
     updateHeader();
     if (level === 'ERROR') {

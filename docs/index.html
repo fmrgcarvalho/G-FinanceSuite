@@ -6,54 +6,43 @@
   <title>G-FINANCE</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="css/style.css">
-  <script>
-    /* Carregar SheetJS do CDN (mais confiável) */
-    var script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    script.onload = function() {
-      console.log('✓ SheetJS carregado com sucesso');
-    };
-    script.onerror = function() {
-      console.error('❌ Erro ao carregar SheetJS do CDN');
-      alert('⚠️ Erro: Não conseguiu carregar a biblioteca SheetJS.\n\nVerifica a tua ligação à internet.');
-    };
-    document.head.appendChild(script);
-
-    /* Carregar jsPDF do CDN */
-    var jsPdfScript = document.createElement('script');
-    jsPdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    document.head.appendChild(jsPdfScript);
-
-    /* Carregar Chart.js do CDN */
-    var chartScript = document.createElement('script');
-    chartScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js';
-    document.head.appendChild(chartScript);
-  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+          integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw"
+          crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+          integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk"
+          crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
+          integrity="sha384-9MhbyIRcBVQiiC7FSd7T38oJNj2Zh+EfxS7/vjhBi4OOT78NlHSnzM31EZRWR1LZ"
+          crossorigin="anonymous"></script>
 </head>
 <body>
 
+<!-- ── AUTH INIT OVERLAY (oculta o flash de autenticação durante a verificação da sessão) ── -->
+<div id="auth-init-overlay" aria-hidden="true"></div>
+
 <!-- ── LOGIN ── -->
-<div id="login-section" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;z-index:10000">
-  <div style="background:white;border-radius:16px;padding:48px 40px;max-width:360px;width:90%;box-shadow:0 4px 32px rgba(0,0,0,.10);text-align:center">
-    <div style="font-size:28px;font-weight:800;color:#1c2526;letter-spacing:-1px;margin-bottom:8px">G-Finance</div>
-    <p style="color:#6b7280;font-size:13px;margin-bottom:32px">Introduza o token de acesso</p>
-    <input id="login-token-input" type="password" placeholder="Token"
-      style="width:100%;padding:10px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;outline:none;box-sizing:border-box;margin-bottom:12px">
-    <button id="btn-login"
-      style="width:100%;padding:11px;background:#8ec73d;color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer">Entrar</button>
-    <p id="login-error" style="display:none;color:#ef4444;font-size:12px;margin-top:10px">Token inválido. Tente novamente.</p>
+<dialog id="login-dialog" class="login-dialog">
+  <div class="login-card">
+    <div class="login-title">G-Finance</div>
+    <p class="login-subtitle">Introduza o token de acesso</p>
+    <label for="login-token-input" class="visually-hidden">Token de acesso</label>
+    <input id="login-token-input" type="password" placeholder="Token" class="login-input" autocomplete="current-password">
+    <button id="btn-login" class="login-btn">Entrar</button>
+    <p id="login-error" class="login-error" style="display:none">Token inválido. Tente novamente.</p>
   </div>
-</div>
+</dialog>
 
 <header>
-  <div class="logo" style="cursor:pointer">G-Finance</div>
-  <div style="flex:1"></div>
-  <div id="session-indicator" style="display:none;align-items:center;gap:8px;margin-right:6px">
-    <span style="width:9px;height:9px;border-radius:50%;background:#8ec73d;display:inline-block;box-shadow:0 0 0 2px rgba(142,199,61,.35);flex-shrink:0"></span>
-    <span id="session-username" style="font-size:12px;font-weight:600;color:rgba(255,255,255,.85);letter-spacing:.5px"></span>
-    <button id="btn-logout" style="padding:4px 10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:5px;color:rgba(255,255,255,.7);font-size:11px;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.16)'" onmouseleave="this.style.background='rgba(255,255,255,.08)'">Sair</button>
+  <h1 class="visually-hidden">G-Finance Suite</h1>
+  <div class="logo">G-Finance</div>
+  <div class="header-spacer"></div>
+  <div id="session-indicator" class="session-indicator" style="display:none">
+    <span class="session-dot" aria-hidden="true"></span>
+    <span id="session-username" class="session-username"></span>
+    <button id="btn-logout" class="btn-logout">Sair</button>
   </div>
-  <button class="header-btn" id="log-btn" title="Abrir/Fechar Log">📋 Log</button>
+  <button class="header-btn" id="log-btn" title="Abrir/Fechar Log"><span aria-hidden="true">📋</span> Log</button>
 </header>
 
 <!-- Barra de info sticky (aparece ao fazer scroll) -->
@@ -62,9 +51,9 @@
     <div class="is-dot"></div>
     <span class="is-name" id="is-name">—</span>
     <div class="is-sep"></div>
-    <span class="is-stat">📄 <strong id="is-total">—</strong> <span class="is-label">registos</span></span>
+    <span class="is-stat"><span aria-hidden="true">📄</span> <strong id="is-total">—</strong> <span class="is-label">registos</span></span>
     <div class="is-sep"></div>
-    <span class="is-stat">🔑 <strong id="is-campos">—</strong> <span class="is-label">campos</span></span>
+    <span class="is-stat"><span aria-hidden="true">🔑</span> <strong id="is-campos">—</strong> <span class="is-label">campos</span></span>
     <div class="is-sep"></div>
     <button class="is-op-btn" id="is-op1">Identificar duplicados</button>
     <button class="is-op-btn is-op-blue" id="is-op2">Reconciliação</button>
@@ -76,44 +65,44 @@
 <main>
 
   <!-- ── 0. SELECTOR DE MODO ── -->
-  <div id="mode-section" style="display:none;max-width:1020px;margin:60px auto 0;padding:0 16px">
-    <div style="text-align:center;margin-bottom:36px">
-      <div style="font-size:36px;margin-bottom:12px">📊</div>
-      <h2 style="font-size:22px;font-weight:700;color:#1c2526;margin-bottom:8px">O que pretende fazer?</h2>
-      <p style="color:#6b7280;font-size:14px">Selecione o tipo de análise para continuar</p>
+  <div id="mode-section" class="mode-section" style="display:none">
+    <div class="mode-section__header">
+      <span aria-hidden="true" style="font-size:36px;display:block;margin-bottom:12px">📊</span>
+      <h2 class="mode-section__title">O que pretende fazer?</h2>
+      <p class="mode-section__sub">Selecione o tipo de análise para continuar</p>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+    <div class="mode-grid">
       <!-- Modo A: Op1/Op2 -->
-      <div id="mode-ops-card" style="background:white;border:2px solid #e5e7eb;border-radius:14px;padding:28px 24px;cursor:pointer;transition:all 0.2s;text-align:center" onmouseenter="this.style.borderColor='#8ec73d';this.style.boxShadow='0 4px 20px rgba(142,199,61,.15)'" onmouseleave="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
-        <div style="font-size:32px;margin-bottom:14px">🔍</div>
-        <h3 style="font-size:16px;font-weight:700;color:#1c2526;margin-bottom:8px">Análise de Dados</h3>
-        <p style="font-size:13px;color:#6b7280;line-height:1.5">Identificação de duplicados e reconciliação de partidas a partir de um conjunto de ficheiros.</p>
-        <div style="margin-top:16px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
-          <span style="background:#f0f9e8;color:#3a7d10;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Análise de Duplicados</span>
-          <span style="background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Reconciliação</span>
+      <button id="mode-ops-card" class="mode-card mode-card--green" aria-label="Análise de Dados: identificação de duplicados e reconciliação">
+        <span aria-hidden="true" class="mode-card__icon">🔍</span>
+        <h3 class="mode-card__title">Análise de Dados</h3>
+        <p class="mode-card__desc">Identificação de duplicados e reconciliação de partidas a partir de um conjunto de ficheiros.</p>
+        <div class="mode-card__tags">
+          <span class="mode-tag mode-tag--green">Análise de Duplicados</span>
+          <span class="mode-tag mode-tag--blue">Reconciliação</span>
         </div>
-      </div>
+      </button>
       <!-- Modo B: Op3 -->
-      <div id="mode-op3-card" style="background:white;border:2px solid #e5e7eb;border-radius:14px;padding:28px 24px;cursor:pointer;transition:all 0.2s;text-align:center" onmouseenter="this.style.borderColor='#2563eb';this.style.boxShadow='0 4px 20px rgba(37,99,235,.12)'" onmouseleave="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
-        <div style="font-size:32px;margin-bottom:14px">⚖️</div>
-        <h3 style="font-size:16px;font-weight:700;color:#1c2526;margin-bottom:8px">Reconciliação SAP vs RW</h3>
-        <p style="font-size:13px;color:#6b7280;line-height:1.5">Comparação entre movimentos do SAP e do Rentway, com mapeamento de clientes e deteção de divergências.</p>
-        <div style="margin-top:16px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
-          <span style="background:#fefce8;color:#a16207;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Faturação</span>
-          <span style="background:#fefce8;color:#a16207;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">RMKT</span>
-          <span style="background:#fefce8;color:#a16207;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Pagos Por</span>
+      <button id="mode-op3-card" class="mode-card mode-card--blue" aria-label="Reconciliação SAP vs Rentway: comparação de movimentos com mapeamento de clientes">
+        <span aria-hidden="true" class="mode-card__icon">⚖️</span>
+        <h3 class="mode-card__title">Reconciliação SAP vs RW</h3>
+        <p class="mode-card__desc">Comparação entre movimentos do SAP e do Rentway, com mapeamento de clientes e deteção de divergências.</p>
+        <div class="mode-card__tags">
+          <span class="mode-tag mode-tag--amber">Faturação</span>
+          <span class="mode-tag mode-tag--amber">RMKT</span>
+          <span class="mode-tag mode-tag--amber">Pagos Por</span>
         </div>
-      </div>
+      </button>
       <!-- Modo C: Op4 -->
-      <div id="mode-op4-card" style="background:white;border:2px solid #e5e7eb;border-radius:14px;padding:28px 24px;cursor:pointer;transition:all 0.2s;text-align:center" onmouseenter="this.style.borderColor='#7c3aed';this.style.boxShadow='0 4px 20px rgba(124,58,237,.12)'" onmouseleave="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
-        <div style="font-size:32px;margin-bottom:14px">🛠️</div>
-        <h3 style="font-size:16px;font-weight:700;color:#1c2526;margin-bottom:8px">Ferramentas de Documentos</h3>
-        <p style="font-size:13px;color:#6b7280;line-height:1.5">Converter ficheiros para outros formatos ou mesclar múltiplos documentos num único.</p>
-        <div style="margin-top:16px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
-          <span style="background:#f5f3ff;color:#6d28d9;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Converter</span>
-          <span style="background:#f5f3ff;color:#6d28d9;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Mesclar</span>
+      <button id="mode-op4-card" class="mode-card mode-card--purple" aria-label="Ferramentas de Documentos: converter e mesclar ficheiros">
+        <span aria-hidden="true" class="mode-card__icon">🛠️</span>
+        <h3 class="mode-card__title">Ferramentas de Documentos</h3>
+        <p class="mode-card__desc">Converter ficheiros para outros formatos ou mesclar múltiplos documentos num único.</p>
+        <div class="mode-card__tags">
+          <span class="mode-tag mode-tag--purple">Converter</span>
+          <span class="mode-tag mode-tag--purple">Mesclar</span>
         </div>
-      </div>
+      </button>
     </div>
   </div>
 
@@ -121,162 +110,166 @@
   <div id="op4-section" style="display:none">
 
     <!-- Header -->
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #e5e7eb">
-      <button id="btn-op4-back" style="padding:7px 14px;background:white;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:#374151;transition:all 0.2s">← Voltar</button>
+    <div class="section-header">
+      <button id="btn-op4-back" class="section-header__back">← Voltar</button>
       <div>
-        <h2 style="font-size:18px;font-weight:700;color:#1c2526;margin:0">Ferramentas de Documentos</h2>
-        <p style="font-size:12px;color:#6b7280;margin:2px 0 0">Converter formatos ou mesclar múltiplos ficheiros num único documento</p>
+        <h2 class="section-header__title">Ferramentas de Documentos</h2>
+        <p class="section-header__sub">Converter formatos ou mesclar múltiplos ficheiros num único documento</p>
       </div>
     </div>
 
-    <!-- Zona de upload -->
-    <div id="op4-dropzone" style="background:#f9fafb;border:2px dashed #d1d5db;border-radius:12px;padding:32px 24px;text-align:center;margin-bottom:16px;transition:all 0.2s;cursor:pointer">
-      <div style="font-size:36px;margin-bottom:10px">📂</div>
-      <p style="font-size:14px;color:#374151;font-weight:600;margin-bottom:6px">Arraste os ficheiros aqui</p>
-      <p style="font-size:12px;color:#9ca3af;margin-bottom:14px">CSV, JSON, XLSX, XLS</p>
-      <label style="padding:9px 20px;background:#2563eb;color:white;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;display:inline-block">
+    <!-- Zona de upload compacta (horizontal) -->
+    <div id="op4-dropzone" class="op4-dropzone">
+      <span class="op4-dropzone__icon" aria-hidden="true">📁</span>
+      <span class="op4-dropzone__title">Arraste os ficheiros aqui</span>
+      <span class="op4-dropzone__sub">CSV · JSON · XLSX · XLS</span>
+      <label class="op4-dropzone__label">
         Selecionar Ficheiros
         <input type="file" id="op4-file-input" accept=".csv,.json,.xlsx,.xls" multiple style="display:none">
       </label>
     </div>
 
     <!-- Lista de ficheiros carregados -->
-    <div id="op4-file-list" style="margin-bottom:20px"></div>
+    <div id="op4-file-list"></div>
 
-    <!-- Formato de saída (partilhado entre converter e mesclar) -->
-    <div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:18px 20px;margin-bottom:20px">
-      <div style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px">Formato de saída</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="op4-fmt-btn" data-format="xlsx" style="padding:7px 16px;border:1.5px solid #2563eb;border-radius:7px;background:#eff6ff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.15s">XLSX</button>
-        <button class="op4-fmt-btn" data-format="csv"  style="padding:7px 16px;border:1.5px solid #ddd;border-radius:7px;background:white;color:#6b7280;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s">CSV</button>
-        <button class="op4-fmt-btn" data-format="json" style="padding:7px 16px;border:1.5px solid #ddd;border-radius:7px;background:white;color:#6b7280;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s">JSON</button>
-        <button class="op4-fmt-btn" data-format="xml"  style="padding:7px 16px;border:1.5px solid #ddd;border-radius:7px;background:white;color:#6b7280;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s">XML</button>
-        <button class="op4-fmt-btn" data-format="pdf"  style="padding:7px 16px;border:1.5px solid #ddd;border-radius:7px;background:white;color:#6b7280;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s">PDF</button>
+    <!-- Card único: tabs + formato + painel -->
+    <div class="op4-card">
+
+      <!-- Tabs como segmented control -->
+      <div class="op4-tab-bar">
+        <button id="op4-tab-convert" class="op4-tab-btn active">🔄 Converter</button>
+        <button id="op4-tab-merge"   class="op4-tab-btn">⊕ Mesclar</button>
       </div>
-    </div>
 
-    <!-- Tabs -->
-    <div style="display:flex;gap:10px;margin-bottom:20px">
-      <button id="op4-tab-convert" style="padding:8px 22px;border:1.5px solid #2563eb;border-radius:7px;background:#2563eb;color:white;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s">Converter</button>
-      <button id="op4-tab-merge"   style="padding:8px 22px;border:1.5px solid #d1d5db;border-radius:7px;background:white;color:#374151;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s">Mesclar</button>
-    </div>
-
-    <!-- Painel: Converter -->
-    <div id="op4-convert-panel" style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:24px">
-      <h3 style="font-size:14px;font-weight:700;color:#1c2526;margin-bottom:6px">Conversão de Formato</h3>
-      <p style="font-size:13px;color:#6b7280;margin-bottom:20px">Cada ficheiro carregado será descarregado individualmente no formato selecionado acima.</p>
-      <button id="btn-op4-convert" style="padding:10px 24px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s" onmouseenter="this.style.background='#1d4ed8'" onmouseleave="this.style.background='#2563eb'">▶ Converter e Transferir</button>
-    </div>
-
-    <!-- Painel: Mesclar -->
-    <div id="op4-merge-panel" style="display:none;background:white;border:1px solid #e5e7eb;border-radius:12px;padding:24px">
-      <h3 style="font-size:14px;font-weight:700;color:#1c2526;margin-bottom:14px">Mesclagem de Ficheiros</h3>
-      <div id="op4-merge-status">
-        <span style="color:#9ca3af;font-size:13px">Adicione pelo menos 2 ficheiros para mesclar.</span>
-      </div>
-      <!-- Tabela de mapeamento (mostrada só quando campos divergem) -->
-      <div id="op4-field-map-wrap" style="display:none;margin-top:20px">
-        <div style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Mapeamento de campos</div>
-        <div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px">
-          <div id="op4-field-map-table"></div>
+      <!-- Formato de saída -->
+      <div class="op4-fmt-panel">
+        <p class="op4-fmt-label">Formato de saída</p>
+        <div class="op4-fmt-btns">
+          <button class="op4-fmt-btn active" data-format="xlsx">XLSX</button>
+          <button class="op4-fmt-btn" data-format="csv">CSV</button>
+          <button class="op4-fmt-btn" data-format="json">JSON</button>
+          <button class="op4-fmt-btn" data-format="xml">XML</button>
+          <button class="op4-fmt-btn" data-format="pdf">PDF</button>
         </div>
       </div>
-      <div style="margin-top:20px">
-        <button id="btn-op4-merge" disabled style="padding:10px 24px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:not-allowed;opacity:0.5;transition:all 0.2s" onmouseenter="if(!this.disabled)this.style.background='#1d4ed8'" onmouseleave="this.style.background='#2563eb'">▶ Mesclar e Transferir</button>
-      </div>
-    </div>
 
+      <div class="op4-rule"></div>
+
+      <!-- Painel: Converter -->
+      <div id="op4-convert-panel" class="op4-panel">
+        <p class="op4-panel__desc">Cada ficheiro carregado será descarregado individualmente no formato selecionado acima.</p>
+        <button id="btn-op4-convert" class="btn-op4-action">▶ Converter e Transferir</button>
+      </div>
+
+      <!-- Painel: Mesclar -->
+      <div id="op4-merge-panel" class="op4-panel" style="display:none">
+        <p class="op4-panel__desc">Combina múltiplos ficheiros num único ficheiro de saída no formato escolhido.</p>
+        <div id="op4-merge-status" style="margin-bottom:14px">
+          <span style="color:#9ca3af;font-size:13px">Adicione pelo menos 2 ficheiros para mesclar.</span>
+        </div>
+        <div id="op4-field-map-wrap" style="display:none;margin-top:20px">
+          <div style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Mapeamento de campos</div>
+          <div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px">
+            <div id="op4-field-map-table"></div>
+          </div>
+        </div>
+        <div style="margin-top:20px">
+          <button id="btn-op4-merge" class="btn-op4-action" disabled>▶ Mesclar e Transferir</button>
+        </div>
+      </div>
+
+    </div><!-- /op4-card -->
   </div>
 
   <!-- ── OP3 — RECONCILIAÇÃO SAP vs RW ── -->
   <div id="op3-section" style="display:none">
 
     <!-- Header -->
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #e5e7eb">
-      <button id="btn-op3-back" style="padding:7px 14px;background:white;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:#374151;transition:all 0.2s">← Voltar</button>
+    <div class="section-header">
+      <button id="btn-op3-back" class="section-header__back">← Voltar</button>
       <div>
-        <h2 style="font-size:18px;font-weight:700;color:#1c2526;margin:0">Reconciliação SAP vs Rentway</h2>
-        <p style="font-size:12px;color:#6b7280;margin:2px 0 0">Carregue todos os ficheiros e execute a reconciliação</p>
+        <h2 class="section-header__title">Reconciliação SAP vs Rentway</h2>
+        <p class="section-header__sub">Carregue todos os ficheiros e execute a reconciliação</p>
       </div>
     </div>
 
     <!-- Upload de ficheiros -->
-    <div id="op3-upload-card" style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:24px;margin-bottom:20px">
-      <h3 style="font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:20px">Ficheiros de entrada</h3>
+    <div id="op3-upload-card" class="upload-card">
+      <h3 class="upload-card__title">Ficheiros de entrada</h3>
 
       <!-- Grid de uploads -->
-      <div style="display:grid;gap:12px">
+      <div class="upload-grid">
 
         <!-- SAP (múltiplos) -->
-        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px">
-          <div style="width:36px;height:36px;background:#dbeafe;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🏦</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:600;color:#1c2526">Ficheiros SAP</div>
-            <div id="op3-badge-sap" style="font-size:11px;color:#6b7280;background:#f3f4f6;display:inline-block;padding:2px 8px;border-radius:9999px;margin-top:3px">Nenhum ficheiro</div>
+        <div class="upload-slot">
+          <div class="upload-slot__icon upload-slot__icon--blue" aria-hidden="true">🏦</div>
+          <div class="upload-slot__info">
+            <div class="upload-slot__name">Ficheiros SAP</div>
+            <div id="op3-badge-sap" class="upload-slot__badge">Nenhum ficheiro</div>
           </div>
-          <button class="btn-op3-lib" data-slot="sap" style="padding:7px 10px;background:white;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;color:#374151;transition:all 0.2s" title="Da biblioteca">📂</button>
-          <button class="btn-op3-clear" data-slot="sap" style="padding:7px 10px;background:white;border:1px solid #e5e7eb;border-radius:7px;cursor:pointer;font-size:13px;color:#9ca3af;transition:all 0.2s;display:none" title="Limpar">✕</button>
-          <label style="padding:7px 14px;background:#2563eb;color:white;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all 0.2s">
+          <button class="btn-op3-lib upload-slot__lib-btn" data-slot="sap" title="Da biblioteca" aria-label="Escolher SAP da biblioteca">📂</button>
+          <button class="btn-op3-clear upload-slot__clear-btn" data-slot="sap" title="Limpar" aria-label="Limpar ficheiros SAP">✕</button>
+          <label class="upload-slot__label">
             Selecionar
             <input type="file" id="op3-input-sap" accept=".xlsx,.xls,.csv" multiple style="display:none">
           </label>
         </div>
 
         <!-- Mapeamento -->
-        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px">
-          <div style="width:36px;height:36px;background:#fef9c3;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🗺️</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:600;color:#1c2526">Mapeamento RW → SAP</div>
-            <div id="op3-badge-mapeamento" style="font-size:11px;color:#6b7280;background:#f3f4f6;display:inline-block;padding:2px 8px;border-radius:9999px;margin-top:3px">Nenhum ficheiro</div>
+        <div class="upload-slot">
+          <div class="upload-slot__icon upload-slot__icon--yellow" aria-hidden="true">🗺️</div>
+          <div class="upload-slot__info">
+            <div class="upload-slot__name">Mapeamento RW → SAP</div>
+            <div id="op3-badge-mapeamento" class="upload-slot__badge">Nenhum ficheiro</div>
           </div>
-          <button class="btn-op3-lib" data-slot="mapeamento" style="padding:7px 10px;background:white;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;color:#374151;transition:all 0.2s" title="Da biblioteca">📂</button>
-          <button class="btn-op3-clear" data-slot="mapeamento" style="padding:7px 10px;background:white;border:1px solid #e5e7eb;border-radius:7px;cursor:pointer;font-size:13px;color:#9ca3af;transition:all 0.2s;display:none" title="Limpar">✕</button>
-          <label style="padding:7px 14px;background:#2563eb;color:white;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all 0.2s">
+          <button class="btn-op3-lib upload-slot__lib-btn" data-slot="mapeamento" title="Da biblioteca" aria-label="Escolher mapeamento da biblioteca">📂</button>
+          <button class="btn-op3-clear upload-slot__clear-btn" data-slot="mapeamento" title="Limpar" aria-label="Limpar mapeamento">✕</button>
+          <label class="upload-slot__label">
             Selecionar
             <input type="file" id="op3-input-mapeamento" accept=".xlsx,.xls,.csv" style="display:none">
           </label>
         </div>
 
         <!-- RW Faturação -->
-        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px">
-          <div style="width:36px;height:36px;background:#dcfce7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🧾</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:600;color:#1c2526">RW Faturação</div>
-            <div id="op3-badge-faturacao" style="font-size:11px;color:#6b7280;background:#f3f4f6;display:inline-block;padding:2px 8px;border-radius:9999px;margin-top:3px">Nenhum ficheiro</div>
+        <div class="upload-slot">
+          <div class="upload-slot__icon upload-slot__icon--green" aria-hidden="true">🧾</div>
+          <div class="upload-slot__info">
+            <div class="upload-slot__name">RW Faturação</div>
+            <div id="op3-badge-faturacao" class="upload-slot__badge">Nenhum ficheiro</div>
           </div>
-          <button class="btn-op3-lib" data-slot="rwFaturacao" style="padding:7px 10px;background:white;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;color:#374151;transition:all 0.2s" title="Da biblioteca">📂</button>
-          <button class="btn-op3-clear" data-slot="rwFaturacao" style="padding:7px 10px;background:white;border:1px solid #e5e7eb;border-radius:7px;cursor:pointer;font-size:13px;color:#9ca3af;transition:all 0.2s;display:none" title="Limpar">✕</button>
-          <label style="padding:7px 14px;background:#2563eb;color:white;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all 0.2s">
+          <button class="btn-op3-lib upload-slot__lib-btn" data-slot="rwFaturacao" title="Da biblioteca" aria-label="Escolher faturação da biblioteca">📂</button>
+          <button class="btn-op3-clear upload-slot__clear-btn" data-slot="rwFaturacao" title="Limpar" aria-label="Limpar faturação">✕</button>
+          <label class="upload-slot__label">
             Selecionar
             <input type="file" id="op3-input-faturacao" accept=".xlsx,.xls,.csv" style="display:none">
           </label>
         </div>
 
         <!-- RW RMKT -->
-        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px">
-          <div style="width:36px;height:36px;background:#fce7f3;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🔄</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:600;color:#1c2526">RW RMKT</div>
-            <div id="op3-badge-rmkt" style="font-size:11px;color:#6b7280;background:#f3f4f6;display:inline-block;padding:2px 8px;border-radius:9999px;margin-top:3px">Nenhum ficheiro</div>
+        <div class="upload-slot">
+          <div class="upload-slot__icon upload-slot__icon--pink" aria-hidden="true">🔄</div>
+          <div class="upload-slot__info">
+            <div class="upload-slot__name">RW RMKT</div>
+            <div id="op3-badge-rmkt" class="upload-slot__badge">Nenhum ficheiro</div>
           </div>
-          <button class="btn-op3-lib" data-slot="rwRmkt" style="padding:7px 10px;background:white;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;color:#374151;transition:all 0.2s" title="Da biblioteca">📂</button>
-          <button class="btn-op3-clear" data-slot="rwRmkt" style="padding:7px 10px;background:white;border:1px solid #e5e7eb;border-radius:7px;cursor:pointer;font-size:13px;color:#9ca3af;transition:all 0.2s;display:none" title="Limpar">✕</button>
-          <label style="padding:7px 14px;background:#2563eb;color:white;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all 0.2s">
+          <button class="btn-op3-lib upload-slot__lib-btn" data-slot="rwRmkt" title="Da biblioteca" aria-label="Escolher RMKT da biblioteca">📂</button>
+          <button class="btn-op3-clear upload-slot__clear-btn" data-slot="rwRmkt" title="Limpar" aria-label="Limpar RMKT">✕</button>
+          <label class="upload-slot__label">
             Selecionar
             <input type="file" id="op3-input-rmkt" accept=".xlsx,.xls,.csv" style="display:none">
           </label>
         </div>
 
         <!-- RW Pagos Por -->
-        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px">
-          <div style="width:36px;height:36px;background:#fee2e2;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">💸</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:600;color:#1c2526">RW Pagos Por</div>
-            <div id="op3-badge-pagospor" style="font-size:11px;color:#6b7280;background:#f3f4f6;display:inline-block;padding:2px 8px;border-radius:9999px;margin-top:3px">Nenhum ficheiro</div>
+        <div class="upload-slot">
+          <div class="upload-slot__icon upload-slot__icon--red" aria-hidden="true">💸</div>
+          <div class="upload-slot__info">
+            <div class="upload-slot__name">RW Pagos Por</div>
+            <div id="op3-badge-pagospor" class="upload-slot__badge">Nenhum ficheiro</div>
           </div>
-          <button class="btn-op3-lib" data-slot="rwPagosPor" style="padding:7px 10px;background:white;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;color:#374151;transition:all 0.2s" title="Da biblioteca">📂</button>
-          <button class="btn-op3-clear" data-slot="rwPagosPor" style="padding:7px 10px;background:white;border:1px solid #e5e7eb;border-radius:7px;cursor:pointer;font-size:13px;color:#9ca3af;transition:all 0.2s;display:none" title="Limpar">✕</button>
-          <label style="padding:7px 14px;background:#2563eb;color:white;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all 0.2s">
+          <button class="btn-op3-lib upload-slot__lib-btn" data-slot="rwPagosPor" title="Da biblioteca" aria-label="Escolher Pagos Por da biblioteca">📂</button>
+          <button class="btn-op3-clear upload-slot__clear-btn" data-slot="rwPagosPor" title="Limpar" aria-label="Limpar Pagos Por">✕</button>
+          <label class="upload-slot__label">
             Selecionar
             <input type="file" id="op3-input-pagospor" accept=".xlsx,.xls,.csv" style="display:none">
           </label>
@@ -285,8 +278,8 @@
       </div>
 
       <!-- Botão executar -->
-      <div style="margin-top:20px;text-align:right">
-        <button id="btn-op3-run" disabled style="padding:11px 28px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:not-allowed;opacity:0.5;transition:all 0.2s">▶ Executar Reconciliação</button>
+      <div class="upload-run">
+        <button id="btn-op3-run" class="btn-op4-action" disabled>▶ Executar Reconciliação</button>
       </div>
     </div>
 
@@ -297,47 +290,48 @@
     <div id="op3-results-section" style="display:none">
 
       <!-- Cards de resumo -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">
-        <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center">
-          <div style="font-size:22px;font-weight:700;color:#1c2526" id="op3-s-div">—</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:600">Divergências</div>
+      <div class="op3-stat-grid">
+        <div class="op3-stat-card">
+          <div class="op3-stat-val" id="op3-s-div">—</div>
+          <div class="op3-stat-label">Divergências</div>
         </div>
-        <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center">
-          <div style="font-size:22px;font-weight:700;color:#e24b4a" id="op3-s-rw">—</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:600">Só em RW</div>
+        <div class="op3-stat-card">
+          <div class="op3-stat-val op3-stat-val--rw" id="op3-s-rw">—</div>
+          <div class="op3-stat-label">Só em RW</div>
         </div>
-        <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center">
-          <div style="font-size:22px;font-weight:700;color:#f59e0b" id="op3-s-sap">—</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:600">Só em SAP</div>
+        <div class="op3-stat-card">
+          <div class="op3-stat-val op3-stat-val--sap" id="op3-s-sap">—</div>
+          <div class="op3-stat-label">Só em SAP</div>
         </div>
-        <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center">
-          <div style="font-size:22px;font-weight:700;color:#16a34a" id="op3-s-matched">—</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:600">Reconciliados</div>
+        <div class="op3-stat-card">
+          <div class="op3-stat-val op3-stat-val--matched" id="op3-s-matched">—</div>
+          <div class="op3-stat-label">Reconciliados</div>
         </div>
       </div>
 
       <!-- Tabs de análise -->
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
-        <div style="display:flex;border-bottom:1px solid #e5e7eb;background:#f9fafb">
-          <button id="op3-tab-faturacao" class="op3-tab-active" style="flex:1;padding:12px 16px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:#1c2526;border-bottom:2px solid transparent;transition:all 0.2s">🧾 Faturação</button>
-          <button id="op3-tab-rmkt" style="flex:1;padding:12px 16px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:#6b7280;border-bottom:2px solid transparent;transition:all 0.2s;opacity:0.4" disabled>🔄 RMKT</button>
-          <button id="op3-tab-pagosPor" style="flex:1;padding:12px 16px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:#6b7280;border-bottom:2px solid transparent;transition:all 0.2s;opacity:0.4" disabled>💸 Pagos Por</button>
+      <div class="op3-tabs-container">
+        <div role="tablist" aria-label="Tabs de reconciliação Op3" class="op3-tab-bar">
+          <button id="op3-tab-faturacao" role="tab" aria-selected="true" aria-controls="op3-tab-panel" class="op3-tab-btn op3-tab-active"><span aria-hidden="true">🧾</span> Faturação</button>
+          <button id="op3-tab-rmkt" role="tab" aria-selected="false" aria-controls="op3-tab-panel" class="op3-tab-btn" disabled><span aria-hidden="true">🔄</span> RMKT</button>
+          <button id="op3-tab-pagosPor" role="tab" aria-selected="false" aria-controls="op3-tab-panel" class="op3-tab-btn" disabled><span aria-hidden="true">💸</span> Pagos Por</button>
         </div>
 
-        <div style="padding:20px">
+        <div class="op3-tab-inner">
 
           <!-- Sub-tabs de lista (Em RW / Em SAP / Reconciliados) -->
-          <div id="op3-list-tabs" style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:16px;gap:0">
+          <div id="op3-list-tabs" class="op3-list-tabs">
             <!-- preenchido por JS -->
           </div>
 
-          <!-- Botão exportar lista activa -->
-          <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-            <button id="btn-op3-export-active" style="padding:5px 14px;background:white;border:1px solid #d1d5db;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;color:#374151;transition:all 0.15s">⬇ CSV</button>
+          <!-- Botões de exportação Op3 -->
+          <div class="op3-export-bar">
+            <button id="btn-op3-export-active" class="btn-op3-export"><span aria-hidden="true">⬇</span> CSV</button>
+            <button id="btn-op3-export-xlsx" class="btn-op3-export btn-op3-export--green"><span aria-hidden="true">📊</span> XLSX (todos)</button>
           </div>
 
           <!-- Tabela activa (única — muda com a sub-tab) -->
-          <div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px">
+          <div class="op3-table-wrap">
             <table id="op3-active-table" style="width:100%;border-collapse:collapse;font-size:12px"></table>
           </div>
           <div id="op3-active-table-pag"></div>
@@ -351,26 +345,31 @@
   <!-- ── 1. IMPORTAÇÃO (MÚLTIPLOS FICHEIROS) ── -->
   <div id="import-section">
     <!-- Header fora da caixa branca -->
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #e5e7eb">
-      <button id="btn-import-back" style="padding:7px 14px;background:white;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:#374151;transition:all 0.2s">← Voltar</button>
+    <div class="section-header">
+      <button id="btn-import-back" class="section-header__back">← Voltar</button>
       <div>
-        <h2 style="font-size:18px;font-weight:700;color:#1c2526;margin:0">Análise de Dados</h2>
-        <p style="font-size:12px;color:#6b7280;margin:2px 0 0">Carregue os ficheiros para identificar duplicados ou reconciliar</p>
+        <h2 class="section-header__title">Análise de Dados</h2>
+        <p class="section-header__sub">Carregue os ficheiros para identificar duplicados ou reconciliar</p>
       </div>
     </div>
 
     <!-- Biblioteca de ficheiros guardados -->
-    <div id="filestore-panel" style="display:none;margin-bottom:20px">
-      <div style="background:white;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #f3f4f6">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:14px;font-weight:700;color:#1c2526">💾 Ficheiros Guardados</span>
-            <span id="fs-storage-info" style="font-size:11px;color:#9ca3af;background:#f9fafb;padding:2px 8px;border-radius:99px"></span>
+    <div id="filestore-panel" class="filestore-panel" style="display:none">
+      <div class="filestore-box">
+        <div class="filestore-header">
+          <div class="filestore-header__left">
+            <span class="filestore-title"><span aria-hidden="true">💾</span> Ficheiros Guardados</span>
+            <span id="fs-storage-info" class="storage-info"></span>
           </div>
-          <div style="display:flex;gap:8px">
-            <button id="btn-fs-clear-all" style="padding:6px 12px;background:white;border:1px solid #fca5a5;color:#dc2626;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s">Limpar tudo</button>
-            <button id="btn-fs-load" disabled style="padding:6px 14px;background:#8ec73d;color:white;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:not-allowed;opacity:0.5;transition:all 0.2s">↑ Carregar</button>
+          <div class="filestore-header__actions">
+            <button id="btn-fs-clear-all" class="btn-fs-clear">Limpar tudo</button>
+            <button id="btn-fs-load" class="btn-fs-load" disabled>↑ Carregar</button>
           </div>
+        </div>
+        <div class="filestore-search-row">
+          <input id="fs-search" type="search" placeholder="Pesquisar ficheiro..." class="filestore-search">
+          <button id="btn-fs-sort-name" title="Ordenar por nome" class="btn-fs-sort">A→Z</button>
+          <button id="btn-fs-sort-date" title="Ordenar por data (mais recente)" class="btn-fs-sort btn-fs-sort--active"><span aria-hidden="true">📅</span></button>
         </div>
         <div id="fs-list" style="max-height:220px;overflow-y:auto"></div>
       </div>
@@ -390,7 +389,10 @@
 
       <!-- Lista de ficheiros carregados -->
       <div id="files-queue" style="display:none;margin-top:16px;padding:16px;background:var(--white);border:1px solid var(--gray-border);border-radius:10px">
-        <h4 style="margin-bottom:12px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Ficheiros a processar</h4>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <h4 style="margin:0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Ficheiros a processar</h4>
+          <button id="btn-clear-queue" style="font-size:11px;padding:4px 10px;border:1px solid var(--gray-border);border-radius:6px;background:white;color:var(--muted);cursor:pointer">✕ Limpar fila</button>
+        </div>
         <div id="files-queue-list"></div>
       </div>
     </div>
@@ -496,21 +498,21 @@
     </div>
 
     <!-- Op 2 — configuração dinâmica (COMPACTO) -->
-    <div id="recon-config" style="display:none;margin-top:14px;background:linear-gradient(135deg,#f8f9fa 0%,#f0f1f3 100%);border:1px solid var(--gray-border);border-radius:10px;padding:14px 16px">
-      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
-        <div style="flex:1;min-width:200px">
-          <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">📊 Agrupar por</label>
-          <select id="group-field-select" class="config-select" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:white;font-weight:500"></select>
+    <div id="recon-config" class="recon-config-bar" style="display:none">
+      <div class="recon-config-row">
+        <div class="config-field">
+          <label class="config-label" for="group-field-select"><span aria-hidden="true">📊</span> Agrupar por</label>
+          <select id="group-field-select" class="config-select" style="width:100%"></select>
         </div>
-        <div style="flex:1;min-width:200px">
-          <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">💰 Montante</label>
-          <select id="value-field-select" class="config-select" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:white;font-weight:500"></select>
+        <div class="config-field">
+          <label class="config-label" for="value-field-select"><span aria-hidden="true">💰</span> Montante</label>
+          <select id="value-field-select" class="config-select" style="width:100%"></select>
         </div>
-        <div style="min-width:140px">
-          <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">✓ Tolerância (€)</label>
-          <input type="number" id="tolerance-input" value="1.00" min="0" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:white;font-weight:500;text-align:center">
+        <div class="config-field--sm">
+          <label class="config-label" for="tolerance-input"><span aria-hidden="true">✓</span> Tolerância (€)</label>
+          <input type="number" id="tolerance-input" value="1.00" min="0" step="0.01" class="config-select" style="width:100%;text-align:center">
         </div>
-        <button class="btn-run" id="btn-run-recon" style="padding:8px 20px;background:var(--green);color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-size:13px;height:36px;display:flex;align-items:center;gap:6px">▶ Executar</button>
+        <button class="btn-run" id="btn-run-recon">▶ Executar</button>
       </div>
     </div>
 
@@ -522,18 +524,18 @@
         <div class="sum-card clean" id="card-unique" data-filter="unique" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="s-unique">—</div><div class="sl" id="sl-unique">—</div></div>
         <div class="sum-card dups" id="card-dups" data-filter="duplicates" style="cursor:pointer;transition:all 0.2s"> <div class="sv" id="s-dups">—</div> <div class="sl" id="sl-dups">—</div></div>
         <div class="sum-card info" id="card-groups"> <div class="sv" id="s-groups">—</div><div class="sl" id="sl-groups">—</div></div>
+        <div class="sum-card warn" id="card-suspicious" data-filter="suspicious" style="cursor:pointer;transition:all 0.2s"><div class="sv" id="s-suspicious">—</div><div class="sl">Suspeitos</div></div>
       </div>
       <!-- BARRA DE FILTROS DINÂMICA -->
-      <div id="filters-section" style="background:linear-gradient(135deg,#f8f9fa 0%,#f0f1f3 100%);border:1px solid var(--gray-border);border-radius:10px;padding:12px 16px;margin-bottom:18px;display:none">
-        <!-- Filtros: Procura, Nº duplicados, Montante -->
-        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+      <div id="filters-section" class="filters-panel" style="display:none">
+        <div class="filters-row">
           <!-- Procura por texto -->
-          <div style="flex:1;min-width:220px">
-            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">🔍 Procurar</label>
-            <div style="display:flex;gap:6px;align-items:stretch">
-              <input type="text" id="filter-search" placeholder="Escreva para procurar..." style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
-              <div style="position:relative;flex-shrink:0" id="search-field-wrapper">
-                <button id="search-field-btn" style="height:100%;padding:0 10px;border:1px solid var(--gray-border);border-radius:6px;background:white;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:4px">
+          <div class="filter-field">
+            <label class="filter-label" for="filter-search"><span aria-hidden="true">🔍</span> Procurar</label>
+            <div class="filter-search-wrap">
+              <input type="text" id="filter-search" placeholder="Escreva para procurar..." class="filter-search-input">
+              <div class="filter-field-dropdown" id="search-field-wrapper">
+                <button id="search-field-btn" class="btn-filter-field">
                   <span id="search-field-label">Todos os campos</span> <span style="font-size:9px">▾</span>
                 </button>
                 <div id="search-field-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:210px;background:white;border:1px solid var(--gray-border);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.13);z-index:200;padding:4px 0;max-height:280px;overflow-y:auto">
@@ -543,22 +545,22 @@
             </div>
           </div>
           <!-- Filtro por número de duplicados (exato) — SÓ PARA VISTA DUPLICADOS -->
-          <div id="filter-exactcount-wrapper" style="min-width:120px;display:none">
-            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Nº duplicados</label>
-            <input type="number" id="filter-exactcount" min="1" placeholder="Exato" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+          <div id="filter-exactcount-wrapper" class="filter-field--sm" style="display:none">
+            <label class="filter-label" for="filter-exactcount">Nº duplicados</label>
+            <input type="number" id="filter-exactcount" min="1" placeholder="Exato" class="filter-input">
           </div>
           <!-- Filtro por montante mín -->
-          <div style="min-width:130px">
-            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Montante mín (€)</label>
-            <input type="number" id="filter-minamt" step="0.01" placeholder="Min" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+          <div class="filter-field--num">
+            <label class="filter-label" for="filter-minamt">Montante mín (€)</label>
+            <input type="number" id="filter-minamt" step="0.01" placeholder="Min" class="filter-input">
           </div>
           <!-- Filtro por montante máx -->
-          <div style="min-width:130px">
-            <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Montante máx (€)</label>
-            <input type="number" id="filter-maxamt" step="0.01" placeholder="Max" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+          <div class="filter-field--num">
+            <label class="filter-label" for="filter-maxamt">Montante máx (€)</label>
+            <input type="number" id="filter-maxamt" step="0.01" placeholder="Max" class="filter-input">
           </div>
           <!-- Botão Limpar -->
-          <button id="btn-clear-filters" style="padding:8px 14px;background:#e8e9eb;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">🗑 Limpar</button>
+          <button id="btn-clear-filters" class="btn-clear-filters"><span aria-hidden="true">🗑</span> Limpar</button>
         </div>
       </div>
       <div class="pagination" id="pagination-top" style="display:none;margin-bottom:12px">
@@ -582,23 +584,22 @@
         <div class="sum-card info" id="recon-card-tol"> <div class="sv" id="recon-s-tol">—</div><div class="sl">Tolerância</div></div>
       </div>
       <!-- FILTROS DE RECONCILIAÇÃO -->
-      <div style="background:linear-gradient(135deg,#f8f9fa 0%,#f0f1f3 100%);border:1px solid var(--gray-border);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
-        <div style="min-width:130px">
-          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Saldo mín (€)</label>
-          <input type="number" id="recon-min-saldo" placeholder="Min" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+      <div class="recon-filters-panel">
+        <div class="recon-filter-field">
+          <label class="filter-label" for="recon-min-saldo">Saldo mín (€)</label>
+          <input type="number" id="recon-min-saldo" placeholder="Min" step="0.01" class="filter-input">
         </div>
-        <div style="min-width:130px">
-          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase">Saldo máx (€)</label>
-          <input type="number" id="recon-max-saldo" placeholder="Max" step="0.01" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:12px;background:white">
+        <div class="recon-filter-field">
+          <label class="filter-label" for="recon-max-saldo">Saldo máx (€)</label>
+          <input type="number" id="recon-max-saldo" placeholder="Max" step="0.01" class="filter-input">
         </div>
-        <button id="btn-apply-recon-filters" style="padding:8px 14px;background:#4a9d83;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">✓ Aplicar Filtro</button>
-        <button id="btn-clear-recon-filters" style="padding:8px 14px;background:#e8e9eb;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s">🗑 Limpar</button>
-        <div style="flex:1;min-width:20px"></div>
-        <div style="display:flex;flex-direction:column;gap:2px;text-align:right">
-          <div style="font-weight:600;color:#1e40af;font-size:12px">📤 Exportar</div>
-          <div style="font-size:10px;color:#6b7280">CSV, JSON, XML, XLSX, PDF</div>
+        <button id="btn-apply-recon-filters" class="btn-apply-filters"><span aria-hidden="true">✓</span> Aplicar Filtro</button>
+        <button id="btn-clear-recon-filters" class="btn-clear-filters"><span aria-hidden="true">🗑</span> Limpar</button>
+        <div class="recon-export-hint">
+          <div class="recon-export-hint__label"><span aria-hidden="true">📤</span> Exportar</div>
+          <div class="recon-export-hint__sub">CSV, JSON, XML, XLSX, PDF</div>
         </div>
-        <button id="btn-open-recon-export" style="padding:8px 14px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;font-size:12px">⬇ Exportar</button>
+        <button id="btn-open-recon-export" class="btn-recon-export"><span aria-hidden="true">⬇</span> Exportar</button>
       </div>
 
       <!-- TABELA ESTRUTURADA COM PAGINAÇÃO -->
@@ -644,8 +645,8 @@
       </div>
 
       <!-- MODAL DE EXPORT AVANÇADO -->
-      <div id="export-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
-        <div style="background:white;border-radius:12px;padding:28px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3)">
+      <div id="export-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Exportar Dados" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+        <div class="modal-dialog" style="padding:28px">
           <h2 style="margin-bottom:20px;color:#1c2526">Exportar Dados</h2>
 
           <!-- Seleção de Dados -->
@@ -685,7 +686,7 @@
           </div>
 
           <!-- Botões de Ação -->
-          <div style="display:flex;gap:10px;justify-content:flex-end">
+          <div class="modal-footer">
             <button id="btn-close-export-modal" style="padding:10px 20px;border:1px solid #ddd;background:white;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">✕ Cancelar</button>
             <button id="btn-execute-export" style="padding:10px 24px;background:#8ec73d;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">⬇ Exportar</button>
           </div>
@@ -693,8 +694,8 @@
       </div>
 
       <!-- MODAL DE EXPORT PARA RECONCILIAÇÃO -->
-      <div id="recon-export-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
-        <div style="background:white;border-radius:12px;padding:28px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3)">
+      <div id="recon-export-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Exportar Dados da Reconciliação" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+        <div class="modal-dialog" style="padding:28px">
           <h2 style="margin-bottom:20px;color:#1c2526">Exportar Dados da Reconciliação</h2>
 
           <!-- Seleção de Dados -->
@@ -734,7 +735,7 @@
           </div>
 
           <!-- Botões de Ação -->
-          <div style="display:flex;gap:10px;justify-content:flex-end">
+          <div class="modal-footer">
             <button id="btn-close-recon-export-modal" style="padding:10px 20px;border:1px solid #ddd;background:white;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">✕ Cancelar</button>
             <button id="btn-execute-recon-export" style="padding:10px 24px;background:#8ec73d;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.2s">⬇ Exportar</button>
           </div>
@@ -748,21 +749,21 @@
 
 <footer>
   <strong>G-FINANCE <span class="footer-version" id="version-badge">v1.0.0</span></strong>
-  <span style="margin:0 12px;color:#d1d5db">•</span>
-  <span style="display:inline-flex;align-items:center;gap:14px;font-size:11px;color:#6b7280">
-    <span style="font-size:14px">🔐</span>
-    <span style="display:inline-flex;gap:16px;flex-wrap:wrap">
-      <span style="display:inline-flex;align-items:center;gap:4px"><span>✓</span><span>Sem servidor</span></span>
-      <span style="display:inline-flex;align-items:center;gap:4px"><span>✓</span><span>Sem transmissão</span></span>
-      <span style="display:inline-flex;align-items:center;gap:4px"><span>✓</span><span>Apenas este PC</span></span>
+  <span class="footer-sep" aria-hidden="true">•</span>
+  <span class="footer-security">
+    <span aria-hidden="true" style="font-size:14px">🔐</span>
+    <span class="footer-security__items">
+      <span class="footer-security__item"><span aria-hidden="true">✓</span><span>Sem servidor</span></span>
+      <span class="footer-security__item"><span aria-hidden="true">✓</span><span>Sem transmissão</span></span>
+      <span class="footer-security__item"><span aria-hidden="true">✓</span><span>Apenas este PC</span></span>
     </span>
   </span>
 </footer>
 
 <!-- ── MODAL PICKER BIBLIOTECA OP3 ── -->
-<div id="op3-lib-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;align-items:center;justify-content:center">
+<div id="op3-lib-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Escolher da biblioteca" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;align-items:center;justify-content:center">
   <div id="op3-lib-backdrop" style="position:absolute;inset:0;background:rgba(0,0,0,0.45)"></div>
-  <div style="position:relative;background:white;border-radius:12px;padding:24px;max-width:480px;width:90%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.25)">
+  <div class="modal-dialog" style="position:relative;padding:24px;max-width:480px;max-height:80vh;display:flex;flex-direction:column">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <h3 style="font-size:15px;font-weight:700;color:#1c2526;margin:0">📂 Escolher da biblioteca</h3>
       <button id="op3-lib-cancel" style="padding:4px 10px;background:none;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;font-size:12px;color:#6b7280">✕</button>
@@ -775,7 +776,7 @@
 </div>
 
 <!-- ── MODAL DE LOG ── -->
-<div id="log-modal" class="log-modal" style="display:none">
+<div id="log-modal" class="log-modal" role="dialog" aria-modal="true" aria-label="Log do sistema" style="display:none">
   <div class="log-modal-backdrop" id="log-modal-backdrop"></div>
   <div class="log-modal-dialog">
     <div class="log-modal-header">
@@ -789,11 +790,13 @@
     <div id="log-body" class="log-modal-body"></div>
     <div class="log-modal-footer">
       <button class="log-btn primary" id="btn-export-log">📥 Exportar .txt</button>
+      <button class="log-btn" id="btn-history-log">📋 Histórico</button>
       <button class="log-btn" id="btn-clear-log">🗑 Limpar</button>
     </div>
   </div>
 </div>
 
+<div role="status" aria-live="polite" aria-atomic="true" class="visually-hidden" id="aria-status"></div>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

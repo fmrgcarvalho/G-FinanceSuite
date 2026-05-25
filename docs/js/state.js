@@ -104,7 +104,11 @@ export const AppState = {
     },
     mappings:  {},      // { sap:{}, rwFaturacao:{}, ... } — set in mapping phase
     activeTab: 'faturacao', // 'faturacao' | 'rmkt' | 'pagosPor'
+    overrides: {},      // { [atribuicao]: { ts } } — linhas aceites manualmente
   },
+
+  // ── Anomalias de dados (Op1) ───────────────────────────────
+  anomalyRecords: [], // [{record, fields:[{field,value,dominantType,actualType,reason}]}]
 
   // ── Op4 — Ferramentas de Documentos ────────────────────────
   op4: {
@@ -148,12 +152,15 @@ export const AppState = {
     this.exportState      = { dataType: 'all', format: 'xlsx' };
     this.reconExportState = { dataType: 'all', format: 'xlsx' };
 
+    this.anomalyRecords = [];
+
     this.op3 = {
       files:    { sap: [], mapeamento: null, rwFaturacao: null, rwRmkt: null, rwPagosPor: null },
       libFiles: { sap: [], mapeamento: null, rwFaturacao: null, rwRmkt: null, rwPagosPor: null },
       results:  { faturacao: null, rmkt: null, pagosPor: null },
-      mappings: {},
+      mappings:  {},
       activeTab: 'faturacao',
+      overrides: {},
     };
 
     this.op4 = { files: [], mode: 'convert', format: 'xlsx', fieldMap: {} };

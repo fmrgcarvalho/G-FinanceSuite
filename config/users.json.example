@@ -1,0 +1,6 @@
+{
+  "sessionHours": 8,
+  "users": [
+    { "token": "SEU_TOKEN_AQUI", "name": "NOME_UTILIZADOR" }
+  ]
+}

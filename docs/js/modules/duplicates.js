@@ -5,7 +5,7 @@
    ============================================================ */
 
 import { AppState, PAGE_SIZE } from '../state.js';
-import { show, hide, fmt, fmtN, escHtml, setSummaryCards } from './ui.js';
+import { show, hide, fmt, fmtN, escHtml, setSummaryCards, setupTableKeyNav, classifyValue } from './ui.js';
 import { setPagination, renderPagination } from './pagination.js';
 
 // ── IDs DOM necessários ────────────────────────────────────────
@@ -15,7 +15,7 @@ export const REQUIRED_IDS = [
   'filter-search', 'filter-exactcount', 'filter-minamt', 'filter-maxamt',
   'filter-exactcount-wrapper', 'search-field-panel', 'search-field-wrapper',
   'search-field-btn', 'search-field-label',
-  'card-all', 'card-dups', 'card-unique',
+  'card-all', 'card-dups', 'card-unique', 'card-suspicious',
 ];
 
 // ── Seletor de campos Op1 ──────────────────────────────────────
@@ -120,11 +120,15 @@ export function runDuplicates() {
     .filter(g => g.length === 1)
     .map(g => g[0]);
 
+  const allFields = AppState.availableFields.map(f => f.key);
+  detectTypeAnomalies(AppState.rawData, allFields);
+
   setSummaryCards([
-    { id:'s-total',  val:fmtN(AppState.rawData.length),         label:'Total de registos',   cls:'total' },
-    { id:'s-dups',   val:fmtN(dupCount),                         label:'Registos duplicados', cls:'dups'  },
-    { id:'s-unique', val:fmtN(AppState.rawData.length-dupCount), label:'Registos únicos',     cls:'clean' },
-    { id:'s-groups', val:fmtN(AppState.dupGroups.length),        label:'Grupos duplicados',   cls:'info'  },
+    { id:'s-total',      val:fmtN(AppState.rawData.length),              label:'Total de registos',   cls:'total' },
+    { id:'s-dups',       val:fmtN(dupCount),                              label:'Registos duplicados', cls:'dups'  },
+    { id:'s-unique',     val:fmtN(AppState.rawData.length - dupCount),    label:'Registos únicos',     cls:'clean' },
+    { id:'s-groups',     val:fmtN(AppState.dupGroups.length),             label:'Grupos duplicados',   cls:'info'  },
+    { id:'s-suspicious', val:fmtN(AppState.anomalyRecords.length),        label:'Suspeitos',           cls:'warn'  },
   ]);
 
   hide('reconciliation-dashboard');
@@ -202,6 +206,54 @@ export function renderDuplicates(fields) {
       </table></div>`;
 
     setPagination(sorted.length > PAGE_SIZE ? 'flex' : 'none', `Registos ${start+1}–${Math.min(start+PAGE_SIZE, sorted.length)} de ${fmtN(sorted.length)}`);
+    renderPagination(totalPages, () => renderDuplicates(fields));
+    setupFilters(() => renderDuplicates(fields));
+    return;
+  }
+
+  if (AppState.activeFilters.type === 'suspicious') {
+    let suspiciousRecs = AppState.anomalyRecords;
+
+    if (!suspiciousRecs.length) {
+      el.innerHTML = `<div class="no-dups"><div class="big">✅</div><p>Nenhum dado suspeito detetado.</p></div>`;
+      setPagination('none'); return;
+    }
+
+    if (AppState.activeFilters.search) {
+      suspiciousRecs = suspiciousRecs.filter(({ record }) => {
+        const vals = AppState.activeFilters.searchFields.length
+          ? AppState.activeFilters.searchFields.map(k => record[k])
+          : Object.values(record);
+        return vals.some(v => String(v ?? '').toLowerCase().includes(AppState.activeFilters.search));
+      });
+    }
+
+    if (!suspiciousRecs.length) {
+      el.innerHTML = `<div class="no-dups"><div class="big">🔍</div><p>Nenhum registo corresponde aos filtros.</p></div>`;
+      setPagination('none'); return;
+    }
+
+    const totalPages = Math.ceil(suspiciousRecs.length / PAGE_SIZE);
+    const start      = (AppState.currentPage - 1) * PAGE_SIZE;
+    const slice      = suspiciousRecs.slice(start, start + PAGE_SIZE);
+    const showCols   = _visibleCols(fields);
+
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;padding:12px;background:#fff7ed;border-radius:8px;border:1px solid #fed7aa;">
+        <div style="display:flex;align-items:center;gap:16px">
+          <span style="display:inline-block;background:#ea580c;color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">⚠ Dados suspeitos</span>
+          <span style="font-size:14px;color:#555;font-weight:500;">${fmtN(suspiciousRecs.length)} registo(s) com anomalias de tipo</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr>${_headerCells(showCols)}</tr></thead>
+        <tbody>${slice.map(({ record, fields: anomFields }) => {
+          const anomalyMap = Object.fromEntries(anomFields.map(a => [a.field, a.reason]));
+          return `<tr>${_rowCellsWithAnomalies(record, showCols, anomalyMap)}</tr>`;
+        }).join('')}</tbody>
+      </table></div>`;
+
+    setPagination(suspiciousRecs.length > PAGE_SIZE ? 'flex' : 'none', `Registos ${start+1}–${Math.min(start+PAGE_SIZE, suspiciousRecs.length)} de ${fmtN(suspiciousRecs.length)}`);
     renderPagination(totalPages, () => renderDuplicates(fields));
     setupFilters(() => renderDuplicates(fields));
     return;
@@ -318,6 +370,7 @@ export function renderDuplicates(fields) {
   setPagination(filteredGroups.length > PAGE_SIZE ? 'flex' : 'none', `Grupos ${start+1}–${Math.min(start+PAGE_SIZE, filteredGroups.length)} de ${fmtN(filteredGroups.length)}`);
   renderPagination(totalPages, () => renderDuplicates(fields));
   setupFilters(() => renderDuplicates(fields));
+  setupTableKeyNav(el);
 }
 
 // ── Filtros ────────────────────────────────────────────────────
@@ -512,8 +565,87 @@ function _rowCells(r, cols) {
   }).join('');
 }
 
+function _rowCellsWithAnomalies(r, cols, anomalyMap) {
+  return cols.map(f => {
+    const v = r[f];
+    const reason = anomalyMap[f];
+    if (reason) {
+      const display = typeof v === 'number' ? fmt(v) : escHtml(String(v ?? '—'));
+      return `<td class="cell-anomaly" title="${escHtml(reason)}">${display}</td>`;
+    }
+    if (typeof v === 'number')
+      return `<td class="${v < 0 ? 'amount-neg' : 'amount-pos'}">${fmt(v)}</td>`;
+    return `<td class="${['numero_documento','atribuicao','conta','referencia'].includes(f) ? 'mono' : ''}">${v ?? '—'}</td>`;
+  }).join('');
+}
+
+function detectTypeAnomalies(records, fields) {
+  if (!records.length || !fields.length) { AppState.anomalyRecords = []; return; }
+  const currentYear = new Date().getFullYear();
+
+  // Build dominant-type profile per field
+  const profiles = {};
+  for (const field of fields) {
+    const counts = { numeric: 0, date: 0, text: 0 };
+    let allPositive = true;
+    let nonEmpty = 0;
+    for (const r of records) {
+      const t = classifyValue(r[field]);
+      if (t === 'empty') continue;
+      nonEmpty++;
+      if (t in counts) counts[t]++;
+      if (t === 'numeric' && typeof r[field] === 'number' && r[field] < 0) allPositive = false;
+    }
+    if (nonEmpty === 0) { profiles[field] = { dominant: null }; continue; }
+    const [topType, topCount] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    profiles[field] = {
+      dominant:    topCount / nonEmpty >= 0.6 ? topType : null,
+      allPositive: allPositive && counts.numeric > 0,
+    };
+  }
+
+  const TYPE_MISMATCH_REASON = {
+    date:    { numeric: 'Data em coluna numérica',   text: 'Data em coluna de texto'    },
+    numeric: { date:    'Número em coluna de datas', text: 'Número em coluna de texto'   },
+    text:    { numeric: 'Texto em coluna numérica',  date:  'Texto em coluna de datas'  },
+  };
+
+  const result = [];
+  for (const record of records) {
+    const anomFields = [];
+    for (const field of fields) {
+      const prof = profiles[field];
+      if (!prof || !prof.dominant) continue;
+      const v = record[field];
+      const t = classifyValue(v);
+      if (t === 'empty') continue;
+
+      if (t !== prof.dominant) {
+        const reason = TYPE_MISMATCH_REASON[t]?.[prof.dominant] ?? `Tipo inesperado (${t} em coluna ${prof.dominant})`;
+        anomFields.push({ field, value: v, dominantType: prof.dominant, actualType: t, reason });
+      } else if (t === 'date') {
+        const yearMatch = String(v).match(/(\d{4})/);
+        if (yearMatch) {
+          const year = parseInt(yearMatch[1]);
+          if (year > currentYear + 5)
+            anomFields.push({ field, value: v, dominantType: 'date', actualType: 'date', reason: `Data futura implausível (${year})` });
+          else if (year < 1900)
+            anomFields.push({ field, value: v, dominantType: 'date', actualType: 'date', reason: `Data histórica implausível (${year})` });
+        }
+      } else if (t === 'numeric' && prof.allPositive) {
+        const num = typeof v === 'number' ? v : parseFloat(String(v).replace(/[€$£\s]/g, '').replace(',', '.'));
+        if (!isNaN(num) && num < 0)
+          anomFields.push({ field, value: v, dominantType: 'numeric', actualType: 'numeric', reason: 'Valor negativo em coluna sempre positiva' });
+      }
+    }
+    if (anomFields.length) result.push({ record, fields: anomFields });
+  }
+  AppState.anomalyRecords = result;
+}
+
 function _setFilterCards(type) {
-  document.getElementById('card-all')?.classList.toggle('selected',  type === 'all');
-  document.getElementById('card-dups')?.classList.toggle('selected', type === 'duplicates');
-  document.getElementById('card-unique')?.classList.toggle('selected', type === 'unique');
+  document.getElementById('card-all')?.classList.toggle('selected',       type === 'all');
+  document.getElementById('card-dups')?.classList.toggle('selected',      type === 'duplicates');
+  document.getElementById('card-unique')?.classList.toggle('selected',    type === 'unique');
+  document.getElementById('card-suspicious')?.classList.toggle('selected', type === 'suspicious');
 }

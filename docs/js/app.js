@@ -3,12 +3,12 @@
    ============================================================ */
 
 import { AppState, APP_VERSION, PAGE_SIZE, PDF_MAX_RECORDS } from './state.js';
-import { Logger } from './modules/logger.js';
-import { show, hide, setProgress, fmt, fmtN, escHtml, setSummaryCards, guessFieldType } from './modules/ui.js';
+import { Logger, loadAuditLog } from './modules/logger.js';
+import { show, hide, setProgress, fmt, fmtN, escHtml, setSummaryCards, guessFieldType, setupTableKeyNav, trapFocus, releaseFocus } from './modules/ui.js';
 import { setPagination, renderPagination } from './modules/pagination.js';
 import {
   initImport, isLikelyNumeric,
-  addFilesToQueue, removeFileFromQueue, startProcessing, processSingleFile,
+  addFilesToQueue, removeFileFromQueue, clearQueue, startProcessing, processSingleFile,
   startAnalysis, confirmMapping, onMapInputChange, toggleIgnore, updateQueueUI,
   loadSavedFilesAndAnalyse,
 } from './modules/import.js';
@@ -28,7 +28,7 @@ import {
   updateReconExportCounts, updateReconExportPreview, getReconDataToExport, executeReconExport,
   setReconSortField, initReconEvents,
 } from './modules/reconciliation.js';
-import { initOp3Events, openOp3LibPicker, confirmOp3LibPicker, closeOp3LibPicker, clearOp3Slot } from './modules/op3.js';
+import { initOp3Events, openOp3LibPicker, confirmOp3LibPicker, closeOp3LibPicker, clearOp3Slot, exportOp3Xlsx } from './modules/op3.js';
 import { initOp4Events, clearOp4 } from './modules/op4.js';
 import { initAuth, isSessionValid, login, getCurrentUser, logout } from './modules/auth.js';
 import {
@@ -48,7 +48,9 @@ import {
 function toggleLog() {
   const modal = document.getElementById('log-modal');
   if (!modal) return;
-  modal.style.display = modal.style.display === 'none' || !modal.style.display ? 'flex' : 'none';
+  const isOpen = modal.style.display === 'flex';
+  modal.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) trapFocus(modal); else releaseFocus(modal);
 }
 
 function exportLog() {
@@ -62,6 +64,22 @@ function exportLog() {
 }
 
 function clearLog() { Logger.clear(); }
+
+async function showAuditHistory() {
+  const body = document.getElementById('log-body');
+  if (!body) return;
+  const entries = await loadAuditLog(500);
+  if (!entries.length) {
+    body.insertAdjacentHTML('afterbegin',
+      '<div class="log-entry INFO" style="opacity:.6;font-style:italic"><span class="log-ts"></span><span class="log-msg">Sem histórico guardado.</span></div>');
+    return;
+  }
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const banner = '<div class="log-entry INFO" style="opacity:.6;font-style:italic;border-bottom:1px solid #e5e7eb;margin-bottom:4px"><span class="log-ts"></span><span class="log-msg">── Histórico persistido (últimas 500 entradas) ──</span></div>';
+  const html   = entries.map(e => `<div class="log-entry ${e.level}"><span class="log-ts">${e.ts.substring(11)}</span><span class="log-msg">${esc(e.msg)}</span></div>`).join('');
+  body.insertAdjacentHTML('afterbegin', banner + html);
+  body.scrollTop = 0;
+}
 
 /* --------------------------------------------------------------
    SHOW CONTENT
@@ -229,18 +247,17 @@ function renderReconciliation(reconOk, reconNok, tolerance, groupField, valField
 /* --------------------------------------------------------------
    BIBLIOTECA DE FICHEIROS
    -------------------------------------------------------------- */
-async function renderFilestorePanel() {
-  const panel = document.getElementById('filestore-panel');
-  const list  = document.getElementById('fs-list');
-  if (!panel || !list) return;
+let _fsAllFiles  = [];   // cache completo para pesquisa/ordenação
+let _fsSortMode  = 'date'; // 'date' | 'name'
 
-  const files = await listStoredFiles();
-  if (!files.length) { panel.style.display = 'none'; return; }
-
-  const totalSize = files.reduce((s, f) => s + (f.size || 0), 0);
-  const info = document.getElementById('fs-storage-info');
-  if (info) info.textContent = `${files.length} ficheiro${files.length !== 1 ? 's' : ''} · ${fmtBytes(totalSize)}`;
-
+function _renderFsList(files) {
+  const list = document.getElementById('fs-list');
+  if (!list) return;
+  if (!files.length) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:#9ca3af">Sem resultados</div>';
+    _updateFsLoadBtn();
+    return;
+  }
   list.innerHTML = files.map(f => {
     const date = new Date(f.savedAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: '2-digit' });
     return `<div class="fs-item">
@@ -252,9 +269,38 @@ async function renderFilestorePanel() {
       <button class="fs-delete-btn" data-action="fs-delete" data-name="${escHtml(f.name)}">🗑</button>
     </div>`;
   }).join('');
+  _updateFsLoadBtn();
+}
+
+function _applyFsFilter() {
+  const q     = (document.getElementById('fs-search')?.value || '').toLowerCase().trim();
+  let visible = q ? _fsAllFiles.filter(f => f.name.toLowerCase().includes(q)) : [..._fsAllFiles];
+  if (_fsSortMode === 'name') {
+    visible.sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+  } else {
+    visible.sort((a, b) => b.savedAt.localeCompare(a.savedAt)); // mais recente primeiro
+  }
+  _renderFsList(visible);
+  // Update sort button styles
+  const btnName = document.getElementById('btn-fs-sort-name');
+  const btnDate = document.getElementById('btn-fs-sort-date');
+  if (btnName) { btnName.style.background = _fsSortMode === 'name' ? '#eff6ff' : '#f9fafb'; btnName.style.borderColor = _fsSortMode === 'name' ? '#2563eb' : '#e5e7eb'; btnName.style.color = _fsSortMode === 'name' ? '#2563eb' : '#6b7280'; }
+  if (btnDate) { btnDate.style.background = _fsSortMode === 'date' ? '#eff6ff' : '#f9fafb'; btnDate.style.borderColor = _fsSortMode === 'date' ? '#2563eb' : '#e5e7eb'; btnDate.style.color = _fsSortMode === 'date' ? '#2563eb' : '#6b7280'; }
+}
+
+async function renderFilestorePanel() {
+  const panel = document.getElementById('filestore-panel');
+  if (!panel) return;
+
+  _fsAllFiles = await listStoredFiles();
+  if (!_fsAllFiles.length) { panel.style.display = 'none'; return; }
+
+  const totalSize = _fsAllFiles.reduce((s, f) => s + (f.size || 0), 0);
+  const info = document.getElementById('fs-storage-info');
+  if (info) info.textContent = `${_fsAllFiles.length} ficheiro${_fsAllFiles.length !== 1 ? 's' : ''} · ${fmtBytes(totalSize)}`;
 
   panel.style.display = '';
-  _updateFsLoadBtn();
+  _applyFsFilter();
 }
 
 function _updateFsLoadBtn() {
@@ -288,7 +334,7 @@ function hideSessionIndicator() {
    -------------------------------------------------------------- */
 function validateDOM() {
   const allIds = [
-    'login-section', 'login-token-input', 'btn-login', 'login-error',
+    'login-dialog', 'login-token-input', 'btn-login', 'login-error',
     'session-indicator', 'session-username', 'btn-logout',
     'mode-section', 'mode-ops-card', 'mode-op3-card', 'mode-op4-card',
     'op4-section', 'btn-op4-back', 'op4-file-input', 'op4-dropzone',
@@ -330,17 +376,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   hide('op4-section');
   hide('mode-section');
 
-  // ── Autenticação ───────────────────────────────────────────────
-  await initAuth();
-  let _sessionValid = await isSessionValid();
-  if (_sessionValid) {
-    hide('login-section');
-    show('mode-section');
-    const name = await getCurrentUser();
-    if (name) showSessionIndicator(name);
-  } else {
-    document.getElementById('login-section').style.display = 'flex';
+  // ── Autenticação (DESATIVADA) ──────────────────────────────────
+  // Login e sessão temporariamente desativados — acesso direto sem autenticação.
+  // Para reativar: remover este bloco e restaurar o bloco original abaixo.
+  const _authOverlay = document.getElementById('auth-init-overlay');
+  if (_authOverlay) {
+    _authOverlay.classList.add('fade-out');
+    _authOverlay.addEventListener('transitionend', () => _authOverlay.remove(), { once: true });
   }
+  show('mode-section');
 
   validateDOM();
 
@@ -350,11 +394,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   initOp3Events();
   initOp4Events();
 
-  // ── Biblioteca de ficheiros ────────────────────────────────────
-  await initFileStore();
-  renderFilestorePanel();
+  // ── Biblioteca de ficheiros (DESATIVADA) ──────────────────────
+  // IndexedDB temporariamente desativado. Para reativar:
+  //   await initFileStore();
+  //   renderFilestorePanel();
+  //   document.addEventListener('filestore:saved', renderFilestorePanel);
 
-  document.addEventListener('filestore:saved', renderFilestorePanel);
+  document.getElementById('fs-search')?.addEventListener('input', _applyFsFilter);
+  document.getElementById('btn-fs-sort-name')?.addEventListener('click', () => { _fsSortMode = 'name'; _applyFsFilter(); });
+  document.getElementById('btn-fs-sort-date')?.addEventListener('click', () => { _fsSortMode = 'date'; _applyFsFilter(); });
 
   document.getElementById('btn-fs-clear-all')?.addEventListener('click', async () => {
     if (!confirm('Limpar todos os ficheiros guardados da biblioteca?')) return;
@@ -429,6 +477,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('log-modal-backdrop')?.addEventListener('click', toggleLog);
   document.getElementById('log-modal-close')?.addEventListener('click', toggleLog);
   document.getElementById('btn-export-log')?.addEventListener('click', exportLog);
+  document.getElementById('btn-history-log')?.addEventListener('click', showAuditHistory);
   document.getElementById('btn-clear-log')?.addEventListener('click', clearLog);
 
   // ── Op selection ───────────────────────────────────────────────
@@ -441,6 +490,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-sticky-reset')?.addEventListener('click', resetAll);
   document.getElementById('btn-ctb-reset')?.addEventListener('click', resetAll);
   document.getElementById('btn-cancel-mapping')?.addEventListener('click', resetAll);
+  document.getElementById('btn-clear-queue')?.addEventListener('click', clearQueue);
 
   // ── Mapeamento ─────────────────────────────────────────────────
   document.getElementById('btn-confirm-mapping')?.addEventListener('click', confirmMapping);
@@ -509,7 +559,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const name  = await login(token);
     if (name) {
       _sessionValid = true;
-      document.getElementById('login-section').style.display = 'none';
+      _dlg?.close();
       show('mode-section');
       showSessionIndicator(name);
       document.getElementById('login-error').style.display = 'none';
@@ -531,7 +581,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     hide('mode-section'); hide('import-section'); hide('content');
     hide('op3-section'); hide('op4-section'); hide('results-section'); hide('progress-section'); hide('mapping-section');
     document.getElementById('login-token-input').value = '';
-    document.getElementById('login-section').style.display = 'flex';
+    _dlg?.showModal();
     Logger.info('Sessão terminada.');
   });
 
