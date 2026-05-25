@@ -1,7 +1,11 @@
 /* ============================================================
    G-FinanceSuite — Configuração de Autenticação
-   Edite este ficheiro para gerir tokens e duração de sessão.
+   Adicione entradas em USERS para gerir acessos.
    ============================================================ */
 
-export const VALID_TOKENS  = ['12345'];
+export const USERS = [
+  { token: '123456', name: 'ADMIN'  },
+  { token: 'guerin', name: 'GUERIN' },
+];
+
 export const SESSION_HOURS = 8;

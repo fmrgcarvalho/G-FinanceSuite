@@ -3,7 +3,7 @@
    BD separada: GFinanceAuth (não colide com GFinanceDB/filestore)
    ============================================================ */
 
-import { VALID_TOKENS, SESSION_HOURS } from '../../config/auth.js';
+import { USERS, SESSION_HOURS } from '../../config/auth.js';
 
 const DB_NAME     = 'GFinanceAuth';
 const DB_VER      = 1;
@@ -34,7 +34,7 @@ function _get(db) {
 
 function _put(db, record) {
   return new Promise((res, rej) => {
-    const tx  = db.transaction(STORE, 'readwrite');
+    const tx = db.transaction(STORE, 'readwrite');
     tx.objectStore(STORE).put(record);
     tx.oncomplete = () => res();
     tx.onerror    = () => rej(tx.error);
@@ -43,7 +43,7 @@ function _put(db, record) {
 
 function _delete(db) {
   return new Promise((res, rej) => {
-    const tx  = db.transaction(STORE, 'readwrite');
+    const tx = db.transaction(STORE, 'readwrite');
     tx.objectStore(STORE).delete(SESSION_KEY);
     tx.oncomplete = () => res();
     tx.onerror    = () => rej(tx.error);
@@ -65,12 +65,26 @@ export async function isSessionValid() {
   }
 }
 
+/** Retorna o nome do utilizador logado, ou null se sessão inválida. */
+export async function getCurrentUser() {
+  try {
+    const db  = await _open();
+    const rec = await _get(db);
+    if (!rec || new Date(rec.expiresAt) <= new Date()) return null;
+    return rec.name || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Valida token e cria sessão. Retorna o nome do utilizador ou null se falhar. */
 export async function login(token) {
-  if (!VALID_TOKENS.includes(token)) return false;
+  const user = USERS.find(u => u.token === token);
+  if (!user) return null;
   const expiresAt = new Date(Date.now() + SESSION_HOURS * 3_600_000).toISOString();
   const db = await _open();
-  await _put(db, { id: SESSION_KEY, token, expiresAt });
-  return true;
+  await _put(db, { id: SESSION_KEY, token, name: user.name, expiresAt });
+  return user.name;
 }
 
 export async function logout() {

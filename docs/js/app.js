@@ -29,7 +29,7 @@ import {
   setReconSortField, initReconEvents,
 } from './modules/reconciliation.js';
 import { initOp3Events, openOp3LibPicker, confirmOp3LibPicker, closeOp3LibPicker } from './modules/op3.js';
-import { initAuth, isSessionValid, login } from './modules/auth.js';
+import { initAuth, isSessionValid, login, getCurrentUser, logout } from './modules/auth.js';
 import {
   initFileStore, listStoredFiles, loadStoredFile,
   deleteStoredFile, clearAllStoredFiles, fmtBytes,
@@ -266,11 +266,27 @@ function _updateFsLoadBtn() {
 }
 
 /* --------------------------------------------------------------
+   INDICADOR DE SESSÃO
+   -------------------------------------------------------------- */
+function showSessionIndicator(name) {
+  const el = document.getElementById('session-indicator');
+  if (el) el.style.display = 'flex';
+  const un = document.getElementById('session-username');
+  if (un) un.textContent = name;
+}
+
+function hideSessionIndicator() {
+  const el = document.getElementById('session-indicator');
+  if (el) el.style.display = 'none';
+}
+
+/* --------------------------------------------------------------
    VALIDAÇÃO DE DOM
    -------------------------------------------------------------- */
 function validateDOM() {
   const allIds = [
     'login-section', 'login-token-input', 'btn-login', 'login-error',
+    'session-indicator', 'session-username', 'btn-logout',
     'mode-section', 'mode-ops-card', 'mode-op3-card',
     'op3-section', 'btn-op3-back', 'btn-op3-run',
     'op3-upload-card', 'op3-mapping-section',
@@ -310,8 +326,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Autenticação ───────────────────────────────────────────────
   await initAuth();
   let _sessionValid = await isSessionValid();
-  if (_sessionValid) { hide('login-section'); show('mode-section'); }
-  else               { show('login-section'); }
+  if (_sessionValid) {
+    hide('login-section');
+    show('mode-section');
+    const name = await getCurrentUser();
+    if (name) showSessionIndicator(name);
+  } else {
+    document.getElementById('login-section').style.display = 'flex';
+  }
 
   validateDOM();
 
@@ -462,11 +484,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Login ──────────────────────────────────────────────────────
   async function doLogin() {
     const token = document.getElementById('login-token-input')?.value.trim() || '';
-    const ok    = await login(token);
-    if (ok) {
+    const name  = await login(token);
+    if (name) {
       _sessionValid = true;
-      hide('login-section');
+      document.getElementById('login-section').style.display = 'none';
       show('mode-section');
+      showSessionIndicator(name);
       document.getElementById('login-error').style.display = 'none';
     } else {
       document.getElementById('login-error').style.display = '';
@@ -475,6 +498,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-login')?.addEventListener('click', doLogin);
   document.getElementById('login-token-input')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') doLogin();
+  });
+
+  // ── Logout ────────────────────────────────────────────────────
+  document.getElementById('btn-logout')?.addEventListener('click', async () => {
+    await logout();
+    _sessionValid = false;
+    hideSessionIndicator();
+    AppState.reset();
+    hide('mode-section'); hide('import-section'); hide('content');
+    hide('op3-section'); hide('results-section'); hide('progress-section'); hide('mapping-section');
+    document.getElementById('login-token-input').value = '';
+    document.getElementById('login-section').style.display = 'flex';
+    Logger.info('Sessão terminada.');
   });
 
   // ── Logo → home ────────────────────────────────────────────────
