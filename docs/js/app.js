@@ -28,7 +28,7 @@ import {
   updateReconExportCounts, updateReconExportPreview, getReconDataToExport, executeReconExport,
   setReconSortField, initReconEvents,
 } from './modules/reconciliation.js';
-import { initOp3Events } from './modules/op3.js';
+import { initOp3Events, openOp3LibPicker, confirmOp3LibPicker, closeOp3LibPicker } from './modules/op3.js';
 import {
   initFileStore, listStoredFiles, loadStoredFile,
   deleteStoredFile, clearAllStoredFiles, fmtBytes,
@@ -275,6 +275,7 @@ function validateDOM() {
     'op3-input-sap', 'op3-input-mapeamento', 'op3-input-faturacao', 'op3-input-rmkt', 'op3-input-pagospor',
     'op3-results-section', 'op3-tab-faturacao', 'op3-tab-rmkt', 'op3-tab-pagosPor',
     'filestore-panel', 'fs-list', 'fs-storage-info', 'btn-fs-load', 'btn-fs-clear-all',
+    'op3-lib-modal', 'op3-lib-list', 'op3-lib-confirm', 'op3-lib-cancel',
     'import-section', 'file-input', 'files-queue', 'files-queue-list',
     'mapping-section', 'map-table-wrap', 'map-summary',
     'progress-section', 'prog-fill', 'prog-label', 'prog-sub',
@@ -343,6 +344,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderFilestorePanel();
     Logger.info(`Removido da biblioteca: ${btn.dataset.name}`);
   });
+
+  // ── Op3 picker da biblioteca ───────────────────────────────────
+  document.getElementById('op3-upload-card')?.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-op3-lib');
+    if (btn) openOp3LibPicker(btn.dataset.slot);
+  });
+  document.getElementById('op3-lib-confirm')?.addEventListener('click', confirmOp3LibPicker);
+  document.getElementById('op3-lib-cancel')?.addEventListener('click',  closeOp3LibPicker);
+  document.getElementById('op3-lib-backdrop')?.addEventListener('click', closeOp3LibPicker);
 
   // ── Mode selector ──────────────────────────────────────────────
   document.getElementById('mode-ops-card')?.addEventListener('click', () => {

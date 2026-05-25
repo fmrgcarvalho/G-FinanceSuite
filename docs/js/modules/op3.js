@@ -5,6 +5,7 @@
 
 import { AppState } from '../state.js';
 import { Logger } from './logger.js';
+import { listStoredFiles, loadStoredFile } from './filestore.js';
 
 // ── Constantes ─────────────────────────────────────────────────
 
@@ -560,9 +561,15 @@ function updateBadge(id, label) {
 
 function updateRunBtn() {
   const f   = AppState.op3.files;
+  const lib = AppState.op3.libFiles;
   const btn = document.getElementById('btn-op3-run');
   if (!btn) return;
-  const ok  = f.sap.length > 0 && !!f.mapeamento && (!!f.rwFaturacao || !!f.rwRmkt || !!f.rwPagosPor);
+  const hasSap = f.sap.length > 0 || lib.sap.length > 0;
+  const hasMap = !!f.mapeamento  || !!lib.mapeamento;
+  const hasRw  = !!(f.rwFaturacao || lib.rwFaturacao)
+              || !!(f.rwRmkt      || lib.rwRmkt)
+              || !!(f.rwPagosPor  || lib.rwPagosPor);
+  const ok = hasSap && hasMap && hasRw;
   btn.disabled      = !ok;
   btn.style.opacity = ok ? '1' : '0.5';
   btn.style.cursor  = ok ? 'pointer' : 'not-allowed';
@@ -571,21 +578,32 @@ function updateRunBtn() {
 // ── Executar Op3 — Fase 1: ler cabeçalhos e mostrar mapeamento ─
 
 async function runOp3Phase1() {
-  const f = AppState.op3.files;
-  if (!f.sap.length)    { alert('Carrega pelo menos um ficheiro SAP.'); return; }
-  if (!f.mapeamento)    { alert('Carrega o ficheiro de Mapeamento.'); return; }
-  if (!f.rwFaturacao && !f.rwRmkt && !f.rwPagosPor) { alert('Carrega pelo menos um ficheiro RW.'); return; }
+  const f   = AppState.op3.files;
+  const lib = AppState.op3.libFiles;
+  const hasSap = f.sap.length > 0 || lib.sap.length > 0;
+  const hasMap = !!f.mapeamento  || !!lib.mapeamento;
+  const hasRw  = !!(f.rwFaturacao || lib.rwFaturacao) || !!(f.rwRmkt || lib.rwRmkt) || !!(f.rwPagosPor || lib.rwPagosPor);
+  if (!hasSap) { alert('Carrega pelo menos um ficheiro SAP.'); return; }
+  if (!hasMap) { alert('Carrega o ficheiro de Mapeamento.'); return; }
+  if (!hasRw)  { alert('Carrega pelo menos um ficheiro RW.'); return; }
 
   const btn = document.getElementById('btn-op3-run');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ A ler colunas...'; }
 
+  // Helper: headers de ficheiro ou de entrada da biblioteca
+  const hdrs = async (file, libEntry) =>
+    libEntry ? Object.keys(libEntry.records?.[0] || {})
+             : (file ? await parseHeaders(file) : null);
+
   try {
     const headersMap = {};
-    headersMap.sap = await parseHeaders(f.sap[0]);
-    if (f.mapeamento)  headersMap.mapeamento  = await parseHeaders(f.mapeamento);
-    if (f.rwFaturacao) headersMap.rwFaturacao  = await parseHeaders(f.rwFaturacao);
-    if (f.rwRmkt)      headersMap.rwRmkt       = await parseHeaders(f.rwRmkt);
-    if (f.rwPagosPor)  headersMap.rwPagosPor   = await parseHeaders(f.rwPagosPor);
+    headersMap.sap = lib.sap.length
+      ? Object.keys(lib.sap[0]?.records?.[0] || {})
+      : await parseHeaders(f.sap[0]);
+    const hMap  = await hdrs(f.mapeamento,  lib.mapeamento);  if (hMap)  headersMap.mapeamento  = hMap;
+    const hFat  = await hdrs(f.rwFaturacao, lib.rwFaturacao); if (hFat)  headersMap.rwFaturacao  = hFat;
+    const hRmkt = await hdrs(f.rwRmkt,      lib.rwRmkt);      if (hRmkt) headersMap.rwRmkt       = hRmkt;
+    const hPag  = await hdrs(f.rwPagosPor,  lib.rwPagosPor);  if (hPag)  headersMap.rwPagosPor   = hPag;
 
     const FILE_CFG = {
       sap: FILE_FIELDS.sap, mapeamento: FILE_FIELDS.mapeamento,
@@ -615,45 +633,50 @@ async function runOp3Phase1() {
 
 async function runOp3Phase2() {
   const f   = AppState.op3.files;
+  const lib = AppState.op3.libFiles;
   const mps = AppState.op3.mappings;
   const btn = document.getElementById('btn-op3-confirm-mapping');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ A processar...'; }
 
+  // Helper: records da biblioteca (I/O zero) ou do ficheiro
+  const getRows = async (file, libEntry) =>
+    libEntry ? libEntry.records : parseFile(file);
+
   try {
-    const sapParsed = await Promise.all(f.sap.map(async file => {
-      const rows = await parseFile(file);
-      const recs = normalizeSap(rows, file.name, mps.sap || {});
-      rows.length = 0;
-      return recs;
-    }));
+    const sapParsed = lib.sap.length
+      ? lib.sap.map(e => normalizeSap(e.records, e.name, mps.sap || {}))
+      : await Promise.all(f.sap.map(async file => {
+          const rows = await parseFile(file);
+          const recs = normalizeSap(rows, file.name, mps.sap || {});
+          rows.length = 0;
+          return recs;
+        }));
     const sapRecs = sapParsed.flat();
-    sapParsed.length = 0;
     Logger.info(`Op3: SAP total → ${sapRecs.length} registos`);
 
-    const mapRows    = await parseFile(f.mapeamento);
+    const mapRows    = await getRows(f.mapeamento, lib.mapeamento);
     const mapeamento = normalizeMapeamento(mapRows, mps.mapeamento || {});
-    mapRows.length   = 0;
 
     const results = { faturacao: null, rmkt: null, pagosPor: null };
 
-    if (f.rwFaturacao) {
-      const rows = await parseFile(f.rwFaturacao);
-      const recs = normalizeRw(rows, f.rwFaturacao.name, mps.rwFaturacao || {});
-      rows.length = 0;
+    if (f.rwFaturacao || lib.rwFaturacao) {
+      const rows = await getRows(f.rwFaturacao, lib.rwFaturacao);
+      const name = lib.rwFaturacao ? lib.rwFaturacao.name : f.rwFaturacao.name;
+      const recs = normalizeRw(rows, name, mps.rwFaturacao || {});
       results.faturacao = await reconcile(recs, sapRecs, mapeamento);
       Logger.info(`Op3 Faturação → RW-only:${results.faturacao.somenteRw.length} SAP-only:${results.faturacao.somenteSap.length} matched:${results.faturacao.matched.length}`);
     }
-    if (f.rwRmkt) {
-      const rows = await parseFile(f.rwRmkt);
-      const recs = normalizeRw(rows, f.rwRmkt.name, mps.rwRmkt || {});
-      rows.length = 0;
+    if (f.rwRmkt || lib.rwRmkt) {
+      const rows = await getRows(f.rwRmkt, lib.rwRmkt);
+      const name = lib.rwRmkt ? lib.rwRmkt.name : f.rwRmkt.name;
+      const recs = normalizeRw(rows, name, mps.rwRmkt || {});
       results.rmkt = await reconcile(recs, sapRecs, mapeamento);
       Logger.info(`Op3 RMKT → RW-only:${results.rmkt.somenteRw.length} SAP-only:${results.rmkt.somenteSap.length} matched:${results.rmkt.matched.length}`);
     }
-    if (f.rwPagosPor) {
-      const rows = await parseFile(f.rwPagosPor);
-      const recs = normalizePagosPor(rows, f.rwPagosPor.name, mps.rwPagosPor || {});
-      rows.length = 0;
+    if (f.rwPagosPor || lib.rwPagosPor) {
+      const rows = await getRows(f.rwPagosPor, lib.rwPagosPor);
+      const name = lib.rwPagosPor ? lib.rwPagosPor.name : f.rwPagosPor.name;
+      const recs = normalizePagosPor(rows, name, mps.rwPagosPor || {});
       results.pagosPor = await reconcile(recs, sapRecs, mapeamento, true);
       Logger.info(`Op3 PagosPor → RW-only:${results.pagosPor.somenteRw.length} SAP-only:${results.pagosPor.somenteSap.length} matched:${results.pagosPor.matched.length}`);
     }
@@ -699,6 +722,79 @@ function exportMatchedCsv(matched, filename) {
   const body   = matched.map(m => { const r = { ...m.rw, doc_sap: m.sapDoc }; return keys.map(k => `"${(r[k] ?? '').toString().replace(/"/g, '""')}"`).join(','); });
   const blob = new Blob(['﻿' + [header, ...body].join('\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+}
+
+// ── Picker da biblioteca ───────────────────────────────────────
+
+let _pickerSlot = null; // slot activo no picker
+
+export async function openOp3LibPicker(slot) {
+  _pickerSlot = slot;
+  const list = document.getElementById('op3-lib-list');
+  const confirm = document.getElementById('op3-lib-confirm');
+  if (!list || !confirm) return;
+
+  const files = await listStoredFiles();
+  if (!files.length) {
+    alert('A biblioteca está vazia. Processa primeiro ficheiros na Análise de Dados.');
+    return;
+  }
+
+  list.innerHTML = files.map(f => {
+    const date = new Date(f.savedAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: '2-digit' });
+    return `<label class="fs-item" style="cursor:pointer">
+      <input type="radio" name="op3-lib-pick" value="${escHtml(f.name)}" style="width:15px;height:15px;accent-color:#2563eb;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div class="fs-item-name" title="${escHtml(f.name)}">${escHtml(f.name)}</div>
+        <div class="fs-item-meta">${(f.recordCount || 0).toLocaleString('pt-PT')} registos · ${date}</div>
+      </div>
+    </label>`;
+  }).join('');
+
+  list.querySelectorAll('input[type=radio]').forEach(r =>
+    r.addEventListener('change', () => {
+      confirm.disabled      = false;
+      confirm.style.opacity = '1';
+      confirm.style.cursor  = 'pointer';
+    })
+  );
+  confirm.disabled      = true;
+  confirm.style.opacity = '0.5';
+  confirm.style.cursor  = 'not-allowed';
+
+  const modal = document.getElementById('op3-lib-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+export async function confirmOp3LibPicker() {
+  const modal = document.getElementById('op3-lib-modal');
+  const radio = document.querySelector('input[name="op3-lib-pick"]:checked');
+  if (!radio || !_pickerSlot) { if (modal) modal.style.display = 'none'; return; }
+
+  const entry = await loadStoredFile(radio.value);
+  if (!entry) { alert('Ficheiro não encontrado na biblioteca.'); return; }
+
+  const lib = AppState.op3.libFiles;
+  const badgeId = {
+    sap: 'op3-badge-sap', mapeamento: 'op3-badge-mapeamento',
+    rwFaturacao: 'op3-badge-faturacao', rwRmkt: 'op3-badge-rmkt', rwPagosPor: 'op3-badge-pagospor',
+  }[_pickerSlot];
+
+  if (_pickerSlot === 'sap') {
+    lib.sap = [entry];
+  } else {
+    lib[_pickerSlot] = entry;
+  }
+
+  updateBadge(badgeId, `📂 ${entry.name} (${(entry.recordCount || 0).toLocaleString('pt-PT')} reg.)`);
+  updateRunBtn();
+  if (modal) modal.style.display = 'none';
+  Logger.info(`Op3 biblioteca: ${_pickerSlot} → ${entry.name}`);
+}
+
+export function closeOp3LibPicker() {
+  const modal = document.getElementById('op3-lib-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 // ── Inicialização de eventos ────────────────────────────────────

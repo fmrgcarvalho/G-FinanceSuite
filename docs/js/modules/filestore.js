@@ -40,18 +40,27 @@ export async function initFileStore() {
   catch (e) { console.warn('[filestore] IndexedDB indisponível:', e); return false; }
 }
 
-// Upsert: cria ou actualiza entrada com o mesmo nome de ficheiro
-export async function saveFileToStore(name, records, columns, size, mapping = {}) {
-  const s = await _store('readwrite');
-  return _req(s.put({
-    name,
-    size,
-    savedAt:     new Date().toISOString(),
-    recordCount: records.length,
-    columns,
-    records,
-    mapping,
-  }));
+const MAX_FILES = 15;
+
+// Upsert + LRU: guarda/actualiza e remove os mais antigos se > MAX_FILES.
+// Usa uma única transacção para garantir atomicidade (sem await entre ops IDB).
+export function saveFileToStore(name, records, columns, size, mapping = {}) {
+  return new Promise(async (res, rej) => {
+    const db = await _open();
+    const tx = db.transaction(STORE, 'readwrite');
+    const s  = tx.objectStore(STORE);
+    s.put({ name, size, savedAt: new Date().toISOString(), recordCount: records.length, columns, records, mapping });
+    const req = s.getAll();
+    req.onsuccess = () => {
+      const all = req.result;
+      if (all.length > MAX_FILES) {
+        all.sort((a, b) => a.savedAt.localeCompare(b.savedAt));
+        all.slice(0, all.length - MAX_FILES).forEach(old => s.delete(old.name));
+      }
+    };
+    tx.oncomplete = () => res();
+    tx.onerror    = () => rej(tx.error);
+  });
 }
 
 // Devolve só metadados (sem records) — rápido, para listar

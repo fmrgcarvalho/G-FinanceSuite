@@ -90,6 +90,13 @@ export const AppState = {
       rwRmkt:      null, // File
       rwPagosPor:  null, // File
     },
+    libFiles: {
+      sap:         [],   // entradas da biblioteca (com .records e .columns)
+      mapeamento:  null,
+      rwFaturacao: null,
+      rwRmkt:      null,
+      rwPagosPor:  null,
+    },
     results: {
       faturacao: null,   // { somenteRw[], somenteSap[], matched[] }
       rmkt:      null,
@@ -134,8 +141,9 @@ export const AppState = {
     this.reconExportState = { dataType: 'all', format: 'xlsx' };
 
     this.op3 = {
-      files:   { sap: [], mapeamento: null, rwFaturacao: null, rwRmkt: null, rwPagosPor: null },
-      results: { faturacao: null, rmkt: null, pagosPor: null },
+      files:    { sap: [], mapeamento: null, rwFaturacao: null, rwRmkt: null, rwPagosPor: null },
+      libFiles: { sap: [], mapeamento: null, rwFaturacao: null, rwRmkt: null, rwPagosPor: null },
+      results:  { faturacao: null, rmkt: null, pagosPor: null },
       mappings: {},
       activeTab: 'faturacao',
     };
