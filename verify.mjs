@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import { writeFileSync, mkdirSync } from 'fs';
 
-const BASE = 'http://localhost:3001';
+const BASE = `http://localhost:${process.env.PORT || 3000}`;
 const SHOTS = 'c:/RepoAI/G-FinanceSuite/verify-shots';
 mkdirSync(SHOTS, { recursive: true });
 
