@@ -44,9 +44,9 @@ const MAX_FILES = 15;
 
 // Upsert + LRU: guarda/actualiza e remove os mais antigos se > MAX_FILES.
 // Usa uma única transacção para garantir atomicidade (sem await entre ops IDB).
-export function saveFileToStore(name, records, columns, size, mapping = {}) {
-  return new Promise(async (res, rej) => {
-    const db = await _open();
+export async function saveFileToStore(name, records, columns, size, mapping = {}) {
+  const db = await _open();
+  return new Promise((res, rej) => {
     const tx = db.transaction(STORE, 'readwrite');
     const s  = tx.objectStore(STORE);
     s.put({ name, size, savedAt: new Date().toISOString(), recordCount: records.length, columns, records, mapping });

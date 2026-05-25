@@ -743,7 +743,7 @@ export async function openOp3LibPicker(slot) {
   list.innerHTML = files.map(f => {
     const date = new Date(f.savedAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: '2-digit' });
     return `<label class="fs-item" style="cursor:pointer">
-      <input type="radio" name="op3-lib-pick" value="${escHtml(f.name)}" style="width:15px;height:15px;accent-color:#2563eb;flex-shrink:0">
+      <input type="checkbox" class="op3-lib-pick" value="${escHtml(f.name)}" style="width:15px;height:15px;accent-color:#2563eb;flex-shrink:0">
       <div style="flex:1;min-width:0">
         <div class="fs-item-name" title="${escHtml(f.name)}">${escHtml(f.name)}</div>
         <div class="fs-item-meta">${(f.recordCount || 0).toLocaleString('pt-PT')} registos · ${date}</div>
@@ -751,13 +751,12 @@ export async function openOp3LibPicker(slot) {
     </label>`;
   }).join('');
 
-  list.querySelectorAll('input[type=radio]').forEach(r =>
-    r.addEventListener('change', () => {
-      confirm.disabled      = false;
-      confirm.style.opacity = '1';
-      confirm.style.cursor  = 'pointer';
-    })
-  );
+  list.addEventListener('change', () => {
+    const hasChecked      = list.querySelectorAll('.op3-lib-pick:checked').length > 0;
+    confirm.disabled      = !hasChecked;
+    confirm.style.opacity = hasChecked ? '1' : '0.5';
+    confirm.style.cursor  = hasChecked ? 'pointer' : 'not-allowed';
+  });
   confirm.disabled      = true;
   confirm.style.opacity = '0.5';
   confirm.style.cursor  = 'not-allowed';
@@ -767,30 +766,36 @@ export async function openOp3LibPicker(slot) {
 }
 
 export async function confirmOp3LibPicker() {
-  const modal = document.getElementById('op3-lib-modal');
-  const radio = document.querySelector('input[name="op3-lib-pick"]:checked');
-  if (!radio || !_pickerSlot) { if (modal) modal.style.display = 'none'; return; }
+  const modal   = document.getElementById('op3-lib-modal');
+  const checked = [...document.querySelectorAll('#op3-lib-list .op3-lib-pick:checked')];
+  if (!checked.length || !_pickerSlot) { if (modal) modal.style.display = 'none'; return; }
 
-  const entry = await loadStoredFile(radio.value);
-  if (!entry) { alert('Ficheiro não encontrado na biblioteca.'); return; }
+  const entries = (await Promise.all(checked.map(c => loadStoredFile(c.value)))).filter(Boolean);
+  if (!entries.length) { alert('Ficheiros não encontrados na biblioteca.'); return; }
 
-  const lib = AppState.op3.libFiles;
+  const lib     = AppState.op3.libFiles;
   const badgeId = {
     sap: 'op3-badge-sap', mapeamento: 'op3-badge-mapeamento',
     rwFaturacao: 'op3-badge-faturacao', rwRmkt: 'op3-badge-rmkt', rwPagosPor: 'op3-badge-pagospor',
   }[_pickerSlot];
 
+  const totalRec = entries.reduce((s, e) => s + (e.recordCount || 0), 0);
+
   if (_pickerSlot === 'sap') {
-    lib.sap = [entry];
+    lib.sap = entries;
   } else {
-    lib[_pickerSlot] = entry;
+    const merged = entries.flatMap(e => e.records || []);
+    lib[_pickerSlot] = { name: entries.map(e => e.name).join(', '), records: merged, recordCount: merged.length };
   }
 
-  updateBadge(badgeId, `📂 ${entry.name} (${(entry.recordCount || 0).toLocaleString('pt-PT')} reg.)`);
+  const label = entries.length === 1
+    ? `📂 ${entries[0].name} (${totalRec.toLocaleString('pt-PT')} reg.)`
+    : `📂 ${entries.length} ficheiros (${totalRec.toLocaleString('pt-PT')} reg.)`;
+  updateBadge(badgeId, label);
   _showClearBtn(_pickerSlot, true);
   updateRunBtn();
   if (modal) modal.style.display = 'none';
-  Logger.info(`Op3 biblioteca: ${_pickerSlot} → ${entry.name}`);
+  Logger.info(`Op3 biblioteca: ${_pickerSlot} → ${entries.map(e => e.name).join(', ')}`);
 }
 
 export function closeOp3LibPicker() {

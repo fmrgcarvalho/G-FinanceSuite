@@ -189,6 +189,7 @@ function addMoreFiles() {
   Logger.info('A aguardar novos ficheiros para mesclar...');
   hide('content'); hide('results-section'); hide('progress-section');
   show('import-section');
+  renderFilestorePanel();
   AppState.fileQueue        = [];
   AppState.consolidatedFiles = [];
   AppState.mappings          = {};
@@ -390,6 +391,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('mode-ops-card')?.addEventListener('click', () => {
     hide('mode-section');
     show('import-section');
+    renderFilestorePanel();
   });
   document.getElementById('mode-op3-card')?.addEventListener('click', () => {
     hide('mode-section');
