@@ -32,8 +32,21 @@
 </head>
 <body>
 
+<!-- ── LOGIN ── -->
+<div id="login-section" style="position:fixed;inset:0;background:#f3f4f6;display:flex;align-items:center;justify-content:center;z-index:10000">
+  <div style="background:white;border-radius:16px;padding:48px 40px;max-width:360px;width:90%;box-shadow:0 4px 32px rgba(0,0,0,.10);text-align:center">
+    <div style="font-size:28px;font-weight:800;color:#1c2526;letter-spacing:-1px;margin-bottom:8px">G-Finance</div>
+    <p style="color:#6b7280;font-size:13px;margin-bottom:32px">Introduza o token de acesso</p>
+    <input id="login-token-input" type="password" placeholder="Token"
+      style="width:100%;padding:10px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;outline:none;box-sizing:border-box;margin-bottom:12px">
+    <button id="btn-login"
+      style="width:100%;padding:11px;background:#8ec73d;color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer">Entrar</button>
+    <p id="login-error" style="display:none;color:#ef4444;font-size:12px;margin-top:10px">Token inválido. Tente novamente.</p>
+  </div>
+</div>
+
 <header>
-  <div class="logo">G-Finance</div>
+  <div class="logo" style="cursor:pointer">G-Finance</div>
   <div style="flex:1"></div>
   <button class="header-btn" id="log-btn" title="Abrir/Fechar Log">📋 Log</button>
 </header>
@@ -71,8 +84,8 @@
         <h3 style="font-size:16px;font-weight:700;color:#1c2526;margin-bottom:8px">Análise de Dados</h3>
         <p style="font-size:13px;color:#6b7280;line-height:1.5">Identificação de duplicados e reconciliação de partidas a partir de um conjunto de ficheiros.</p>
         <div style="margin-top:16px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
-          <span style="background:#f0f9e8;color:#3a7d10;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Op1 Duplicados</span>
-          <span style="background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Op2 Reconciliação</span>
+          <span style="background:#f0f9e8;color:#3a7d10;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Análise de Duplicados</span>
+          <span style="background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Reconciliação</span>
         </div>
       </div>
       <!-- Modo B: Op3 -->

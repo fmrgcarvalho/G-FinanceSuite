@@ -29,6 +29,7 @@ import {
   setReconSortField, initReconEvents,
 } from './modules/reconciliation.js';
 import { initOp3Events, openOp3LibPicker, confirmOp3LibPicker, closeOp3LibPicker } from './modules/op3.js';
+import { initAuth, isSessionValid, login } from './modules/auth.js';
 import {
   initFileStore, listStoredFiles, loadStoredFile,
   deleteStoredFile, clearAllStoredFiles, fmtBytes,
@@ -269,6 +270,7 @@ function _updateFsLoadBtn() {
    -------------------------------------------------------------- */
 function validateDOM() {
   const allIds = [
+    'login-section', 'login-token-input', 'btn-login', 'login-error',
     'mode-section', 'mode-ops-card', 'mode-op3-card',
     'op3-section', 'btn-op3-back', 'btn-op3-run',
     'op3-upload-card', 'op3-mapping-section',
@@ -303,7 +305,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   hide('results-section');
   hide('import-section');
   hide('op3-section');
-  show('mode-section');
+  hide('mode-section');
+
+  // ── Autenticação ───────────────────────────────────────────────
+  await initAuth();
+  let _sessionValid = await isSessionValid();
+  if (_sessionValid) { hide('login-section'); show('mode-section'); }
+  else               { show('login-section'); }
 
   validateDOM();
 
@@ -449,6 +457,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Export button from dup-list (rendered dynamically) ────────
   document.getElementById('dup-list')?.addEventListener('click', e => {
     if (e.target.closest('[data-action="open-export"]')) openExportModal();
+  });
+
+  // ── Login ──────────────────────────────────────────────────────
+  async function doLogin() {
+    const token = document.getElementById('login-token-input')?.value.trim() || '';
+    const ok    = await login(token);
+    if (ok) {
+      _sessionValid = true;
+      hide('login-section');
+      show('mode-section');
+      document.getElementById('login-error').style.display = 'none';
+    } else {
+      document.getElementById('login-error').style.display = '';
+    }
+  }
+  document.getElementById('btn-login')?.addEventListener('click', doLogin);
+  document.getElementById('login-token-input')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // ── Logo → home ────────────────────────────────────────────────
+  document.querySelector('.logo')?.addEventListener('click', () => {
+    if (_sessionValid) resetAll();
   });
 
   // ── Sticky bar scroll observer ─────────────────────────────────
