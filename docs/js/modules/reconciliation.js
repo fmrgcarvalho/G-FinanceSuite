@@ -5,7 +5,7 @@
    ============================================================ */
 
 import { AppState, PAGE_SIZE } from '../state.js';
-import { show, hide, fmt, fmtN, escHtml, setSummaryCards } from './ui.js';
+import { show, hide, fmt, fmtN, escHtml, setSummaryCards, setupTableKeyNav, trapFocus, releaseFocus } from './ui.js';
 import { setPagination, renderPagination } from './pagination.js';
 import { exportToCSV, exportToJSON, exportToXML, exportToXLSX, exportToPDF } from './export.js';
 import { Logger } from './logger.js';
@@ -320,6 +320,7 @@ export function renderReconTable(groups, groupField, valField, tolerance) {
   setPagination(groups.length > PAGE_SIZE ? 'flex' : 'none', `Grupos ${start+1}–${Math.min(start+PAGE_SIZE, groups.length)} de ${fmtN(groups.length)}`, true);
   renderPagination(totalPages, () => renderReconTable(AppState.reconDashboardState.filteredGroups, groupField, valField, tolerance), true);
   Logger.info(`renderReconTable: ${slice.length}/${groups.length} grupos renderizados (página ${AppState.currentPage}/${totalPages})`);
+  setupTableKeyNav(document.getElementById('recon-table-body'));
 }
 
 // ── Filtros ────────────────────────────────────────────────────
@@ -404,13 +405,16 @@ export function openReconExportModal() {
   const modal = document.getElementById('recon-export-modal');
   if (!modal) return;
   modal.style.display = 'flex';
+  trapFocus(modal);
   updateReconExportCounts();
   Logger.info('Modal de exportação de reconciliação aberto');
 }
 
 export function closeReconExportModal() {
   const modal = document.getElementById('recon-export-modal');
-  if (modal) modal.style.display = 'none';
+  if (!modal) return;
+  modal.style.display = 'none';
+  releaseFocus(modal);
 }
 
 export function setReconExportDataType(type) {

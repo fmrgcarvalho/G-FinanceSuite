@@ -1,9 +1,8 @@
 /* ============================================================
    G-FinanceSuite — Autenticação por Token + Sessão IndexedDB
    BD separada: GFinanceAuth (não colide com GFinanceDB/filestore)
+   Validação feita server-side via POST /api/login.
    ============================================================ */
-
-import { USERS, SESSION_HOURS } from '../../config/auth.js';
 
 const DB_NAME     = 'GFinanceAuth';
 const DB_VER      = 1;
@@ -77,14 +76,22 @@ export async function getCurrentUser() {
   }
 }
 
-/** Valida token e cria sessão. Retorna o nome do utilizador ou null se falhar. */
+/** Valida token via servidor e cria sessão local. Retorna nome ou null se falhar. */
 export async function login(token) {
-  const user = USERS.find(u => u.token === token);
-  if (!user) return null;
-  const expiresAt = new Date(Date.now() + SESSION_HOURS * 3_600_000).toISOString();
-  const db = await _open();
-  await _put(db, { id: SESSION_KEY, token, name: user.name, expiresAt });
-  return user.name;
+  try {
+    const resp = await fetch('/api/login', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ token }),
+    });
+    if (!resp.ok) return null;
+    const { name, expiresAt } = await resp.json();
+    const db = await _open();
+    await _put(db, { id: SESSION_KEY, token, name, expiresAt });
+    return name;
+  } catch {
+    return null;
+  }
 }
 
 export async function logout() {

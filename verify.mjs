@@ -42,8 +42,11 @@ async function jsClick(page, selector) {
 
   // ── 1b. Login ─────────────────────────────────────────────────
   console.log('\n=== 1b. Login ===');
-  const loginVisible = await page.isVisible('#login-section');
-  console.log(`  login-section visível: ${loginVisible}`);
+  const loginVisible = await page.evaluate(() => {
+    const dlg = document.getElementById('login-dialog');
+    return dlg ? dlg.open : document.getElementById('login-section')?.style.display !== 'none';
+  });
+  console.log(`  login visível: ${loginVisible}`);
   if (loginVisible) {
     await page.fill('#login-token-input', '123456');
     await page.click('#btn-login');

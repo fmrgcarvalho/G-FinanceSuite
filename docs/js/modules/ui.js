@@ -34,6 +34,7 @@ export function setSummaryCards(defs) {
     dups:  'sum-card dups',
     clean: 'sum-card clean',
     info:  'sum-card info',
+    warn:  'sum-card warn',
   };
   defs.forEach(d => {
     const valEl = document.getElementById(d.id);
@@ -65,6 +66,40 @@ export function escHtml(s) {
   return String(s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Focus trap para modais ─────────────────────────────────────
+export function trapFocus(el) {
+  const sel = 'button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  el._trapHandler = e => {
+    if (e.key !== 'Tab') return;
+    const nodes = [...el.querySelectorAll(sel)].filter(n => n.offsetParent !== null);
+    if (!nodes.length) return;
+    const first = nodes[0], last = nodes[nodes.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  };
+  el.addEventListener('keydown', el._trapHandler);
+}
+
+export function releaseFocus(el) {
+  if (el._trapHandler) el.removeEventListener('keydown', el._trapHandler);
+}
+
+// ── Navegação por teclado em tabelas ──────────────────────────
+export function setupTableKeyNav(el) {
+  if (!el) return;
+  const sel = el.tagName === 'TBODY' ? 'tr' : 'tbody tr';
+  el.querySelectorAll(sel).forEach(tr => { tr.tabIndex = 0; });
+  el.removeEventListener('keydown', el._keyNavHandler);
+  el._keyNavHandler = e => {
+    const rows = [...el.querySelectorAll(`${sel}[tabindex="0"]`)];
+    const idx  = rows.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); rows[Math.min(idx + 1, rows.length - 1)]?.focus(); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); rows[Math.max(idx - 1, 0)]?.focus(); }
+    if (e.key === 'Enter' && idx >= 0) { e.preventDefault(); document.activeElement.click(); }
+  };
+  el.addEventListener('keydown', el._keyNavHandler);
 }
 
 // ── Detecção de tipo de campo ──────────────────────────────────
@@ -100,4 +135,20 @@ function _isLikelyNumeric(field, val) {
     return !isNaN(Number(cleaned)) && cleaned !== '';
   }
   return false;
+}
+
+// ── Classificação de valor individual (para deteção de anomalias) ──
+// Retorna: 'empty' | 'numeric' | 'date' | 'text'
+export function classifyValue(v) {
+  if (v == null || v === '' || v === '—' || v === '-') return 'empty';
+  if (typeof v === 'number') return 'numeric';
+  const s = String(v).trim();
+  if (s === '') return 'empty';
+  // numeric: remove currency symbols, spaces, thousands sep; try parseFloat
+  const cleaned = s.replace(/[€$£\s]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.');
+  if (cleaned !== '' && !isNaN(parseFloat(cleaned)) && isFinite(Number(cleaned))) return 'numeric';
+  // date: ISO YYYY-MM-DD or DD/MM/YYYY or DD-MM-YYYY patterns
+  if (/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(s)) return 'date';
+  if (/^\d{2}[\/\-\.]\d{2}[\/\-\.]\d{4}$/.test(s)) return 'date';
+  return 'text';
 }

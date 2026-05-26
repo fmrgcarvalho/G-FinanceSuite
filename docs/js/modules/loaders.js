@@ -86,8 +86,11 @@ export function isLikelyNumeric(fieldName, sampleVal) {
 }
 
 export function isLikelyDate(fieldName, sampleVal) {
+  if (sampleVal instanceof Date) return true;
   if (/data|date|datum|dt_/i.test(fieldName)) return true;
-  if (typeof sampleVal === 'number' && sampleVal > 32874 && sampleVal < 73051) return true;
+  // NOTE: number-range heuristic (32874–73051) intentionally removed.
+  // With cellDates:true, Excel date cells arrive as Date objects (caught above).
+  // The range heuristic caused false positives for numeric codes like SAP Atribuição.
   if (typeof sampleVal === 'string') {
     const s = sampleVal.trim();
     if (/^\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{4}$/.test(s)) return true;
@@ -121,7 +124,14 @@ export function buildRecord(row, mapping, srcFile) {
   Object.entries(mapping).forEach(([colIdx, field]) => {
     let val = row[parseInt(colIdx)];
     if (val === null || val === undefined || val === '') { rec[field] = null; return; }
-    if (isLikelyDate(field, val))         rec[field] = parseExcelDate(val);
+    // Date objects come from cellDates:true — always convert directly, no heuristic needed
+    if (val instanceof Date) { rec[field] = isNaN(val) ? null : val.toISOString().split('T')[0]; return; }
+    // Field-name wins over value heuristic: a field named "montante" is NEVER a date
+    // even if its value (e.g. 50000) falls in the Excel date serial range.
+    const _numByName = /montante|valor|amount|importe|saldo|price|preco|total|quantidade|qty|custo|cost/i.test(field);
+    const _datByName = /data|date|datum|dt_/i.test(field);
+    if (_numByName && !_datByName)        rec[field] = typeof val === 'number' ? val : parseFloat(String(val).replace(/\s/g,'').replace(',','.')) || null;
+    else if (isLikelyDate(field, val))    rec[field] = parseExcelDate(val);
     else if (isLikelyNumeric(field, val)) rec[field] = typeof val === 'number' ? val : parseFloat(String(val).replace(/\s/g,'').replace(',','.')) || null;
     else                                  rec[field] = String(val).trim() || null;
   });

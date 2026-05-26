@@ -2,6 +2,9 @@
 node_modules/
 .env
 .env.local
+
+# Credenciais (usar config/users.json.example como template)
+config/users.json
 .vscode/
 .idea/
 *.swp

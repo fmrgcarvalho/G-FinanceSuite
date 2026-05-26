@@ -397,15 +397,16 @@ export async function finalizeConsolidation() {
     if (item.status !== 'success') continue;
     const fd = AppState.fileDataMap[item.file.name];
     if (!fd?.records?.length) continue;
-    const cols = Object.keys(fd.records[0] || {}).filter(k => k !== 'ficheiro_origem');
-    try {
-      await saveFileToStore(item.file.name, fd.records, cols, item.file.size || 0, fd.mapping || {});
-      Logger.info(`💾 Guardado: ${item.file.name}`);
-    } catch (e) {
-      Logger.warn(`Biblioteca: não foi possível guardar ${item.file.name} — ${e.message}`);
-    }
+    // IDB desativado — para reativar:
+    // const cols = Object.keys(fd.records[0] || {}).filter(k => k !== 'ficheiro_origem');
+    // try {
+    //   await saveFileToStore(item.file.name, fd.records, cols, item.file.size || 0, fd.mapping || {});
+    //   Logger.info(`💾 Guardado: ${item.file.name}`);
+    // } catch (e) {
+    //   Logger.warn(`Biblioteca: não foi possível guardar ${item.file.name} — ${e.message}`);
+    // }
   }
-  document.dispatchEvent(new CustomEvent('filestore:saved'));
+  // document.dispatchEvent(new CustomEvent('filestore:saved'));
 
   setProgress(100, 'Pronto!', `${AppState.rawData.length.toLocaleString('pt-PT')} registos consolidados`);
   setTimeout(() => { hide('progress-section'); updateQueueUI(); }, 500);
@@ -504,11 +505,11 @@ export async function processExcelFromQueueMainThread(buffer, queueItem) {
   try {
     const data       = new Uint8Array(buffer);
     const strategies = [
-      { label: 'ultra-leve', opts: { type: 'array', raw: true, cellDates: false, cellFormula: false, cellStyles: false, cellNF: false, sheetStubs: false } },
-      { label: 'leve',       opts: { type: 'array', raw: true, cellDates: false, cellFormula: false, cellStyles: false } },
-      { label: 'sheetStubs', opts: { type: 'array', raw: true, cellDates: false, cellFormula: false, sheetStubs: true } },
-      { label: 'raw:false',  opts: { type: 'array', raw: false, cellDates: false, cellFormula: false, cellStyles: false } },
-      { label: 'completo',   opts: { type: 'array', raw: true, cellDates: false } },
+      { label: 'ultra-leve', opts: { type: 'array', raw: true, cellDates: true, cellFormula: false, cellStyles: false, cellNF: false, sheetStubs: false } },
+      { label: 'leve',       opts: { type: 'array', raw: true, cellDates: true, cellFormula: false, cellStyles: false } },
+      { label: 'sheetStubs', opts: { type: 'array', raw: true, cellDates: true, cellFormula: false, sheetStubs: true } },
+      { label: 'raw:false',  opts: { type: 'array', raw: false, cellDates: true, cellFormula: false, cellStyles: false } },
+      { label: 'completo',   opts: { type: 'array', raw: true, cellDates: true } },
     ];
 
     let ws = null, rows = [], lastError = null;

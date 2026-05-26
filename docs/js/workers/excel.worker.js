@@ -25,7 +25,7 @@ self.onmessage = function (e) {
 
     const t0   = Date.now();
     const data = new Uint8Array(buffer);
-    const wb   = XLSX.read(data, { type: 'array', cellDates: false, raw: true });
+    const wb   = XLSX.read(data, { type: 'array', cellDates: true, raw: true });
     log('INFO', `Workbook aberto em ${Date.now() - t0} ms — folhas: ${wb.SheetNames.join(', ')}`);
 
     // Obter folha
@@ -83,7 +83,7 @@ self.onmessage = function (e) {
     if (rows.length < 2) {
       log('WARN', 'A reler workbook com sheetStubs:true…');
       t1 = Date.now();
-      const wb2 = XLSX.read(data, { type: 'array', cellDates: false, cellFormula: false, sheetStubs: true });
+      const wb2 = XLSX.read(data, { type: 'array', cellDates: true, cellFormula: false, sheetStubs: true });
       const ws2 = wb2.Sheets[wb2.SheetNames[0]];
       rows = XLSX.utils.sheet_to_json(ws2, { header: 1, defval: null, raw: true });
       log('INFO', `Tentativa 4 (sheetStubs): ${rows.length} linhas em ${Date.now() - t1} ms`);
