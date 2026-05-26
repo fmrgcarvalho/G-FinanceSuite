@@ -1,126 +1,141 @@
-# G-FinanceSuite — Análise de Duplicados e Reconciliação
+# G-FinanceSuite — Plataforma de Análise Financeira
 
-Aplicação web para **deteção de duplicados** e **reconciliação financeira** de dados contabilísticos. Suporta Excel, CSV e JSON com dashboards visuais, filtros em tempo real e exportação multi-formato.
-
----
-
-## Funcionalidades
-
-### Operação 1 — Identificar Duplicados
-- Upload de múltiplos ficheiros com consolidação automática
-- Mapeamento de colunas com auto-sugestão por aliases
-- Seleção de campos para agrupamento (chips interativos)
-- Cálculo de grupos duplicados + registos únicos + soma de valores
-- Cards clicáveis para filtrar (Total / Únicos / Duplicados)
-- Filtros: texto, montante mín/máx, nº exato de duplicados, campo de procura
-- Ordenação por qualquer coluna
-- Paginação (100/página) no topo e fundo da tabela
-
-### Operação 2 — Reconciliação Avançada
-- Dashboard visual: Pie Chart + Bar Chart (Chart.js)
-- Estatísticas: saldo total, médio, mediana, máximo
-- Cards clicáveis: Total / Reconciliados / Por reconciliar
-- Tabela expansível — click numa linha para ver os documentos do grupo
-- Filtro por saldo mínimo e máximo
-- Paginação (100/página) no topo e fundo da tabela
-
-### Exportação
-- CSV, JSON, XML, XLSX (SheetJS), PDF (até 2000 registos)
-- Seleção de dados: todos / duplicados / únicos (Op1) ou todos / reconciliados / por reconciliar (Op2)
-- Log de operações exportável em .txt
+Aplicação web empresarial para análise, reconciliação e transformação de dados financeiros. Stack completo com React frontend, Node.js backend, PostgreSQL e processamento assíncrono via pg-boss.
 
 ---
 
-## Estrutura
+## Stack
+
+| Camada | Tecnologia |
+|--------|-----------|
+| Frontend | React 19 + TypeScript + Zustand + TailwindCSS + Vite |
+| Backend | Node.js + Express + TypeScript + JWT |
+| Base de dados | PostgreSQL 16 + pg-boss (job queue) |
+| IA Local | Ollama (LLM inference — opcional) |
+| Infra | Docker Compose + Nginx reverse proxy |
+
+---
+
+## Operações Disponíveis
+
+| # | Operação | Estado |
+|---|----------|--------|
+| 1 | **Duplicados** — Deteção de registos duplicados em múltiplos ficheiros | ✅ Implementado |
+| 2 | **Conciliação** — Reconciliação de saldos por campo de agrupamento | ✅ Implementado |
+| 3 | **SAP vs RW** — Conciliação de dados SAP com ficheiros Rentway | ✅ Implementado |
+| 4 | **Transformar** — Conversão e combinação de ficheiros (CSV/JSON/XLSX) + RW Normalização | ✅ Implementado |
+| 5 | **Rec. Fornecedores** — Reconciliação de partidas em aberto SAP vs RW com mapeamento | ✅ Implementado |
+| 6 | **Analítica** — Insights automáticos e análise exploratória | ✅ Implementado |
+| 7 | **IA** — Chat inteligente sobre os dados (Ollama local) | ✅ Implementado |
+| 8 | **Biblioteca** — Sessões guardadas e resultados históricos | ✅ Implementado |
+
+---
+
+## Estrutura do Projeto
 
 ```
 G-FinanceSuite/
-├── docs/
-│   ├── index.html
-│   ├── js/
-│   │   ├── app.js                  — Orquestrador (event listeners, init)
-│   │   ├── state.js                — AppState centralizado
-│   │   ├── modules/
-│   │   │   ├── logger.js           — Logger partilhado
-│   │   │   ├── ui.js               — Utilitários de DOM
-│   │   │   ├── pagination.js       — Paginação Op1 + Op2
-│   │   │   ├── import.js           — Upload, fila, mapeamento
-│   │   │   ├── duplicates.js       — Op1: análise, filtros, ordenação
-│   │   │   ├── reconciliation.js   — Op2: análise, dashboard, filtros
-│   │   │   └── export.js           — Exportação multi-formato
-│   │   └── workers/
-│   │       └── excel.worker.js     — Web Worker para Excel
-│   └── css/
-│       └── style.css
-├── server.js                       — Servidor Express estático
-└── package.json
+├── frontend/                    # React + Vite SPA
+│   ├── src/
+│   │   ├── pages/               # 12 páginas (uma por funcionalidade)
+│   │   ├── components/          # Logo, Header, FinanceBackground
+│   │   ├── store/               # Zustand (auth + sessão + job)
+│   │   ├── api/                 # Cliente HTTP com Bearer token
+│   │   ├── hooks/               # useJobProgress (SSE)
+│   │   └── types/               # Tipos TypeScript partilhados
+│   └── package.json
+│
+├── backend/                     # Express API + workers
+│   ├── src/
+│   │   ├── routes/              # auth, sessions, users, upload, analyse, ai, events
+│   │   ├── lib/                 # parser.ts, analysis.ts
+│   │   ├── workers/             # parseFile, runAnalysis (pg-boss)
+│   │   ├── db/                  # Pool PostgreSQL + migrações SQL
+│   │   ├── middleware/          # JWT authenticate
+│   │   └── types/               # Tipos TypeScript backend
+│   └── package.json
+│
+├── docker-compose.yml           # 4 serviços: frontend, backend, db, ollama
+├── nginx.conf                   # Reverse proxy + SSE passthrough
+├── config/users.json            # Seed de utilizadores iniciais
+└── deploy/                      # Scripts de deployment
 ```
 
 ---
 
-## Como Correr
+## Arranque Rápido
 
-A aplicação usa ES6 modules — requer servidor HTTP (não funciona com `file://`).
+### Docker (recomendado)
 
 ```bash
-npm install
-node server.js
-# Aceder em http://localhost:3000
+# 1. Copiar template de configuração
+cp config/users.json.example config/users.json
+cp .env.example .env
+
+# 2. Editar .env com os secrets
+#    POSTGRES_PASSWORD=<password-segura>
+#    JWT_SECRET=<secret-forte>
+#    ALLOWED_ORIGIN=http://localhost
+
+# 3. Arrancar
+docker compose up -d
+
+# Aceder em http://localhost
+# Login por omissão: admin / 123456 (alterar imediatamente)
 ```
 
-**Ou com serve:**
+### Desenvolvimento Local
+
 ```bash
-npx serve docs
+# Backend
+cd backend && npm install
+npm run dev   # porta 3001
+
+# Frontend
+cd frontend && npm install
+npm run dev   # porta 5173 (proxy para :3001)
 ```
-
-**Dependências CDN (internet necessária):**
-
-| Biblioteca | Versão | Uso |
-|-----------|--------|-----|
-| SheetJS | 0.18.5 | Leitura de Excel e CSV |
-| jsPDF | 2.5.1 | Exportação PDF |
-| Chart.js | 3.9.1 | Gráficos Pie e Bar |
-
----
-
-## Fluxo de Uso
-
-### Duplicados
-1. Arrasta ou seleciona ficheiros (Excel / CSV / JSON)
-2. Processa — barra de progresso por ficheiro
-3. Mapeia colunas (auto-sugestão)
-4. Seleciona campos que identificam um duplicado
-5. Executa análise
-6. Filtra e ordena os resultados
-7. Exporta
-
-### Reconciliação
-1. Arrasta ou seleciona ficheiros
-2. Processa e mapeia
-3. Configura: campo de agrupamento + campo de valor + tolerância
-4. Executa análise
-5. Explora o dashboard (gráficos + estatísticas)
-6. Filtra por cards e por saldo
-7. Expande linhas da tabela para ver documentos
-8. Exporta
-
----
-
-## Performance
-
-- Suporta datasets de 344.000+ registos
-- Paginação de 100 itens/página para renderização rápida
-- Web Worker para parsing de Excel sem bloquear a UI
-- Gráficos colapsáveis para poupar memória
 
 ---
 
 ## Segurança
 
-- Sem servidor — dados processados inteiramente no browser
-- Sem envio de dados para servidores externos
-- Pode funcionar offline após o carregamento inicial da página
+- Autenticação JWT com expiração configurável por utilizador
+- RBAC: perfis `admin` e `user` com funcionalidades restritas por utilizador
+- Rate limiting no endpoint de login (10 req/min)
+- Audit log de todas as operações
+- Helmet + CORS configurados no backend
+- Dados processados server-side — ficheiros nunca saem do servidor
 
 ---
 
-**Versão 2.4.0 · 2026-05-24**
+## Testes
+
+```bash
+cd frontend
+npm test          # vitest run (40 testes)
+npm run test:ui   # interface visual Vitest UI
+npm run test:watch # modo watch
+```
+
+Cobertura:
+- Zustand store (auth, sessão, job)
+- Cliente API (fetch mocks, headers, erros)
+- Parser RW Normalização (deteção de cabeçalho, fornecedores, Atribuição)
+- Componentes React (LoginPage, ModePage — render + interação)
+- Hook useJobProgress (SSE — mount/unmount/erros)
+
+---
+
+## Fluxo de Uso Típico
+
+1. Login → selecionar operação no painel inicial
+2. Upload de ficheiro(s) → mapeamento de colunas
+3. Configurar parâmetros da operação
+4. Executar análise (processamento assíncrono com barra de progresso)
+5. Explorar resultados em tabs
+6. Exportar para XLSX
+
+---
+
+**Versão 3.0.0 · 2026-05-27**
